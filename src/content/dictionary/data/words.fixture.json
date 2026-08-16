@@ -103,7 +103,7 @@
     },
     {
       "word": "AIMLESS",
-      "common": true
+      "common": false
     },
     {
       "word": "AIRMAN",
@@ -139,7 +139,7 @@
     },
     {
       "word": "ALLSPICE",
-      "common": true
+      "common": false
     },
     {
       "word": "ALODIAL",
@@ -151,7 +151,7 @@
     },
     {
       "word": "AMARANTH",
-      "common": true
+      "common": false
     },
     {
       "word": "AMBIVERTS",
@@ -171,7 +171,7 @@
     },
     {
       "word": "AMPUTATED",
-      "common": true
+      "common": false
     },
     {
       "word": "ANADEMS",
@@ -219,7 +219,7 @@
     },
     {
       "word": "ANTONYMS",
-      "common": true
+      "common": false
     },
     {
       "word": "APAREJO",
@@ -251,7 +251,7 @@
     },
     {
       "word": "ARCHWAY",
-      "common": true
+      "common": false
     },
     {
       "word": "ARGENTINE",
@@ -291,7 +291,7 @@
     },
     {
       "word": "ASSIGNOR",
-      "common": true
+      "common": false
     },
     {
       "word": "ASTERISM",
@@ -387,7 +387,7 @@
     },
     {
       "word": "BANYAN",
-      "common": true
+      "common": false
     },
     {
       "word": "BARBICELS",
@@ -427,7 +427,7 @@
     },
     {
       "word": "BEANO",
-      "common": true
+      "common": false
     },
     {
       "word": "BEAVERS",
@@ -479,7 +479,7 @@
     },
     {
       "word": "BERET",
-      "common": true
+      "common": false
     },
     {
       "word": "BESEEMING",
@@ -531,7 +531,7 @@
     },
     {
       "word": "BIRDSEYE",
-      "common": true
+      "common": false
     },
     {
       "word": "BISONS",
@@ -547,7 +547,7 @@
     },
     {
       "word": "BLASTERS",
-      "common": true
+      "common": false
     },
     {
       "word": "BLEARIEST",
@@ -559,7 +559,7 @@
     },
     {
       "word": "BLOAT",
-      "common": true
+      "common": false
     },
     {
       "word": "BLOOMING",
@@ -575,7 +575,7 @@
     },
     {
       "word": "BLUNTS",
-      "common": true
+      "common": false
     },
     {
       "word": "BOATFULS",
@@ -647,15 +647,15 @@
     },
     {
       "word": "BRAVADO",
-      "common": true
+      "common": false
     },
     {
       "word": "BRAZING",
-      "common": true
+      "common": false
     },
     {
       "word": "BREECHES",
-      "common": true
+      "common": false
     },
     {
       "word": "BRICK",
@@ -799,7 +799,7 @@
     },
     {
       "word": "CAPTOPRIL",
-      "common": true
+      "common": false
     },
     {
       "word": "CARB",
@@ -807,7 +807,7 @@
     },
     {
       "word": "CARDED",
-      "common": true
+      "common": false
     },
     {
       "word": "CARHOP",
@@ -879,7 +879,7 @@
     },
     {
       "word": "CHAINSAWS",
-      "common": true
+      "common": false
     },
     {
       "word": "CHAMFERS",
@@ -935,7 +935,7 @@
     },
     {
       "word": "CHOKES",
-      "common": true
+      "common": false
     },
     {
       "word": "CHORDAL",
@@ -967,7 +967,7 @@
     },
     {
       "word": "CITRON",
-      "common": true
+      "common": false
     },
     {
       "word": "CLAIMABLE",
@@ -975,7 +975,7 @@
     },
     {
       "word": "CLAPPER",
-      "common": true
+      "common": false
     },
     {
       "word": "CLATHRATE",
@@ -987,7 +987,7 @@
     },
     {
       "word": "CLERGYMAN",
-      "common": true
+      "common": false
     },
     {
       "word": "CLIMBERS",
@@ -1051,7 +1051,7 @@
     },
     {
       "word": "COLLARD",
-      "common": true
+      "common": false
     },
     {
       "word": "COLLUDING",
@@ -1071,7 +1071,7 @@
     },
     {
       "word": "COMMONER",
-      "common": true
+      "common": false
     },
     {
       "word": "COMPERED",
@@ -1083,7 +1083,7 @@
     },
     {
       "word": "CONCHA",
-      "common": true
+      "common": false
     },
     {
       "word": "CONDONING",
@@ -1103,7 +1103,7 @@
     },
     {
       "word": "CONSTRUE",
-      "common": true
+      "common": false
     },
     {
       "word": "CONTRACT",
@@ -1183,7 +1183,7 @@
     },
     {
       "word": "CRAVERS",
-      "common": true
+      "common": false
     },
     {
       "word": "CREATED",
@@ -1251,7 +1251,7 @@
     },
     {
       "word": "CURSIVE",
-      "common": true
+      "common": false
     },
     {
       "word": "CUSKS",
@@ -1323,7 +1323,7 @@
     },
     {
       "word": "DECATHLON",
-      "common": true
+      "common": false
     },
     {
       "word": "DECILLION",
@@ -1343,7 +1343,7 @@
     },
     {
       "word": "DEFI",
-      "common": true
+      "common": false
     },
     {
       "word": "DEFORCE",
@@ -1371,15 +1371,15 @@
     },
     {
       "word": "DEMOTION",
-      "common": true
+      "common": false
     },
     {
       "word": "DENOUNCES",
-      "common": true
+      "common": false
     },
     {
       "word": "DEOXY",
-      "common": true
+      "common": false
     },
     {
       "word": "DEPORTS",
@@ -1399,7 +1399,7 @@
     },
     {
       "word": "DESTRUCT",
-      "common": true
+      "common": false
     },
     {
       "word": "DETHRONE",
@@ -1407,7 +1407,7 @@
     },
     {
       "word": "DEVELOPE",
-      "common": true
+      "common": false
     },
     {
       "word": "DEVONS",
@@ -1415,7 +1415,7 @@
     },
     {
       "word": "DEXTRAN",
-      "common": true
+      "common": false
     },
     {
       "word": "DIACIDS",
@@ -1487,7 +1487,7 @@
     },
     {
       "word": "DISTASTE",
-      "common": true
+      "common": false
     },
     {
       "word": "DITCHES",
@@ -1495,7 +1495,7 @@
     },
     {
       "word": "DIVERTER",
-      "common": true
+      "common": false
     },
     {
       "word": "DIZENS",
@@ -1519,7 +1519,7 @@
     },
     {
       "word": "DONGS",
-      "common": true
+      "common": false
     },
     {
       "word": "DOORMATS",
@@ -1527,7 +1527,7 @@
     },
     {
       "word": "DORMS",
-      "common": true
+      "common": false
     },
     {
       "word": "DOTIER",
@@ -1671,7 +1671,7 @@
     },
     {
       "word": "EMIGRATE",
-      "common": true
+      "common": false
     },
     {
       "word": "EMPHASIZE",
@@ -1787,7 +1787,7 @@
     },
     {
       "word": "EXACTA",
-      "common": true
+      "common": false
     },
     {
       "word": "EXCEPTIVE",
@@ -1795,7 +1795,7 @@
     },
     {
       "word": "EXCRETED",
-      "common": true
+      "common": false
     },
     {
       "word": "EXERTED",
@@ -1811,7 +1811,7 @@
     },
     {
       "word": "EXPLETIVE",
-      "common": true
+      "common": false
     },
     {
       "word": "EXPUNGING",
@@ -1823,7 +1823,7 @@
     },
     {
       "word": "EYEBEAM",
-      "common": true
+      "common": false
     },
     {
       "word": "EYRE",
@@ -1847,7 +1847,7 @@
     },
     {
       "word": "FALTERED",
-      "common": true
+      "common": false
     },
     {
       "word": "FANION",
@@ -1931,7 +1931,7 @@
     },
     {
       "word": "FIREWORK",
-      "common": true
+      "common": false
     },
     {
       "word": "FISHLINES",
@@ -1979,7 +1979,7 @@
     },
     {
       "word": "FLOURED",
-      "common": true
+      "common": false
     },
     {
       "word": "FLUIDISE",
@@ -2007,7 +2007,7 @@
     },
     {
       "word": "FOOTBOARD",
-      "common": true
+      "common": false
     },
     {
       "word": "FOOTWORN",
@@ -2027,7 +2027,7 @@
     },
     {
       "word": "FORGIVES",
-      "common": true
+      "common": false
     },
     {
       "word": "FORMICARY",
@@ -2043,7 +2043,7 @@
     },
     {
       "word": "FRACAS",
-      "common": true
+      "common": false
     },
     {
       "word": "FRANKFURT",
@@ -2055,7 +2055,7 @@
     },
     {
       "word": "FRESHEN",
-      "common": true
+      "common": false
     },
     {
       "word": "FRIGATE",
@@ -2143,7 +2143,7 @@
     },
     {
       "word": "GATS",
-      "common": true
+      "common": false
     },
     {
       "word": "GAVOTS",
@@ -2183,7 +2183,7 @@
     },
     {
       "word": "GILLY",
-      "common": true
+      "common": false
     },
     {
       "word": "GINKGOES",
@@ -2235,11 +2235,11 @@
     },
     {
       "word": "GOLLY",
-      "common": true
+      "common": false
     },
     {
       "word": "GOODBYES",
-      "common": true
+      "common": false
     },
     {
       "word": "GOOSY",
@@ -2259,7 +2259,7 @@
     },
     {
       "word": "GRANDMAS",
-      "common": true
+      "common": false
     },
     {
       "word": "GRAPIEST",
@@ -2303,7 +2303,7 @@
     },
     {
       "word": "GUACAMOLE",
-      "common": true
+      "common": false
     },
     {
       "word": "GUERDONED",
@@ -2347,7 +2347,7 @@
     },
     {
       "word": "HAKIM",
-      "common": true
+      "common": false
     },
     {
       "word": "HALITUS",
@@ -2371,7 +2371,7 @@
     },
     {
       "word": "HAPS",
-      "common": true
+      "common": false
     },
     {
       "word": "HARDNOSES",
@@ -2383,7 +2383,7 @@
     },
     {
       "word": "HASHED",
-      "common": true
+      "common": false
     },
     {
       "word": "HATEFULLY",
@@ -2439,7 +2439,7 @@
     },
     {
       "word": "HERONS",
-      "common": true
+      "common": false
     },
     {
       "word": "HEXAGRAM",
@@ -2531,7 +2531,7 @@
     },
     {
       "word": "HURL",
-      "common": true
+      "common": false
     },
     {
       "word": "HUSSARS",
@@ -2539,7 +2539,7 @@
     },
     {
       "word": "HYDRANT",
-      "common": true
+      "common": false
     },
     {
       "word": "HYGIENICS",
@@ -2575,15 +2575,15 @@
     },
     {
       "word": "IMITATES",
-      "common": true
+      "common": false
     },
     {
       "word": "IMMUNOGEN",
-      "common": true
+      "common": false
     },
     {
       "word": "IMPEACHED",
-      "common": true
+      "common": false
     },
     {
       "word": "IMPLEDGED",
@@ -2607,7 +2607,7 @@
     },
     {
       "word": "INDECENCY",
-      "common": true
+      "common": false
     },
     {
       "word": "INDIGOIDS",
@@ -2627,7 +2627,7 @@
     },
     {
       "word": "INFUSIONS",
-      "common": true
+      "common": false
     },
     {
       "word": "INHERES",
@@ -2683,7 +2683,7 @@
     },
     {
       "word": "IRONWOOD",
-      "common": true
+      "common": false
     },
     {
       "word": "ISOBATH",
@@ -2691,7 +2691,7 @@
     },
     {
       "word": "ISOMERASE",
-      "common": true
+      "common": false
     },
     {
       "word": "ISSUER",
@@ -2771,7 +2771,7 @@
     },
     {
       "word": "KANA",
-      "common": true
+      "common": false
     },
     {
       "word": "KASBAH",
@@ -2791,7 +2791,7 @@
     },
     {
       "word": "KERSEY",
-      "common": true
+      "common": false
     },
     {
       "word": "KHALIF",
@@ -2827,7 +2827,7 @@
     },
     {
       "word": "KNOCKOFFS",
-      "common": true
+      "common": false
     },
     {
       "word": "KNURS",
@@ -2915,7 +2915,7 @@
     },
     {
       "word": "LECITHIN",
-      "common": true
+      "common": false
     },
     {
       "word": "LEGAL",
@@ -2923,7 +2923,7 @@
     },
     {
       "word": "LEGUME",
-      "common": true
+      "common": false
     },
     {
       "word": "LENIENCE",
@@ -2935,7 +2935,7 @@
     },
     {
       "word": "LEUKOCYTE",
-      "common": true
+      "common": false
     },
     {
       "word": "LEVULOSE",
@@ -2951,7 +2951,7 @@
     },
     {
       "word": "LIFELESS",
-      "common": true
+      "common": false
     },
     {
       "word": "LIGHTS",
@@ -2959,11 +2959,11 @@
     },
     {
       "word": "LIMBA",
-      "common": true
+      "common": false
     },
     {
       "word": "LIMNOLOGY",
-      "common": true
+      "common": false
     },
     {
       "word": "LINEATION",
@@ -3111,7 +3111,7 @@
     },
     {
       "word": "MARIACHI",
-      "common": true
+      "common": false
     },
     {
       "word": "MARLINS",
@@ -3151,7 +3151,7 @@
     },
     {
       "word": "MEDIAS",
-      "common": true
+      "common": false
     },
     {
       "word": "MEEKNESS",
@@ -3175,7 +3175,7 @@
     },
     {
       "word": "MERINGUE",
-      "common": true
+      "common": false
     },
     {
       "word": "MESIAN",
@@ -3219,15 +3219,15 @@
     },
     {
       "word": "MINAS",
-      "common": true
+      "common": false
     },
     {
       "word": "MINIMAX",
-      "common": true
+      "common": false
     },
     {
       "word": "MINTY",
-      "common": true
+      "common": false
     },
     {
       "word": "MISACT",
@@ -3259,7 +3259,7 @@
     },
     {
       "word": "MISTAKING",
-      "common": true
+      "common": false
     },
     {
       "word": "MISUSAGES",
@@ -3267,7 +3267,7 @@
     },
     {
       "word": "MITZVAHS",
-      "common": true
+      "common": false
     },
     {
       "word": "MOCHILAS",
@@ -3295,7 +3295,7 @@
     },
     {
       "word": "MONOMERS",
-      "common": true
+      "common": false
     },
     {
       "word": "MONUMENT",
@@ -3343,11 +3343,11 @@
     },
     {
       "word": "MULLED",
-      "common": true
+      "common": false
     },
     {
       "word": "MUMBLE",
-      "common": true
+      "common": false
     },
     {
       "word": "MUNTJAK",
@@ -3375,7 +3375,7 @@
     },
     {
       "word": "MYSTIFIED",
-      "common": true
+      "common": false
     },
     {
       "word": "NAGGERS",
@@ -3443,7 +3443,7 @@
     },
     {
       "word": "NOBLEST",
-      "common": true
+      "common": false
     },
     {
       "word": "NOIRS",
@@ -3499,7 +3499,7 @@
     },
     {
       "word": "NYMPHETS",
-      "common": true
+      "common": false
     },
     {
       "word": "OBELISING",
@@ -3515,7 +3515,7 @@
     },
     {
       "word": "OCCLUSIVE",
-      "common": true
+      "common": false
     },
     {
       "word": "OCTAL",
@@ -3531,7 +3531,7 @@
     },
     {
       "word": "OFFSHOOT",
-      "common": true
+      "common": false
     },
     {
       "word": "OILED",
@@ -3543,7 +3543,7 @@
     },
     {
       "word": "OMELETTE",
-      "common": true
+      "common": false
     },
     {
       "word": "ONERIEST",
@@ -3555,7 +3555,7 @@
     },
     {
       "word": "OPED",
-      "common": true
+      "common": false
     },
     {
       "word": "OPIUM",
@@ -3795,7 +3795,7 @@
     },
     {
       "word": "PENSIVE",
-      "common": true
+      "common": false
     },
     {
       "word": "PEPEROMIA",
@@ -3859,7 +3859,7 @@
     },
     {
       "word": "PIGMENTED",
-      "common": true
+      "common": false
     },
     {
       "word": "PILEUP",
@@ -3887,7 +3887,7 @@
     },
     {
       "word": "PISTACHIO",
-      "common": true
+      "common": false
     },
     {
       "word": "PITTANCE",
@@ -3955,7 +3955,7 @@
     },
     {
       "word": "POLYTHENE",
-      "common": true
+      "common": false
     },
     {
       "word": "PONDING",
@@ -3967,7 +3967,7 @@
     },
     {
       "word": "POPULISM",
-      "common": true
+      "common": false
     },
     {
       "word": "PORTAPAKS",
@@ -3975,7 +3975,7 @@
     },
     {
       "word": "POSSES",
-      "common": true
+      "common": false
     },
     {
       "word": "POSTICHES",
@@ -3999,7 +3999,7 @@
     },
     {
       "word": "PRAYS",
-      "common": true
+      "common": false
     },
     {
       "word": "PRECAVA",
@@ -4015,7 +4015,7 @@
     },
     {
       "word": "PRELIMS",
-      "common": true
+      "common": false
     },
     {
       "word": "PREORDAIN",
@@ -4027,7 +4027,7 @@
     },
     {
       "word": "PRESSER",
-      "common": true
+      "common": false
     },
     {
       "word": "PRETRAINS",
@@ -4063,7 +4063,7 @@
     },
     {
       "word": "PRONGED",
-      "common": true
+      "common": false
     },
     {
       "word": "PROPOSAL",
@@ -4183,7 +4183,7 @@
     },
     {
       "word": "RAWS",
-      "common": true
+      "common": false
     },
     {
       "word": "READABLE",
@@ -4199,7 +4199,7 @@
     },
     {
       "word": "REBAR",
-      "common": true
+      "common": false
     },
     {
       "word": "REBORED",
@@ -4251,7 +4251,7 @@
     },
     {
       "word": "REFINER",
-      "common": true
+      "common": false
     },
     {
       "word": "REFORGED",
@@ -4323,7 +4323,7 @@
     },
     {
       "word": "REPRISALS",
-      "common": true
+      "common": false
     },
     {
       "word": "RERADIATE",
@@ -4439,7 +4439,7 @@
     },
     {
       "word": "ROMANCING",
-      "common": true
+      "common": false
     },
     {
       "word": "ROOKIEST",
@@ -4471,7 +4471,7 @@
     },
     {
       "word": "RUDELY",
-      "common": true
+      "common": false
     },
     {
       "word": "RUINATION",
@@ -4535,7 +4535,7 @@
     },
     {
       "word": "SARDINES",
-      "common": true
+      "common": false
     },
     {
       "word": "SASSILY",
@@ -4559,7 +4559,7 @@
     },
     {
       "word": "SCALPER",
-      "common": true
+      "common": false
     },
     {
       "word": "SCARABAEI",
@@ -4651,7 +4651,7 @@
     },
     {
       "word": "SENSUOUS",
-      "common": true
+      "common": false
     },
     {
       "word": "SERAI",
@@ -4699,7 +4699,7 @@
     },
     {
       "word": "SHELLING",
-      "common": true
+      "common": false
     },
     {
       "word": "SHIATSUS",
@@ -4755,7 +4755,7 @@
     },
     {
       "word": "SIGNORE",
-      "common": true
+      "common": false
     },
     {
       "word": "SILKIEST",
@@ -4807,7 +4807,7 @@
     },
     {
       "word": "SLAW",
-      "common": true
+      "common": false
     },
     {
       "word": "SLEEVED",
@@ -4875,7 +4875,7 @@
     },
     {
       "word": "SOCIALITE",
-      "common": true
+      "common": false
     },
     {
       "word": "SOFAS",
@@ -4915,7 +4915,7 @@
     },
     {
       "word": "SOUTHWARD",
-      "common": true
+      "common": false
     },
     {
       "word": "SPACIOUS",
@@ -4975,7 +4975,7 @@
     },
     {
       "word": "SPRITES",
-      "common": true
+      "common": false
     },
     {
       "word": "SPURGALL",
@@ -4995,11 +4995,11 @@
     },
     {
       "word": "STANZAS",
-      "common": true
+      "common": false
     },
     {
       "word": "STARTLE",
-      "common": true
+      "common": false
     },
     {
       "word": "STATORS",
@@ -5019,11 +5019,11 @@
     },
     {
       "word": "STEWED",
-      "common": true
+      "common": false
     },
     {
       "word": "STIFFS",
-      "common": true
+      "common": false
     },
     {
       "word": "STINKER",
@@ -5035,7 +5035,7 @@
     },
     {
       "word": "STOLES",
-      "common": true
+      "common": false
     },
     {
       "word": "STOOKER",
@@ -5043,7 +5043,7 @@
     },
     {
       "word": "STORMED",
-      "common": true
+      "common": false
     },
     {
       "word": "STRAINED",
@@ -5071,7 +5071,7 @@
     },
     {
       "word": "STUNS",
-      "common": true
+      "common": false
     },
     {
       "word": "STYLISTS",
@@ -5107,7 +5107,7 @@
     },
     {
       "word": "SUDS",
-      "common": true
+      "common": false
     },
     {
       "word": "SUGH",
@@ -5123,7 +5123,7 @@
     },
     {
       "word": "SUNBURN",
-      "common": true
+      "common": false
     },
     {
       "word": "SUNROOF",
@@ -5147,7 +5147,7 @@
     },
     {
       "word": "SUSTAINS",
-      "common": true
+      "common": false
     },
     {
       "word": "SWALLOWER",
@@ -5167,7 +5167,7 @@
     },
     {
       "word": "SWISHER",
-      "common": true
+      "common": false
     },
     {
       "word": "SWORDLIKE",
@@ -5203,7 +5203,7 @@
     },
     {
       "word": "TABU",
-      "common": true
+      "common": false
     },
     {
       "word": "TACOS",
@@ -5215,7 +5215,7 @@
     },
     {
       "word": "TAKEOVERS",
-      "common": true
+      "common": false
     },
     {
       "word": "TALLAGES",
@@ -5247,7 +5247,7 @@
     },
     {
       "word": "TAURINE",
-      "common": true
+      "common": false
     },
     {
       "word": "TAXES",
@@ -5275,11 +5275,11 @@
     },
     {
       "word": "TENANCIES",
-      "common": true
+      "common": false
     },
     {
       "word": "TENORS",
-      "common": true
+      "common": false
     },
     {
       "word": "TENUTO",
@@ -5287,7 +5287,7 @@
     },
     {
       "word": "TERIYAKI",
-      "common": true
+      "common": false
     },
     {
       "word": "TERRIBLY",
@@ -5303,7 +5303,7 @@
     },
     {
       "word": "THAWED",
-      "common": true
+      "common": false
     },
     {
       "word": "THEONOMY",
@@ -5383,7 +5383,7 @@
     },
     {
       "word": "TOMORROWS",
-      "common": true
+      "common": false
     },
     {
       "word": "TONS",
@@ -5427,7 +5427,7 @@
     },
     {
       "word": "TRAMPLED",
-      "common": true
+      "common": false
     },
     {
       "word": "TRAPESES",
@@ -5451,11 +5451,11 @@
     },
     {
       "word": "TRICYCLE",
-      "common": true
+      "common": false
     },
     {
       "word": "TRILL",
-      "common": true
+      "common": false
     },
     {
       "word": "TRIOXID",
@@ -5499,7 +5499,7 @@
     },
     {
       "word": "TUNEUP",
-      "common": true
+      "common": false
     },
     {
       "word": "TURBOCARS",
@@ -5707,7 +5707,7 @@
     },
     {
       "word": "VAULTING",
-      "common": true
+      "common": false
     },
     {
       "word": "VEGETATE",
@@ -5735,7 +5735,7 @@
     },
     {
       "word": "VESTA",
-      "common": true
+      "common": false
     },
     {
       "word": "VIABLE",
@@ -5819,7 +5819,7 @@
     },
     {
       "word": "WASHROOM",
-      "common": true
+      "common": false
     },
     {
       "word": "WATCHOUT",
@@ -5831,7 +5831,7 @@
     },
     {
       "word": "WAXY",
-      "common": true
+      "common": false
     },
     {
       "word": "WEARIES",
@@ -5859,7 +5859,7 @@
     },
     {
       "word": "WHEELERS",
-      "common": true
+      "common": false
     },
     {
       "word": "WHERRY",
@@ -5899,7 +5899,7 @@
     },
     {
       "word": "WINEMAKER",
-      "common": true
+      "common": false
     },
     {
       "word": "WINNOWS",
@@ -5955,7 +5955,7 @@
     },
     {
       "word": "XYLITOL",
-      "common": true
+      "common": false
     },
     {
       "word": "YAMMER",

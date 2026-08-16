@@ -29,8 +29,15 @@ const OUT = resolve(ROOT, 'src/content/dictionary/data')
 const MIN_LETTERS = 4
 const MAX_LETTERS = 9
 
-/** How many of the most frequent words count as "common" for board generation. */
-const COMMON_TARGET = 30_000
+/**
+ * How many of the most frequent words count as "common" for board generation.
+ *
+ * Tightened from 30,000: web-corpus frequency inflates place names and acronyms, so
+ * the tail of a larger list carries oddities like RAIA and TAOS that a player will
+ * never look for. This only governs which words the generator counts as findable —
+ * every ENABLE word remains scorable.
+ */
+const COMMON_TARGET = 20_000
 
 // ---------------------------------------------------------------------------
 // Board symbols
