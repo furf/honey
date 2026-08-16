@@ -34,6 +34,7 @@ const generation: GenerationConfig = {
     S: 66, T: 74, U: 34, V: 12, W: 18, X: 3, Y: 22, Z: 3,
   },
   vowelFloor: 0.3,
+  vowelCeiling: 0.4,
   rareLetterCaps: { J: 1, Qu: 1, X: 1, Z: 1, K: 2, V: 2, W: 2 },
   reseedHistoryDepth: 4,
   maxGenerationAttempts: 200,
@@ -91,11 +92,18 @@ describe('seedHoneycomb', () => {
     }
   })
 
-  it('meets the vowel floor', () => {
+  it('keeps the vowel count inside its band', () => {
+    // A floor alone let boards drift to 52% vowels, which produced boards full of
+    // AEON, ARIA and RAIA. The ceiling is what keeps consonants on the board.
     for (let seed = 1; seed <= 8; seed++) {
       const letters = lettersOf(seeded(seed))
       const vowels = letters.filter(isVowel).length
-      expect(vowels).toBeGreaterThanOrEqual(Math.ceil(letters.length * generation.vowelFloor))
+      expect(vowels, `seed ${seed} vowels`).toBeGreaterThanOrEqual(
+        Math.ceil(letters.length * generation.vowelFloor),
+      )
+      expect(vowels, `seed ${seed} vowels`).toBeLessThanOrEqual(
+        Math.floor(letters.length * generation.vowelCeiling),
+      )
     }
   })
 
@@ -115,6 +123,75 @@ describe('seedHoneycomb', () => {
     // Impossible to satisfy, so generation must exhaust its attempts and fall back.
     const cells = seeded(3, { minCommonWords: 100_000, maxGenerationAttempts: 5 })
     expect(lettersOf(cells).every((letter) => letter !== '')).toBe(true)
+  })
+})
+
+describe('freshness', () => {
+  /**
+   * Every game should feel new. A generator that leans on the highest-frequency
+   * letters will keep serving the same handful of words, which these measurements
+   * are here to catch — a regression would show up as rising overlap long before
+   * anyone noticed it while playing.
+   */
+  const BOARDS = 16
+  const wordSets: Set<string>[] = []
+
+  beforeAll(() => {
+    for (let seed = 1; seed <= BOARDS; seed++) {
+      wordSets.push(new Set(analyseCells(seeded(seed * 1013)).commonWords))
+    }
+  })
+
+  const pairwiseOverlaps = () => {
+    const overlaps: number[] = []
+    for (let i = 0; i < wordSets.length; i++) {
+      for (let j = i + 1; j < wordSets.length; j++) {
+        const a = wordSets[i]!
+        const b = wordSets[j]!
+        let shared = 0
+        for (const word of a) if (b.has(word)) shared++
+        overlaps.push(shared / (a.size + b.size - shared))
+      }
+    }
+    return overlaps
+  }
+
+  const appearanceCounts = () => {
+    const counts = new Map<string, number>()
+    for (const set of wordSets) {
+      for (const word of set) counts.set(word, (counts.get(word) ?? 0) + 1)
+    }
+    return counts
+  }
+
+  it('shares almost nothing between any two boards', () => {
+    const overlaps = pairwiseOverlaps()
+    const mean = overlaps.reduce((sum, value) => sum + value, 0) / overlaps.length
+    // Measured at 0.015. The threshold is loose enough not to be flaky and tight
+    // enough that a generator leaning on common letters would trip it.
+    expect(mean).toBeLessThan(0.05)
+    expect(Math.max(...overlaps)).toBeLessThan(0.2)
+  })
+
+  it('has no word that turns up on every board', () => {
+    const counts = appearanceCounts()
+    const ubiquitous = [...counts.entries()]
+      .filter(([, count]) => count > BOARDS * 0.5)
+      .map(([word, count]) => `${word} on ${count}/${BOARDS}`)
+    expect(ubiquitous).toEqual([])
+  })
+
+  it('draws from a far wider vocabulary than any one board shows', () => {
+    const counts = appearanceCounts()
+    const perBoard = wordSets.reduce((sum, set) => sum + set.size, 0) / wordSets.length
+    // Measured at roughly 20x: ~99 common words per board, ~2000 distinct overall.
+    expect(counts.size).toBeGreaterThan(perBoard * 8)
+  })
+
+  it('finds most of its words on a single board only', () => {
+    const counts = appearanceCounts()
+    const once = [...counts.values()].filter((count) => count === 1).length
+    expect(once / counts.size).toBeGreaterThan(0.5)
   })
 })
 

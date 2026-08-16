@@ -46,7 +46,15 @@ export interface GenerationConfig {
   readonly requireEveryCellUsed: boolean
   /** The letter bag the generator draws from. Weights need not sum to one. */
   readonly letterWeights: Readonly<Record<string, number>>
+  /**
+   * Proportion of cells holding vowels, as a band rather than a floor.
+   *
+   * A floor alone is not enough: the remaining cells still draw from a bag that is
+   * itself vowel-heavy, so boards drift to roughly half vowels and degenerate into
+   * vowel soup. The ceiling is what keeps consonants on the board.
+   */
   readonly vowelFloor: number
+  readonly vowelCeiling: number
   readonly rareLetterCaps: Readonly<Record<string, number>>
   /** How many past letters a cell remembers, to force variety on reseed. */
   readonly reseedHistoryDepth: number

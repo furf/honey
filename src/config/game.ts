@@ -41,7 +41,11 @@ export const gameConfig: GameConfig = {
       S: 66, T: 74, U: 34, V: 12, W: 18, X: 3, Y: 22, Z: 3,
     },
 
+    // A band, not a floor. Measured at 52% vowels when only a floor was enforced,
+    // which produced boards full of AEON, ARIA and RAIA rather than words players
+    // enjoy finding.
     vowelFloor: 0.3,
+    vowelCeiling: 0.4,
     rareLetterCaps: { J: 1, Qu: 1, X: 1, Z: 1, K: 2, V: 2, W: 2 },
     reseedHistoryDepth: 4,
     maxGenerationAttempts: 200,

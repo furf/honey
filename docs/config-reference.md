@@ -65,6 +65,7 @@ down on the level that introduces a second bee" is not logic; it is one cell of
 | `requireEveryCellUsed` | Whether every cell must appear in at least one word |
 | `letterWeights` | The letter bag the generator draws from |
 | `vowelFloor` | Minimum proportion of cells holding vowels |
+| `vowelCeiling` | Maximum proportion of cells holding vowels |
 | `rareLetterCaps` | Per-letter caps on duplicates of rare letters |
 | `reseedHistoryDepth` | How many past letters a cell remembers, to force variety on reseed |
 | `maxGenerationAttempts` | Attempts before relaxing invariants rather than hanging |

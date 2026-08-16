@@ -34,9 +34,11 @@ export function createWeightedBagGenerator(options: WeightedBagOptions): LetterG
   ).filter(([, weight]) => weight > 0)
 
   const vowelPool = weightedSymbols.filter(([symbol]) => isVowel(symbol))
+  const consonantPool = weightedSymbols.filter(([symbol]) => !isVowel(symbol))
   const anyPool = weightedSymbols
 
   if (vowelPool.length === 0) throw new Error('letterWeights contains no vowels')
+  if (consonantPool.length === 0) throw new Error('letterWeights contains no consonants')
 
   /** Adjacency depends only on which cells exist, so it survives every reseed. */
   const adjacencyCache = new WeakMap<ReadonlyMap<string, Cell>, Map<string, string[]>>()
@@ -73,15 +75,23 @@ export function createWeightedBagGenerator(options: WeightedBagOptions): LetterG
     return chosen
   }
 
-  /** Fill every cell, guaranteeing the vowel floor before filling the remainder. */
+  /**
+   * Fill every cell, holding the vowel count inside its band.
+   *
+   * The count is chosen up front and the remaining cells drawn strictly from
+   * consonants. Filling the remainder from the whole bag would push vowels well past
+   * the ceiling, because the bag is itself vowel-heavy by weight.
+   */
   const fill = (cells: Map<string, Cell>, rng: Rng): void => {
     const size = cells.size
-    const vowelTarget = Math.ceil(size * generation.vowelFloor)
+    const floor = Math.ceil(size * generation.vowelFloor)
+    const ceiling = Math.max(floor, Math.floor(size * generation.vowelCeiling))
+    const vowelTarget = floor + rng.int(ceiling - floor + 1)
     const used = new Map<string, number>()
 
     const letters: string[] = []
     for (let i = 0; i < vowelTarget; i++) letters.push(draw(vowelPool, used, rng))
-    for (let i = vowelTarget; i < size; i++) letters.push(draw(anyPool, used, rng))
+    for (let i = vowelTarget; i < size; i++) letters.push(draw(consonantPool, used, rng))
 
     // Shuffle so the guaranteed vowels are not all clustered at the centre.
     for (let i = letters.length - 1; i > 0; i--) {

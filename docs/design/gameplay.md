@@ -117,9 +117,20 @@ by how many new words it creates and by how different it is from the recent lett
 that cell has held, so a cell that reseeds repeatedly does not keep returning the same
 letter. Recent history depth is `config.generation.reseedHistoryDepth`.
 
-The letter pool is a hand-tuned bag with a vowel floor and caps on duplicate rare
-letters, rather than raw English frequency, because a 37-cell board that happens to be
-a consonant swamp is unplayable however statistically legitimate it is.
+The letter pool is a hand-tuned bag with caps on duplicate rare letters, rather than
+raw English frequency, because a 37-cell board that happens to be a consonant swamp is
+unplayable however statistically legitimate it is.
+
+Vowels are held inside a **band**, not merely above a floor. A floor alone leaves the
+remaining cells drawing from a bag that is itself vowel-heavy, and boards drift to
+roughly half vowels — which yields words like `AEON` and `RAIA` rather than words
+players enjoy finding. The ceiling is what keeps consonants on the board.
+
+Every game should feel new, so board-to-board variety is measured rather than assumed:
+the overlap between any two boards' word sets, whether any word recurs across boards,
+and how much of the vocabulary appears on only one board. A generator leaning on the
+highest-frequency letters would serve the same handful of words repeatedly, and these
+measurements exist to catch that long before a player would notice it.
 
 All randomness comes from a single seeded generator, so any board a player reports can
 be reproduced exactly from its seed.
