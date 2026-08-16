@@ -5,7 +5,9 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "jsx": "react-jsx",
-    "types": ["vite/client"],
+    // node is here for tests and build tooling only; nothing in src/ that ships may
+    // reach for a Node API, and the layer boundaries do not stop it, so review does.
+    "types": ["vite/client", "node"],
 
     "strict": true,
     "noUncheckedIndexedAccess": true,
