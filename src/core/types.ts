@@ -6,6 +6,8 @@
  */
 
 import type { Axial } from './hex'
+import type { Dictionary, LetterGenerator } from './ports'
+import type { Rng } from './rng'
 
 // ---------------------------------------------------------------------------
 // Configuration
@@ -96,6 +98,21 @@ export interface BeeType {
   readonly sipChance: number
   readonly hopIntervalMs: number
   readonly sipDurationMs: number
+  /**
+   * How long a bee is visible approaching before it lands and can sting.
+   *
+   * The telegraph is what makes a sting a mistake rather than an ambush.
+   */
+  readonly arrivalMs: number
+  /** How long a full bee remains visible on its way off the board. */
+  readonly departureMs: number
+  /**
+   * Chance of turning at a hop instead of holding its heading.
+   *
+   * Bees cross the honeycomb in a line. A pure random walk would have them loiter
+   * around wherever they landed, which reads as a swarm rather than a flight.
+   */
+  readonly turnChance: number
   readonly spriteId: string
 }
 
@@ -140,15 +157,19 @@ export interface Cell {
   history: string[]
 }
 
+export type BeePhase = 'arriving' | 'hopping' | 'sipping' | 'leaving'
+
 export interface Bee {
   readonly id: number
   readonly typeId: string
   at: Axial
+  /** Index into the six hex directions. Bees hold a heading so flights read as lines. */
+  heading: number
   /** Sips taken so far, against the type's capacity. */
   sipsTaken: number
-  /** Milliseconds until the next hop or the end of the current sip. */
+  /** Milliseconds until the current phase ends. */
   timerMs: number
-  phase: 'arriving' | 'hopping' | 'sipping' | 'leaving'
+  phase: BeePhase
 }
 
 /**
@@ -195,6 +216,17 @@ export type GameEvent =
       readonly from: string
       readonly to: string
     }
+  | { readonly kind: 'beeArrived'; readonly beeId: number; readonly cellKey: string }
+  | { readonly kind: 'beeMoved'; readonly beeId: number; readonly cellKey: string }
+  | {
+      readonly kind: 'beeSipped'
+      readonly beeId: number
+      readonly cellKey: string
+      readonly taken: number
+      /** Sips remaining before this bee fills up and leaves. */
+      readonly sipsLeft: number
+    }
+  | { readonly kind: 'beeLeft'; readonly beeId: number; readonly full: boolean }
   | { readonly kind: 'levelChanged'; readonly from: number; readonly to: number }
   | { readonly kind: 'gameOver'; readonly pot: number }
 
@@ -228,4 +260,30 @@ export interface GameState {
   nextBeeId: number
   /** Events produced since the caller last drained them. */
   events: GameEvent[]
+}
+
+// ---------------------------------------------------------------------------
+// Wiring
+// ---------------------------------------------------------------------------
+
+/**
+ * Everything the rules need from outside themselves.
+ *
+ * Assembled by the composition root. Time arrives as a delta and randomness as an
+ * injected generator, so the rules stay free of any clock or global entropy.
+ */
+export interface GameDeps {
+  readonly config: GameConfig
+  readonly levels: readonly Level[]
+  readonly dictionary: Dictionary
+  readonly generator: LetterGenerator
+  readonly beeTypes: Readonly<Record<string, BeeType>>
+  readonly rng: Rng
+}
+
+export interface Game {
+  readonly state: GameState
+  /** Stable for the life of the game: which cells exist never changes. */
+  readonly adjacency: Map<string, string[]>
+  readonly deps: GameDeps
 }

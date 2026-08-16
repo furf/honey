@@ -260,6 +260,7 @@ describe('stings', () => {
       id,
       typeId: 'worker',
       at: { q: q!, r: r! },
+      heading: 0,
       sipsTaken: 0,
       timerMs: 0,
       phase: 'hopping',

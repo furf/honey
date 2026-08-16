@@ -110,6 +110,9 @@ down on the level that introduces a second bee" is not logic; it is one cell of
 | `sipChance` | Probability of sipping at a given hop. Below certainty on purpose |
 | `hopIntervalMs` | Time between hops |
 | `sipDurationMs` | Pause while sipping |
+| `arrivalMs` | How long the approach is visible before the bee can sting |
+| `departureMs` | How long a departing bee stays visible on its way out |
+| `turnChance` | Chance of turning at a hop rather than holding its heading |
 | `spriteId` | Which sprite the theme draws for this type |
 
 Falling `sipChance` in later levels makes bees linger rather than fill and leave — a

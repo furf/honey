@@ -2,9 +2,12 @@ import { buildAdjacency, createHoneycomb } from './honeycomb'
 import { advanceDrain, clampHealth, restoreFor } from './health'
 import { harvestFor, levelIndexFor } from './scoring'
 import { judgeTrail, lettersIn, stepTrail } from './trail'
-import type { Dictionary, LetterGenerator } from './ports'
-import type { Rng } from './rng'
-import type { BeeType, Cell, GameConfig, GameState, Level } from './types'
+import { isOnBoard, stepBees } from './bees'
+import { takeHoney } from './reseed'
+import { key } from './hex'
+import type { Game, GameDeps, GameState, Level } from './types'
+
+export type { Game, GameDeps } from './types'
 
 /**
  * The game loop, as pure rules.
@@ -14,22 +17,6 @@ import type { BeeType, Cell, GameConfig, GameState, Level } from './types'
  * seed — which is the only practical way to reproduce a board someone reports.
  * See docs/adr/0002-layered-architecture.md.
  */
-
-export interface GameDeps {
-  readonly config: GameConfig
-  readonly levels: readonly Level[]
-  readonly dictionary: Dictionary
-  readonly generator: LetterGenerator
-  readonly beeTypes: Readonly<Record<string, BeeType>>
-  readonly rng: Rng
-}
-
-export interface Game {
-  readonly state: GameState
-  /** Stable for the life of the game: which cells exist never changes. */
-  readonly adjacency: Map<string, string[]>
-  readonly deps: GameDeps
-}
 
 export function createGame(deps: GameDeps, seed: number): Game {
   const { config } = deps
@@ -65,8 +52,8 @@ export function currentLevel(game: Game): Level {
 
 function beeOn(game: Game, cellKey: string): number | null {
   for (const bee of game.state.bees) {
-    if (bee.phase === 'arriving' || bee.phase === 'leaving') continue
-    if (`${bee.at.q},${bee.at.r}` === cellKey) return bee.id
+    if (!isOnBoard(bee)) continue
+    if (key(bee.at) === cellKey) return bee.id
   }
   return null
 }
@@ -184,22 +171,9 @@ export function releaseTrail(game: Game): void {
     healthRestored: state.health - healthBefore,
   })
 
-  for (const cellKey of trail) {
-    const cell = state.cells.get(cellKey)!
-    cell.honey -= harvest.perCell
-    if (cell.honey <= 0) reseed(game, cell, cellKey)
-  }
+  for (const cellKey of trail) takeHoney(game, cellKey, harvest.perCell)
 
   applyLevel(game)
-}
-
-/** A depleted cell takes a new letter and a full pot of honey. */
-function reseed(game: Game, cell: Cell, cellKey: string): void {
-  const { state, deps } = game
-  const from = cell.letter
-  const to = deps.generator.reseedCell(cell, state.cells, deps.rng)
-  cell.honey = deps.config.honey.cellCapacity
-  state.events.push({ kind: 'cellReseeded', cellKey, from, to })
 }
 
 function applyLevel(game: Game): void {
@@ -248,6 +222,8 @@ export function step(game: Game, dtMs: number): void {
   state.drainPauseRemainingMs = drain.pauseRemainingMs
   state.drainRampElapsedMs = drain.rampElapsedMs
   state.health = clampHealth(state.health - drain.drained, deps.config)
+
+  stepBees(game, level, dtMs)
 
   endIfDead(game)
 }

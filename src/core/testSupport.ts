@@ -8,7 +8,7 @@
  */
 
 import type { Dictionary, DictionaryWalk, LetterGenerator } from './ports'
-import type { Cell, GameConfig, Level } from './types'
+import type { BeeType, Cell, GameConfig, Level } from './types'
 
 /**
  * A complete configuration for tests.
@@ -40,6 +40,22 @@ export const testConfig: GameConfig = {
   },
   board: { rings: 3, orientation: 'pointy' },
   timing: { simulationHz: 60, hudUpdateHz: 10 },
+}
+
+export function testBeeType(overrides: Partial<BeeType> = {}): BeeType {
+  return {
+    id: 'worker',
+    sipPercent: 0.1,
+    sipCapacity: 6,
+    sipChance: 1,
+    hopIntervalMs: 1000,
+    sipDurationMs: 1000,
+    arrivalMs: 1000,
+    departureMs: 1000,
+    turnChance: 0,
+    spriteId: 'bee.worker',
+    ...overrides,
+  }
 }
 
 export function testLevel(overrides: Partial<Level> = {}): Level {

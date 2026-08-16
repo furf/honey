@@ -68,8 +68,15 @@ At zero health the game ends.
 
 ## Bees
 
-A bee enters the board, hops between adjacent cells, and occasionally stops to sip. It
-occupies exactly one cell at a time, and any trail that reaches that cell is stung.
+A bee enters on the outer ring, hops between adjacent cells, and occasionally stops to
+sip. It occupies exactly one cell at a time, and any trail that reaches that cell is
+stung.
+
+A bee holds a heading and mostly keeps it, turning only with probability
+`beeType.turnChance`, so a visit reads as a flight across the honeycomb rather than a
+wander around one corner. It leaves either when it fills up or when its heading carries
+it off the edge — it is never steered back onto the board, because a bee that cannot
+leave would hug the rim until full.
 
 Bees are telegraphed. A bee is visible approaching from off-board with an audible buzz
 before it lands, so a sting is never a surprise — only a mistake. As a bee fills, its
@@ -86,7 +93,10 @@ rather than honey.
 
 The number of bees present is kept within `level.bees.min` and `level.bees.max`: below
 the minimum one spawns immediately, below the maximum one spawns on
-`level.bees.spawnIntervalMs`.
+`level.bees.spawnIntervalMs`. A departing bee still occupies its cell and can still
+sting, so it counts against the maximum — but it does not count towards the minimum,
+because a level that insists on a bee being present should not be satisfied by one on
+its way out.
 
 ## Levels
 

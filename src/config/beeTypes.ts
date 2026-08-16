@@ -19,6 +19,11 @@ export const beeTypes: Readonly<Record<string, BeeType>> = {
     sipChance: 0.9,
     hopIntervalMs: 1500,
     sipDurationMs: 1200,
+    // The approach is visible and audible before the bee can sting, so a sting is
+    // always a mistake rather than an ambush.
+    arrivalMs: 1200,
+    departureMs: 900,
+    turnChance: 0.25,
     spriteId: 'bee.worker',
   },
 }
