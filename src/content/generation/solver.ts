@@ -1,7 +1,6 @@
 import type { Cell } from '../../core/types'
-import type { Dictionary } from '../dictionary/types'
+import type { Dictionary, BoardAnalysis } from '../../core/ports'
 import { SYMBOL_INDEX } from '../dictionary/symbols'
-import type { BoardAnalysis } from './types'
 
 /**
  * Finds every word on a honeycomb.

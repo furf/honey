@@ -1,5 +1,3 @@
-export type { Dictionary, DictionaryWalk, WordPolicy } from './dictionary/types'
-export type { LetterGenerator, BoardAnalysis } from './generation/types'
 export type { SolverBoard, SolveOptions, SolveResult } from './generation/solver'
 
 export { createPackedDictionary } from './dictionary/packedDictionary'

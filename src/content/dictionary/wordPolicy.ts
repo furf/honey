@@ -1,4 +1,4 @@
-import type { WordPolicy } from './types'
+import type { WordPolicy } from '../../core/ports'
 import { lengthOf, tokenise } from './symbols'
 
 /**

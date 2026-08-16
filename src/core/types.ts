@@ -151,12 +151,52 @@ export interface Bee {
   phase: 'arriving' | 'hopping' | 'sipping' | 'leaving'
 }
 
-/** Why a released trail did not score. Drives distinct feedback per reason. */
-export type RejectionReason = 'tooShort' | 'stung' | 'alreadyPlayed' | 'notAWord'
+/**
+ * Why a released trail did not score.
+ *
+ * Each reason gets its own feedback, because they mean different things to the
+ * player: a word already played was a real find, and deserves to be told apart from
+ * a word that never existed. See docs/design/presentation.md.
+ */
+export type RejectionReason = 'tooShort' | 'alreadyPlayed' | 'notAWord'
 
-export type TrailOutcome =
-  | { readonly kind: 'scored'; readonly word: string; readonly harvested: number }
-  | { readonly kind: 'rejected'; readonly reason: RejectionReason; readonly word: string }
+/**
+ * Everything the rules did this step, for the renderer and audio to react to.
+ *
+ * The core produces events rather than calling out, so it stays free of any
+ * dependency on how the game looks or sounds.
+ */
+export type GameEvent =
+  | { readonly kind: 'trailStarted'; readonly cellKey: string }
+  | { readonly kind: 'trailExtended'; readonly cellKey: string }
+  | { readonly kind: 'trailBacktracked'; readonly cellKey: string }
+  | {
+      readonly kind: 'wordScored'
+      readonly word: string
+      readonly cellKeys: readonly string[]
+      readonly harvested: number
+      readonly healthRestored: number
+    }
+  | {
+      readonly kind: 'wordRejected'
+      readonly reason: RejectionReason
+      readonly word: string
+      readonly cellKeys: readonly string[]
+    }
+  | {
+      readonly kind: 'stung'
+      readonly cellKey: string
+      readonly beeId: number
+      readonly healthLost: number
+    }
+  | {
+      readonly kind: 'cellReseeded'
+      readonly cellKey: string
+      readonly from: string
+      readonly to: string
+    }
+  | { readonly kind: 'levelChanged'; readonly from: number; readonly to: number }
+  | { readonly kind: 'gameOver'; readonly pot: number }
 
 export type Screen = 'welcome' | 'playing' | 'gameOver'
 
@@ -166,6 +206,13 @@ export interface GameState {
   cells: Map<string, Cell>
   /** Cell keys in the current drag, in order. Empty when not dragging. */
   trail: string[]
+  /**
+   * Set when a sting voids the drag mid-gesture.
+   *
+   * The pointer is still down, so without this latch the very next move would start a
+   * fresh trail from the cell the player is being stung on.
+   */
+  dragVoided: boolean
   bees: Bee[]
   pot: number
   health: number
@@ -179,6 +226,6 @@ export interface GameState {
   msSinceSpawn: number
   elapsedMs: number
   nextBeeId: number
-  /** Outcomes produced this step, for the renderer and audio to react to. */
-  events: TrailOutcome[]
+  /** Events produced since the caller last drained them. */
+  events: GameEvent[]
 }

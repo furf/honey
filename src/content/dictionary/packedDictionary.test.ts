@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { createPackedDictionary } from './packedDictionary'
 import { SYMBOLS, lengthOf, tokenise } from './symbols'
-import type { Dictionary } from './types'
+import type { Dictionary } from '../../core/ports'
 
 const DATA = resolve(dirname(fileURLToPath(import.meta.url)), 'data')
 

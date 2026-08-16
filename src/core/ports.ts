@@ -1,9 +1,20 @@
 /**
- * The dictionary seam.
+ * Ports: the interfaces the rules depend on, implemented in the content layer.
  *
- * Two lists back this interface: ENABLE validates what a player may score, and a
- * common subset is what the board generator counts when it decides a board is good.
- * Both are packed into one structure, with commonness a flag on the word.
+ * These live in core rather than alongside their implementations because the rules
+ * are what require them. The core judges words, so it owns the shape of a dictionary;
+ * the core reseeds cells, so it owns the shape of a letter generator. Content
+ * supplies adapters that satisfy these, and can be swapped without the rules noticing.
+ *
+ * See docs/adr/0002-layered-architecture.md.
+ */
+
+import type { Cell } from './types'
+import type { Rng } from './rng'
+
+/**
+ * Two lists back this port: ENABLE validates what a player may score, and a common
+ * subset is what the board generator counts when deciding a board is good.
  * See docs/adr/0003-two-word-lists.md.
  */
 export interface Dictionary {
@@ -50,4 +61,32 @@ export interface WordPolicy {
   tokenise(word: string): number[] | null
   /** Letters in a sequence of board symbols, counting `Qu` as two. */
   lengthOf(symbols: readonly string[]): number
+}
+
+/** The letter-placement port, swappable independently of the theme. */
+export interface LetterGenerator {
+  readonly id: string
+
+  /**
+   * Fill an empty honeycomb, retrying until the board satisfies every invariant in
+   * config.generation.
+   */
+  seedHoneycomb(cells: Map<string, Cell>, rng: Rng): void
+
+  /**
+   * Choose a replacement letter for a depleted cell.
+   *
+   * Candidates are scored both by how many new words they create and by how different
+   * they are from the cell's recent history, so a cell that reseeds repeatedly does
+   * not keep returning the same letter.
+   */
+  reseedCell(cell: Cell, cells: Map<string, Cell>, rng: Rng): string
+}
+
+/** What a board offers, as measured by the solver. */
+export interface BoardAnalysis {
+  readonly commonWords: readonly string[]
+  readonly longestWordLength: number
+  /** Keys of cells that appear in no word at all. */
+  readonly unusedCellKeys: readonly string[]
 }

@@ -1,4 +1,4 @@
-import type { Dictionary, DictionaryWalk } from './types'
+import type { Dictionary, DictionaryWalk } from '../../core/ports'
 import { SYMBOLS, tokenise } from './symbols'
 
 /**

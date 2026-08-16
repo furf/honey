@@ -1,10 +1,9 @@
 import type { Rng } from '../../core/rng'
 import type { Cell, GenerationConfig, WordsConfig } from '../../core/types'
 import { buildAdjacency } from '../../core/honeycomb'
-import type { Dictionary } from '../dictionary/types'
+import type { BoardAnalysis, Dictionary, LetterGenerator } from '../../core/ports'
 import { SYMBOLS, isVowel } from '../dictionary/symbols'
 import { analyse, solve, toSolverBoard } from './solver'
-import type { BoardAnalysis, LetterGenerator } from './types'
 
 /**
  * Letter placement by weighted draw, filtered through the board invariants.

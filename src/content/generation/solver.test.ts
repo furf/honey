@@ -7,7 +7,7 @@ import { key } from '../../core/hex'
 import type { Axial } from '../../core/hex'
 import type { Cell } from '../../core/types'
 import { createPackedDictionary } from '../dictionary/packedDictionary'
-import type { Dictionary } from '../dictionary/types'
+import type { Dictionary } from '../../core/ports'
 import { analyse, solve, toSolverBoard } from './solver'
 
 const DATA = resolve(dirname(fileURLToPath(import.meta.url)), '../dictionary/data')
