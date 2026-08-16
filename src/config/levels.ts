@@ -7,6 +7,10 @@ import type { Level } from '../core/types'
  * down on the level that introduces a second bee" is not logic — it is level 4's
  * hopIntervalMs being larger than level 3's.
  *
+ * Bee disposition shifts with the levels. Early bees mostly forage and barely notice
+ * the player; later ones increasingly hunt, drifting towards the cells the player has
+ * drained — because an empty cell is a record of the letters they keep using.
+ *
  * sipChance *falls* as levels progress. A greedy bee fills up and leaves; a reluctant
  * one lingers, and a resting bee still blocks its cell. Lowering sipChance therefore
  * costs the player routing options rather than honey, which is the greater threat.
@@ -35,7 +39,11 @@ export const levels: readonly Level[] = [
       min: 0,
       max: 1,
       spawnIntervalMs: 15_000,
-      overrides: { sipChance: 0.9, hopIntervalMs: 1500 },
+      overrides: {
+        sipChance: 0.9,
+        hopIntervalMs: 1500,
+        intentWeights: { forage: 9, hunt: 1, wander: 3 },
+      },
     },
     transition: { sound: 'level.clearNight', durationMs: 800 },
   },
@@ -50,7 +58,11 @@ export const levels: readonly Level[] = [
       min: 0,
       max: 1,
       spawnIntervalMs: 13_000,
-      overrides: { sipChance: 0.8, hopIntervalMs: 1200 },
+      overrides: {
+        sipChance: 0.8,
+        hopIntervalMs: 1200,
+        intentWeights: { forage: 6, hunt: 2, wander: 3 },
+      },
     },
     transition: { sound: 'level.cloudyDay', durationMs: 800 },
   },
@@ -67,7 +79,11 @@ export const levels: readonly Level[] = [
       spawnIntervalMs: 12_000,
       // Eased relative to level 3: a second bee arrives here, and two difficulty
       // increases should never land at once.
-      overrides: { sipChance: 0.7, hopIntervalMs: 1400 },
+      overrides: {
+        sipChance: 0.7,
+        hopIntervalMs: 1400,
+        intentWeights: { forage: 4, hunt: 4, wander: 3 },
+      },
     },
     transition: { sound: 'level.forebodingNight', durationMs: 800 },
   },
@@ -82,7 +98,11 @@ export const levels: readonly Level[] = [
       min: 0,
       max: 2,
       spawnIntervalMs: 11_000,
-      overrides: { sipChance: 0.55, hopIntervalMs: 1100 },
+      overrides: {
+        sipChance: 0.55,
+        hopIntervalMs: 1100,
+        intentWeights: { forage: 2, hunt: 6, wander: 2 },
+      },
     },
     transition: { sound: 'level.stormyDay', durationMs: 800 },
   },
@@ -98,7 +118,11 @@ export const levels: readonly Level[] = [
       min: 1,
       max: 2,
       spawnIntervalMs: 10_000,
-      overrides: { sipChance: 0.45, hopIntervalMs: 900 },
+      overrides: {
+        sipChance: 0.45,
+        hopIntervalMs: 900,
+        intentWeights: { forage: 1, hunt: 9, wander: 2 },
+      },
     },
     transition: { sound: 'level.stormyNight', durationMs: 800 },
   },

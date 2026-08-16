@@ -52,7 +52,11 @@ export function testBeeType(overrides: Partial<BeeType> = {}): BeeType {
     sipDurationMs: 1000,
     arrivalMs: 1000,
     departureMs: 1000,
-    turnChance: 0,
+    intentWeights: { forage: 1, hunt: 0, wander: 0 },
+    intentShiftChance: 0,
+    intentFloor: 0.15,
+    revisitAversion: 0.75,
+    maxHops: 40,
     spriteId: 'bee.worker',
     ...overrides,
   }

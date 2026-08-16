@@ -12,7 +12,13 @@ import {
 } from './testSupport'
 import type { BeeType, Game, GameDeps, GameEvent, Level, LevelBees } from './types'
 
-function makeGame(options: { bees?: Partial<LevelBees>; type?: Partial<BeeType> } = {}): Game {
+interface Options {
+  bees?: Partial<LevelBees>
+  type?: Partial<BeeType>
+  seed?: number
+}
+
+function makeGame(options: Options = {}): Game {
   const level: Level = testLevel({
     // Bees are the subject here; a draining bar would just end the run mid-test.
     healthDrainPerSecond: 0,
@@ -31,10 +37,10 @@ function makeGame(options: { bees?: Partial<LevelBees>; type?: Partial<BeeType> 
     dictionary: stubDictionary(['TEAM']),
     generator: stubGenerator(['Z'], ['Y']),
     beeTypes: { worker: testBeeType(options.type) },
-    rng: createRng(3),
+    rng: createRng(options.seed ?? 3),
   }
 
-  return createGame(deps, 3)
+  return createGame(deps, options.seed ?? 3)
 }
 
 /** Advance the simulation in fixed 16 ms steps. */
@@ -136,32 +142,28 @@ describe('sipping', () => {
 
   it('counts down the sips it has left, so the swell can be drawn', () => {
     run(game, 20_000)
-    const sips = eventsOfKind(drainEvents(game), 'beeSipped')
-    const counts = sips.map((event) => event.sipsLeft)
+    const counts = eventsOfKind(drainEvents(game), 'beeSipped').map((event) => event.sipsLeft)
     expect(counts[0]).toBe(5)
     expect(Math.min(...counts)).toBe(0)
   })
 
-  it('never sips when its chance is zero, but still occupies a cell', () => {
+  it('never sips when its chance is zero', () => {
     const shy = makeGame({ type: { sipChance: 0 } })
     run(shy, 20_000)
-
     expect(eventsOfKind(drainEvents(shy), 'beeSipped')).toEqual([])
-    // A resting bee still blocks its cell, which is the point of a low sip chance.
-    expect(shy.state.bees.some(isOnBoard) || shy.state.bees.length === 0).toBe(true)
   })
 
   it('reseeds a cell it drains to empty', () => {
-    const bee = makeGame({ type: { sipPercent: 1 } })
-    run(bee, 2200)
-    const target = key(bee.state.bees[0]!.at)
-    drainEvents(bee)
+    const thirsty = makeGame({ type: { sipPercent: 1 } })
+    run(thirsty, 2200)
+    const target = key(thirsty.state.bees[0]!.at)
+    drainEvents(thirsty)
 
-    run(bee, 1100)
-    const reseeds = eventsOfKind(drainEvents(bee), 'cellReseeded')
+    run(thirsty, 1100)
+    const reseeds = eventsOfKind(drainEvents(thirsty), 'cellReseeded')
 
     expect(reseeds.map((event) => event.cellKey)).toContain(target)
-    expect(bee.state.cells.get(target)!.honey).toBe(100)
+    expect(thirsty.state.cells.get(target)!.honey).toBe(100)
   })
 })
 
@@ -175,16 +177,15 @@ describe('leaving', () => {
     expect(left[0]!.full).toBe(true)
   })
 
-  it('leaves when its heading carries it off the board', () => {
-    // Never sips and never turns, so it flies straight across and out without ever
-    // filling up. Steering it back on would have bees hugging the rim instead.
-    const passing = makeGame({
-      type: { sipChance: 0, turnChance: 0, sipCapacity: 99, hopIntervalMs: 100 },
+  it('gives up after its maximum hops, however little it collected', () => {
+    // Without this bound a bee that never sips would never leave.
+    const idler = makeGame({
+      type: { sipChance: 0, sipCapacity: 99, maxHops: 4, hopIntervalMs: 100 },
       bees: { min: 1, max: 1, spawnIntervalMs: 100 },
     })
-    run(passing, 30_000)
+    run(idler, 30_000)
 
-    const left = eventsOfKind(drainEvents(passing), 'beeLeft')
+    const left = eventsOfKind(drainEvents(idler), 'beeLeft')
     expect(left.length).toBeGreaterThanOrEqual(1)
     expect(left.every((event) => event.full)).toBe(false)
   })
@@ -212,9 +213,11 @@ describe('leaving', () => {
 })
 
 describe('movement', () => {
+  const roaming = { sipChance: 0, sipCapacity: 99, maxHops: 200, hopIntervalMs: 100 }
+
   it('only ever stands on a cell that exists', () => {
     const wanderer = makeGame({
-      type: { turnChance: 0.5, sipCapacity: 99, hopIntervalMs: 100 },
+      type: { ...roaming, intentWeights: { forage: 1, hunt: 1, wander: 1 } },
       bees: { min: 1, max: 2, spawnIntervalMs: 500 },
     })
     for (let elapsed = 0; elapsed < 60_000; elapsed += 16) {
@@ -227,7 +230,7 @@ describe('movement', () => {
 
   it('moves to a neighbouring cell, never a distant one', () => {
     const wanderer = makeGame({
-      type: { turnChance: 0.5, sipCapacity: 99, hopIntervalMs: 100, sipChance: 0 },
+      type: roaming,
       bees: { min: 1, max: 1, spawnIntervalMs: 60_000 },
     })
 
@@ -245,18 +248,139 @@ describe('movement', () => {
     }
   })
 
-  it('crosses the board rather than loitering on one cell', () => {
-    const passing = makeGame({
-      type: { turnChance: 0, sipChance: 0, sipCapacity: 99, hopIntervalMs: 100 },
+  it('roams rather than sitting on one cell', () => {
+    const wanderer = makeGame({
+      type: roaming,
       bees: { min: 1, max: 1, spawnIntervalMs: 60_000 },
     })
 
     const visited = new Set<string>()
-    for (let elapsed = 0; elapsed < 10_000; elapsed += 16) {
-      step(passing, 16)
-      for (const bee of passing.state.bees) visited.add(key(bee.at))
+    for (let elapsed = 0; elapsed < 20_000; elapsed += 16) {
+      step(wanderer, 16)
+      for (const bee of wanderer.state.bees) visited.add(key(bee.at))
     }
-    expect(visited.size).toBeGreaterThan(3)
+    expect(visited.size).toBeGreaterThan(5)
+  })
+
+  it('mostly avoids doubling straight back', () => {
+    const wanderer = makeGame({
+      type: { ...roaming, revisitAversion: 0.95 },
+      bees: { min: 1, max: 1, spawnIntervalMs: 60_000 },
+    })
+
+    const trail: string[] = []
+    for (let elapsed = 0; elapsed < 40_000; elapsed += 16) {
+      step(wanderer, 16)
+      for (const event of eventsOfKind(drainEvents(wanderer), 'beeMoved')) {
+        trail.push(event.cellKey)
+      }
+    }
+
+    let doubledBack = 0
+    for (let i = 2; i < trail.length; i++) if (trail[i] === trail[i - 2]) doubledBack++
+
+    expect(trail.length).toBeGreaterThan(20)
+    expect(doubledBack / trail.length).toBeLessThan(0.35)
+  })
+})
+
+describe('intent', () => {
+  /**
+   * A honey landscape: the middle of the board is full, the outside is nearly empty.
+   * A forager should be drawn inward, a hunter outward — because empty cells are the
+   * ones the player has been using.
+   */
+  function withLandscape(options: Options) {
+    const roaming = { sipChance: 0, sipCapacity: 99, maxHops: 200, hopIntervalMs: 100 }
+    const built = makeGame({
+      ...options,
+      type: { ...roaming, ...options.type },
+      bees: { min: 1, max: 1, spawnIntervalMs: 60_000, ...options.bees },
+    })
+    for (const cell of built.state.cells.values()) {
+      cell.honey = cell.ring <= 1 ? 100 : 1
+    }
+    return built
+  }
+
+  /** Average ring the bee occupies over a long roam. Lower means further in. */
+  function averageRing(built: Game): number {
+    let total = 0
+    let samples = 0
+    for (let elapsed = 0; elapsed < 40_000; elapsed += 16) {
+      step(built, 16)
+      for (const bee of built.state.bees) {
+        if (!isOnBoard(bee)) continue
+        total += ring(bee.at)
+        samples++
+      }
+    }
+    return samples > 0 ? total / samples : Number.NaN
+  }
+
+  it('draws a forager towards the honey', () => {
+    const forager = averageRing(
+      withLandscape({ type: { intentWeights: { forage: 1, hunt: 0, wander: 0 } } }),
+    )
+    const hunter = averageRing(
+      withLandscape({ type: { intentWeights: { forage: 0, hunt: 1, wander: 0 } } }),
+    )
+
+    expect(forager).toBeLessThan(hunter)
+  })
+
+  it('draws a hunter towards the cells the player has drained', () => {
+    // Same landscape, opposite pull: an empty cell is a record of the player's habits.
+    const hunter = averageRing(
+      withLandscape({ type: { intentWeights: { forage: 0, hunt: 1, wander: 0 } } }),
+    )
+    expect(hunter).toBeGreaterThan(1)
+  })
+
+  it('keeps an inclination from becoming a rail', () => {
+    // The floor is what stops a forager being unable to cross an empty cell.
+    const built = withLandscape({
+      type: { intentWeights: { forage: 1, hunt: 0, wander: 0 }, intentFloor: 0.15 },
+    })
+
+    const rings = new Set<number>()
+    for (let elapsed = 0; elapsed < 40_000; elapsed += 16) {
+      step(built, 16)
+      for (const bee of built.state.bees) if (isOnBoard(bee)) rings.add(ring(bee.at))
+    }
+    expect(rings.size).toBeGreaterThan(1)
+  })
+
+  it('holds its intent when told never to shift', () => {
+    const built = withLandscape({ type: { intentShiftChance: 0 } })
+    run(built, 2200)
+    const first = built.state.bees[0]!.intent
+    run(built, 20_000)
+    for (const bee of built.state.bees) expect(bee.intent).toBe(first)
+  })
+
+  it('changes its mind when told it may', () => {
+    const built = withLandscape({
+      type: {
+        intentShiftChance: 1,
+        intentWeights: { forage: 1, hunt: 1, wander: 1 },
+      },
+    })
+
+    const seen = new Set<string>()
+    for (let elapsed = 0; elapsed < 40_000; elapsed += 16) {
+      step(built, 16)
+      for (const bee of built.state.bees) seen.add(bee.intent)
+    }
+    expect(seen.size).toBeGreaterThan(1)
+  })
+
+  it('falls back to wandering when a level gives every intent zero weight', () => {
+    const built = withLandscape({
+      type: { intentWeights: { forage: 0, hunt: 0, wander: 0 } },
+    })
+    run(built, 2200)
+    expect(built.state.bees[0]!.intent).toBe('wander')
   })
 })
 

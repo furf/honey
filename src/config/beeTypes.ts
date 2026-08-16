@@ -23,7 +23,13 @@ export const beeTypes: Readonly<Record<string, BeeType>> = {
     // always a mistake rather than an ambush.
     arrivalMs: 1200,
     departureMs: 900,
-    turnChance: 0.25,
+    // Baseline disposition. Levels shift these, so bees grow more interested in the
+    // player as the game goes on rather than behaving identically throughout.
+    intentWeights: { forage: 6, hunt: 1, wander: 3 },
+    intentShiftChance: 0.2,
+    intentFloor: 0.15,
+    revisitAversion: 0.75,
+    maxHops: 24,
     spriteId: 'bee.worker',
   },
 }

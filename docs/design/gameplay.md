@@ -72,11 +72,28 @@ A bee enters on the outer ring, hops between adjacent cells, and occasionally st
 sip. It occupies exactly one cell at a time, and any trail that reaches that cell is
 stung.
 
-A bee holds a heading and mostly keeps it, turning only with probability
-`beeType.turnChance`, so a visit reads as a flight across the honeycomb rather than a
-wander around one corner. It leaves either when it fills up or when its heading carries
-it off the edge — it is never steered back onto the board, because a bee that cannot
-leave would hug the rim until full.
+Bee movement is erratic, but not aimless. A bee carries an **intent** that biases which
+neighbour it steps onto:
+
+- **Forage** — drawn towards fuller cells, looking for honey.
+- **Hunt** — drawn towards emptier cells, looking for the player. A cell's honey level
+  is a record of how the player has been playing, and the cells they keep using are the
+  drained ones, so an empty cell is where a sting is most likely to land.
+- **Wander** — no preference.
+
+Intent is drawn from `beeType.intentWeights` on arrival, and may be reconsidered at each
+hop with probability `beeType.intentShiftChance`, so a visit is never scripted. Every
+neighbour keeps at least `beeType.intentFloor` of weight regardless of intent — without
+a floor an inclination becomes a rail, and a forager could never cross an empty cell.
+A bee also avoids doubling straight back, in proportion to `beeType.revisitAversion`,
+because ping-ponging between two cells reads as indecision rather than movement.
+
+Levels override the intent weights, so a bee's disposition shifts across the difficulty
+curve: early bees mostly forage and barely notice the player, later ones increasingly
+hunt.
+
+A bee leaves when it fills up, or after `beeType.maxHops` if it has not — a bee that
+rarely sips would otherwise never leave at all.
 
 Bees are telegraphed. A bee is visible approaching from off-board with an audible buzz
 before it lands, so a sting is never a surprise — only a mistake. As a bee fills, its

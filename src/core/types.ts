@@ -107,12 +107,26 @@ export interface BeeType {
   /** How long a full bee remains visible on its way off the board. */
   readonly departureMs: number
   /**
-   * Chance of turning at a hop instead of holding its heading.
+   * How this bee chooses where to go next, as weights over the intents.
    *
-   * Bees cross the honeycomb in a line. A pure random walk would have them loiter
-   * around wherever they landed, which reads as a swarm rather than a flight.
+   * Levels override these, so a bee's disposition shifts across the difficulty
+   * curve: early bees mostly forage and ignore the player, later ones increasingly
+   * hunt the cells the player keeps returning to.
    */
-  readonly turnChance: number
+  readonly intentWeights: Readonly<Record<BeeIntent, number>>
+  /** Chance of reconsidering its intent at each hop, so a visit is never scripted. */
+  readonly intentShiftChance: number
+  /**
+   * Weight every neighbour keeps regardless of intent.
+   *
+   * Without a floor, a forager could never step onto an empty cell and a hunter
+   * never onto a full one, which turns an inclination into a rail.
+   */
+  readonly intentFloor: number
+  /** How strongly a bee avoids stepping straight back where it came from, 0 to 1. */
+  readonly revisitAversion: number
+  /** Hops before a bee gives up and leaves, however little it has collected. */
+  readonly maxHops: number
   readonly spriteId: string
 }
 
@@ -159,12 +173,24 @@ export interface Cell {
 
 export type BeePhase = 'arriving' | 'hopping' | 'sipping' | 'leaving'
 
+/**
+ * What a bee is trying to do, which decides where it goes next.
+ *
+ * A cell's honey level is a record of how the player has been playing: cells they
+ * keep using are the empty ones. So the two purposeful intents pull in opposite
+ * directions — a forager goes where the food is, a hunter goes where the player is.
+ */
+export type BeeIntent = 'forage' | 'hunt' | 'wander'
+
 export interface Bee {
   readonly id: number
   readonly typeId: string
   at: Axial
-  /** Index into the six hex directions. Bees hold a heading so flights read as lines. */
-  heading: number
+  /** Where it came from, so it can avoid immediately doubling back. */
+  cameFrom: string | null
+  intent: BeeIntent
+  /** Hops taken so far, against the type's maximum. */
+  hops: number
   /** Sips taken so far, against the type's capacity. */
   sipsTaken: number
   /** Milliseconds until the current phase ends. */

@@ -112,8 +112,16 @@ down on the level that introduces a second bee" is not logic; it is one cell of
 | `sipDurationMs` | Pause while sipping |
 | `arrivalMs` | How long the approach is visible before the bee can sting |
 | `departureMs` | How long a departing bee stays visible on its way out |
-| `turnChance` | Chance of turning at a hop rather than holding its heading |
+| `intentWeights` | Weights over forage / hunt / wander — what this bee is inclined to do |
+| `intentShiftChance` | Chance of reconsidering intent at each hop |
+| `intentFloor` | Weight every neighbour keeps regardless of intent, so inclination never becomes a rail |
+| `revisitAversion` | How strongly a bee avoids doubling straight back, 0 to 1 |
+| `maxHops` | Hops before a bee gives up and leaves, however little it collected |
 | `spriteId` | Which sprite the theme draws for this type |
+
+Intent is where a bee's character lives. A forager reads as indifferent to the player;
+a hunter reads as stalking them, because it drifts towards the cells they have drained.
+Levels override `intentWeights`, so disposition shifts along the difficulty curve.
 
 Falling `sipChance` in later levels makes bees linger rather than fill and leave — a
 resting bee still blocks its cell, so it costs routing options rather than honey. See
