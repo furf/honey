@@ -6,11 +6,15 @@
  * Whether a ShareAlike obligation reaches a build-time-only input is exactly the sort
  * of question that is cheap to avoid and expensive to answer.
  *
+ * One carve-out: MPL-2.0 is accepted for unmodified build tooling that never reaches
+ * the bundle, so it is allowed in the dev tree and rejected in the production tree.
+ *
  * See docs/adr/0004-permissive-licences-only.md.
  */
 
 import { execFileSync } from 'node:child_process'
 
+/** Accepted anywhere, including in shipped code. */
 const ALLOWED = [
   /^MIT$/i,
   /^ISC$/i,
@@ -24,27 +28,65 @@ const ALLOWED = [
   /^BlueOak-1\.0\.0$/i,
 ]
 
-const isAllowed = (licence) =>
-  licence
-    // Split SPDX expressions and accept only if every alternative is acceptable.
+/**
+ * Accepted only in the dev tree. File-level copyleft whose obligations attach to the
+ * covered files themselves, so unmodified build tooling does not reach our code.
+ * Voided by patching or vendoring — see the ADR before doing either.
+ */
+const ALLOWED_BUILD_TIME_ONLY = [/^MPL-2\.0$/i]
+
+/**
+ * Evaluate an SPDX expression against a set of accepted licences.
+ *
+ * OR means we may choose, so one acceptable alternative is enough — "(MIT OR GPL-3.0)"
+ * can be taken under MIT. AND means all terms apply at once, so every part must be
+ * acceptable. Parentheses are not nested in practice, so this stays a flat parse.
+ */
+function isAllowed(licence, patterns) {
+  const matches = (term) => patterns.some((pattern) => pattern.test(term.trim()))
+
+  return licence
     .replace(/[()]/g, '')
-    .split(/\s+(?:OR|AND)\s+/i)
-    .every((part) => ALLOWED.some((pattern) => pattern.test(part.trim())))
-
-const raw = execFileSync('pnpm', ['licenses', 'list', '--json'], { encoding: 'utf8' })
-const byLicence = JSON.parse(raw)
-
-const violations = []
-for (const [licence, packages] of Object.entries(byLicence)) {
-  if (isAllowed(licence)) continue
-  for (const pkg of packages) violations.push(`${pkg.name}@${pkg.versions.join(',')} — ${licence}`)
+    .split(/\s+OR\s+/i)
+    .some((alternative) => alternative.split(/\s+AND\s+/i).every(matches))
 }
 
-if (violations.length > 0) {
-  console.error(`Disallowed licences found (${violations.length}):\n`)
-  for (const violation of violations) console.error(`  ${violation}`)
+function listLicences(prodOnly) {
+  const args = ['licenses', 'list', '--json']
+  if (prodOnly) args.push('--prod')
+  return JSON.parse(execFileSync('pnpm', args, { encoding: 'utf8' }))
+}
+
+function violationsIn(byLicence, patterns) {
+  const found = []
+  for (const [licence, packages] of Object.entries(byLicence)) {
+    if (isAllowed(licence, patterns)) continue
+    for (const pkg of packages) found.push(`${pkg.name}@${pkg.versions.join(',')} — ${licence}`)
+  }
+  return found
+}
+
+const production = listLicences(true)
+const everything = listLicences(false)
+
+// Shipped code gets no carve-outs.
+const productionViolations = violationsIn(production, ALLOWED)
+// The dev tree additionally tolerates build-time-only licences.
+const devViolations = violationsIn(everything, [...ALLOWED, ...ALLOWED_BUILD_TIME_ONLY])
+
+const problems = [
+  ...productionViolations.map((v) => `[production] ${v}`),
+  ...devViolations
+    .filter((v) => !productionViolations.includes(v))
+    .map((v) => `[dev] ${v}`),
+]
+
+if (problems.length > 0) {
+  console.error(`Disallowed licences found (${problems.length}):\n`)
+  for (const problem of problems) console.error(`  ${problem}`)
   console.error('\nSee docs/adr/0004-permissive-licences-only.md')
   process.exit(1)
 }
 
-console.error(`All dependency licences accepted (${Object.keys(byLicence).length} distinct).`)
+const distinct = new Set([...Object.keys(production), ...Object.keys(everything)])
+console.error(`All dependency licences accepted (${distinct.size} distinct).`)
