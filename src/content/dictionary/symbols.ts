@@ -21,6 +21,19 @@ export const SYMBOL_INDEX: ReadonlyMap<string, number> = new Map(
 export const QU = 'Qu'
 export const QU_INDEX = SYMBOL_INDEX.get(QU)!
 
+/**
+ * Symbols that satisfy the generator's vowel floor.
+ *
+ * `Qu` counts: it ends in a vowel and behaves like one when joining consonants.
+ * This belongs to the alphabet rather than to configuration — which letters are
+ * vowels is a fact about English, not a number to tune.
+ */
+export const VOWELS: ReadonlySet<string> = new Set(['A', 'E', 'I', 'O', 'U', 'Qu'])
+
+export function isVowel(symbol: string): boolean {
+  return VOWELS.has(symbol)
+}
+
 /** Letters a symbol contributes to word length. `Qu` contributes two. */
 export function lettersIn(symbol: string): number {
   return symbol.length

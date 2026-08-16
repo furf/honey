@@ -62,6 +62,13 @@ export interface SolveOptions {
   readonly maxLetters: number
 }
 
+export interface SolveResult {
+  /** Each word found, with cells it can be drawn through. */
+  readonly paths: Map<string, number[]>
+  /** Which of those words are common. Recorded during the walk, not looked up after. */
+  readonly common: Set<string>
+}
+
 /**
  * Every distinct word on the board, with the cells each one can be drawn through.
  *
@@ -72,10 +79,11 @@ export function solve(
   board: SolverBoard,
   dictionary: Dictionary,
   options: SolveOptions,
-): Map<string, number[]> {
+): SolveResult {
   const { walk } = dictionary
   const { symbols, weights, letters, adjacency } = board
   const found = new Map<string, number[]>()
+  const common = new Set<string>()
 
   const visited = new Uint8Array(symbols.length)
   const path = new Int32Array(options.maxLetters)
@@ -100,6 +108,9 @@ export function solve(
       word = word.toUpperCase()
       if (!found.has(word)) {
         found.set(word, Array.from(path.subarray(0, depth + 1)))
+        // Commonness is a flag on the edge we just followed, so it costs nothing
+        // here and would cost a second walk per word if asked for later.
+        if (walk.isCommon(edge)) common.add(word)
       }
     }
 
@@ -117,7 +128,7 @@ export function solve(
     visit(start, walk.root, 0, 0)
   }
 
-  return found
+  return { paths: found, common }
 }
 
 /** What a board offers, as the generator's invariants need to see it. */
@@ -126,15 +137,15 @@ export function analyse(
   dictionary: Dictionary,
   options: SolveOptions,
 ): BoardAnalysis {
-  const found = solve(board, dictionary, options)
+  const { paths, common } = solve(board, dictionary, options)
 
   const commonWords: string[] = []
   let longestWordLength = 0
   const used = new Uint8Array(board.symbols.length)
 
-  for (const [word, cells] of found) {
+  for (const [word, cells] of paths) {
     if (word.length > longestWordLength) longestWordLength = word.length
-    if (dictionary.isCommon(word)) {
+    if (common.has(word)) {
       commonWords.push(word)
       // Only common words count towards coverage. A cell reachable solely by obscure
       // words is a cell the player will never actually use.

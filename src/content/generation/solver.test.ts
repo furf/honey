@@ -36,7 +36,7 @@ function boardWith(rings: number, placements: [Axial, string][], filler = 'Z') {
 }
 
 function wordsOn(cells: Map<string, Cell>, adjacency: Map<string, string[]>, options = OPTIONS) {
-  return solve(toSolverBoard(cells, adjacency), dictionary, options)
+  return solve(toSolverBoard(cells, adjacency), dictionary, options).paths
 }
 
 describe('solve', () => {
@@ -118,7 +118,7 @@ describe('solve', () => {
   it('reports a path whose cells are all distinct and adjacent in order', () => {
     const { cells, adjacency } = boardWith(3, [], 'E')
     const board = toSolverBoard(cells, adjacency)
-    const found = solve(board, dictionary, OPTIONS)
+    const found = solve(board, dictionary, OPTIONS).paths
 
     for (const [word, path] of found) {
       expect(new Set(path).size, `${word} revisits a cell`).toBe(path.length)

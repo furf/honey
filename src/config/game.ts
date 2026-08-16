@@ -57,6 +57,3 @@ export const gameConfig: GameConfig = {
     hudUpdateHz: 10,
   },
 }
-
-/** Letters that count as vowels for the generator's vowel floor. `Qu` ends in one. */
-export const VOWELS = new Set(['A', 'E', 'I', 'O', 'U', 'Qu'])
