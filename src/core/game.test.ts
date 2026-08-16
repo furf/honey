@@ -262,6 +262,7 @@ describe('stings', () => {
       at: { q: q!, r: r! },
       cameFrom: null,
       intent: 'wander',
+      exiting: false,
       hops: 0,
       sipsTaken: 0,
       timerMs: 0,

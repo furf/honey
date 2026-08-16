@@ -88,6 +88,7 @@ function spawn(game: Game, level: Level): void {
     at: entry.at,
     cameFrom: null,
     intent: chooseIntent(game, type),
+    exiting: false,
     hops: 0,
     sipsTaken: 0,
     timerMs: type.arrivalMs,
@@ -127,6 +128,13 @@ function chooseNext(game: Game, bee: Bee, type: BeeType): string | null {
 }
 
 function settle(game: Game, bee: Bee, type: BeeType): void {
+  // A bee on its way out is full, and has no reason to stop.
+  if (bee.exiting) {
+    bee.phase = 'hopping'
+    bee.timerMs = type.hopIntervalMs
+    return
+  }
+
   if (game.deps.rng.chance(type.sipChance)) {
     bee.phase = 'sipping'
     bee.timerMs = type.sipDurationMs
@@ -138,9 +146,50 @@ function settle(game: Game, bee: Bee, type: BeeType): void {
   }
 }
 
-function depart(bee: Bee, type: BeeType): void {
+/** Turn the bee towards the rim. It keeps hopping until it gets there. */
+function beginExit(bee: Bee): void {
+  bee.exiting = true
+}
+
+/** The bee has reached the edge and is now flying off it. */
+function leave(bee: Bee, type: BeeType): void {
   bee.phase = 'leaving'
   bee.timerMs = type.departureMs
+}
+
+/**
+ * One step of the flight home.
+ *
+ * Any neighbour on a higher ring is one hop closer to the edge, so a greedy step
+ * outward is also the shortest route — no search needed on a board this shape.
+ */
+function exitStep(game: Game, bee: Bee, type: BeeType): void {
+  const { state, deps } = game
+  const here = state.cells.get(cellKeyOf(bee))!
+
+  if (here.ring >= deps.config.board.rings) {
+    leave(bee, type)
+    return
+  }
+
+  const neighbours = game.adjacency.get(cellKeyOf(bee)) ?? []
+  const outward = neighbours.filter((neighbourKey) => {
+    const cell = state.cells.get(neighbourKey)
+    return cell !== undefined && cell.ring > here.ring
+  })
+
+  const next = outward.length > 0 ? deps.rng.pick(outward) : null
+  if (next === null) {
+    leave(bee, type)
+    return
+  }
+
+  bee.cameFrom = cellKeyOf(bee)
+  bee.at = state.cells.get(next)!.at
+
+  state.events.push({ kind: 'beeMoved', beeId: bee.id, cellKey: next })
+  bee.phase = 'hopping'
+  bee.timerMs = type.hopIntervalMs
 }
 
 function sip(game: Game, bee: Bee, type: BeeType): void {
@@ -160,19 +209,20 @@ function sip(game: Game, bee: Bee, type: BeeType): void {
     sipsLeft: Math.max(0, type.sipCapacity - bee.sipsTaken),
   })
 
-  if (bee.sipsTaken >= type.sipCapacity) {
-    depart(bee, type)
-  } else {
-    bee.phase = 'hopping'
-    bee.timerMs = type.hopIntervalMs
-  }
+  if (bee.sipsTaken >= type.sipCapacity) beginExit(bee)
+
+  bee.phase = 'hopping'
+  bee.timerMs = type.hopIntervalMs
 }
 
 function hop(game: Game, bee: Bee, type: BeeType): void {
   const { state, deps } = game
 
-  if (bee.hops >= type.maxHops) {
-    depart(bee, type)
+  // Out of patience counts as done, and a done bee flies out rather than vanishing.
+  if (!bee.exiting && bee.hops >= type.maxHops) beginExit(bee)
+
+  if (bee.exiting) {
+    exitStep(game, bee, type)
     return
   }
 
@@ -180,7 +230,8 @@ function hop(game: Game, bee: Bee, type: BeeType): void {
 
   const next = chooseNext(game, bee, type)
   if (next === null) {
-    depart(bee, type)
+    beginExit(bee)
+    exitStep(game, bee, type)
     return
   }
 

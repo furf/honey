@@ -189,6 +189,13 @@ export interface Bee {
   /** Where it came from, so it can avoid immediately doubling back. */
   cameFrom: string | null
   intent: BeeIntent
+  /**
+   * Set once a bee is done and heading for the rim.
+   *
+   * An exiting bee stops sipping and steers outward, but is still on the board and
+   * can still sting — it flies out rather than vanishing from wherever it filled up.
+   */
+  exiting: boolean
   /** Hops taken so far, against the type's maximum. */
   hops: number
   /** Sips taken so far, against the type's capacity. */

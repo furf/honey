@@ -92,8 +92,14 @@ Levels override the intent weights, so a bee's disposition shifts across the dif
 curve: early bees mostly forage and barely notice the player, later ones increasingly
 hunt.
 
-A bee leaves when it fills up, or after `beeType.maxHops` if it has not — a bee that
+A bee is done when it fills up, or after `beeType.maxHops` if it has not — a bee that
 rarely sips would otherwise never leave at all.
+
+A done bee then **flies to the nearest exit** rather than disappearing from where it
+stood. It stops sipping and steps outward each hop until it reaches the outer ring, then
+leaves the board. On a hexagonal honeycomb any neighbour on a higher ring is one hop
+closer to the edge, so stepping outward is already the shortest route. It is still
+visibly present on the way out, and still stings anything that touches it.
 
 Bees are telegraphed. A bee is visible approaching from off-board with an audible buzz
 before it lands, so a sting is never a surprise — only a mistake. As a bee fills, its

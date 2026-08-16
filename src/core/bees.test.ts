@@ -204,11 +204,73 @@ describe('leaving', () => {
     expect(greedy.state.bees.filter((bee) => gone.has(bee.id))).toEqual([])
   })
 
-  it('cannot sting on its way out', () => {
+  it('cannot sting once it is flying off the edge', () => {
     const greedy = makeGame({ type: { sipCapacity: 1 } })
     run(greedy, 5000)
     const leaving = greedy.state.bees.find((bee) => bee.phase === 'leaving')
     if (leaving) expect(isOnBoard(leaving)).toBe(false)
+  })
+
+  it('makes for the rim once full, rather than vanishing where it stood', () => {
+    const greedy = makeGame({
+      // Sips at the first cell it lands on, so it fills up deep in the board.
+      type: { sipCapacity: 1, sipChance: 1, hopIntervalMs: 100 },
+      bees: { min: 1, max: 1, spawnIntervalMs: 60_000 },
+    })
+
+    // Follow one bee from full to gone, recording where it was each step.
+    const rings: number[] = []
+    let sawExiting = false
+    for (let elapsed = 0; elapsed < 30_000; elapsed += 16) {
+      step(greedy, 16)
+      const bee = greedy.state.bees[0]
+      if (!bee) break
+      if (bee.exiting) {
+        sawExiting = true
+        rings.push(ring(bee.at))
+      }
+    }
+
+    expect(sawExiting).toBe(true)
+    // It only ever moves outward on the way home, and finishes at the edge.
+    for (let i = 1; i < rings.length; i++) expect(rings[i]).toBeGreaterThanOrEqual(rings[i - 1]!)
+    expect(rings.at(-1)).toBe(testConfig.board.rings)
+  })
+
+  it('takes no more honey on the way out', () => {
+    const greedy = makeGame({
+      type: { sipCapacity: 1, sipChance: 1, hopIntervalMs: 100 },
+      bees: { min: 1, max: 1, spawnIntervalMs: 60_000 },
+    })
+
+    let sipsBeforeExit = 0
+    let sipsAfterExit = 0
+    for (let elapsed = 0; elapsed < 30_000; elapsed += 16) {
+      const exitingBefore = greedy.state.bees[0]?.exiting ?? false
+      step(greedy, 16)
+      const sips = eventsOfKind(drainEvents(greedy), 'beeSipped').length
+      if (exitingBefore) sipsAfterExit += sips
+      else sipsBeforeExit += sips
+    }
+
+    expect(sipsBeforeExit).toBeGreaterThan(0)
+    expect(sipsAfterExit).toBe(0)
+  })
+
+  it('can still sting while making its way out', () => {
+    // It is visibly on the board, so it must still be a hazard.
+    const greedy = makeGame({
+      type: { sipCapacity: 1, sipChance: 1, hopIntervalMs: 100 },
+      bees: { min: 1, max: 1, spawnIntervalMs: 60_000 },
+    })
+
+    let stingableWhileExiting = false
+    for (let elapsed = 0; elapsed < 30_000; elapsed += 16) {
+      step(greedy, 16)
+      const bee = greedy.state.bees[0]
+      if (bee?.exiting && isOnBoard(bee)) stingableWhileExiting = true
+    }
+    expect(stingableWhileExiting).toBe(true)
   })
 })
 
