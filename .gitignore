@@ -1,0 +1,20 @@
+node_modules/
+.pnpm-store/
+dist/
+.DS_Store
+*.local
+.vite/
+coverage/
+
+# Build-time word list inputs — large, and never shipped.
+# See docs/adr/0003-two-word-lists.md
+tools/wordlists/raw/
+
+# Installed agent skill packages. These are tooling, reproducible from
+# skills-lock.json, and bring in third-party font files that have nothing to do with
+# the game. The lockfile is committed; the installed contents are not.
+.claude/skills/
+.agents/skills/
+
+# TypeScript incremental build cache
+*.tsbuildinfo

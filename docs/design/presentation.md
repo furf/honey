@@ -1,0 +1,114 @@
+# Presentation
+
+Visual, audible, and interaction decisions. Timings and colours are named by their
+theme or configuration variable rather than their value — see
+[config-reference.md](../config-reference.md).
+
+The overall aesthetic is bright, lively, and subtly dimensional, in the register of
+Zynga's casual titles: saturated colour, soft depth, generous motion. The honeycomb
+itself is gold and amber and stays constant across all environments; the world around
+it is what changes.
+
+## Colour language
+
+Colour carries meaning, and each meaning has exactly one colour.
+
+| State | Colour | Motion |
+|---|---|---|
+| Selecting | Blue | Cell borders light as the trail grows |
+| Valid word | Green | Blink, then settle |
+| Already played | Deep bronze | Shake |
+| Not a word | Desaturated grey | Trail sags, letters fall |
+| Stung / voided | Red | Screen shake, red vignette, health bar flash |
+| Too short | — | Trail simply releases |
+
+**Red means damage and nothing else.** An invalid word is the most common non-event in
+the game, and a red slap every time is exhausting — so it desaturates rather than
+alarms. Bronze for already-played is deliberately deeper and less saturated than the
+board's own golds so it reads as distinct rather than as part of the honeycomb.
+
+Every state is paired with a **distinct motion** as well as a colour, so the feedback
+survives red/green colour blindness.
+
+## Animation
+
+- **Word accepted** — cells blink green, honey drains on a tween rather than snapping,
+  the pot counts up, and the harvested amount floats up from the trail's centroid.
+- **Trail voided** — the letters in the word preview jostle loose and fall *behind* the
+  honeycomb. This is the reason the render stack carries an effects layer beneath the
+  cells as well as above them.
+- **Reseed** — the old letter fades out, honey refills with a rising-fill animation, the
+  new letter fades in. A reseed should read as a reward, not a loss.
+- **Sting** — screen shake, red vignette, health bar flash.
+- **Intro and game over** — the honeycomb scales up from the centre, and letters fall
+  away at the end, both **staggered outward by ring**. The ring stagger makes the
+  honeycomb's structure legible as structure, which is the game's visual identity.
+- **Level transition** — a crossfade between environments. Each environment may supply
+  its own transition renderer, with the crossfade as the fallback; the MVP ships only
+  the fallback. The engine knows *that* a transition is running and for how long, the
+  theme knows what it looks like.
+
+`prefers-reduced-motion` is honoured automatically with no UI: screen shake and the
+sting vignette are exactly the effects that harm motion-sensitive players.
+
+## Screens and HUD
+
+Three screens: welcome, game, game over.
+
+The welcome screen carries the logo, a start button, and the copyright line. Game over
+shows the final pot, a **Play Again** button that starts a new game immediately, and a
+smaller link back to the welcome screen. There is **no auto-return timer** — the spec
+originally called for returning to the welcome screen after five seconds, which would
+have left the Play Again button on screen too briefly to read, let alone press.
+
+During play:
+
+- **Pot** top right, counting up rather than snapping.
+- **Health** top left, a horizontal bar with a percentage label.
+- **Trail preview** above the honeycomb, showing the letters as they are selected. Once
+  the trail is long enough to be valid it also shows a **live honey preview**, so the
+  player watches the value change as the trail grows. This is the single thing that
+  makes the economy felt rather than opaque — players learn the scoring system by
+  watching that number move.
+- **Mute** bottom left, a quiet low-opacity icon that brightens on tap. Bottom left
+  because most players are right-handed and trails are least likely to start there;
+  outside the honeycomb's bounds, with its hit area excluded from the swipe hit-test so
+  it can neither be triggered by a swipe nor eat one.
+
+Audio must be unlocked by a user gesture on mobile browsers, so the audio context is
+created and resumed on the start tap. Mute state persists.
+
+## Rendering
+
+A single canvas, drawn in layers, bottom to top:
+
+```
+environment → fx-behind → honeycomb → honey fill → letters → trail → bees → fx-front
+```
+
+The HUD is DOM above the canvas rather than drawn, so it gets text rendering and
+accessibility for free.
+
+Simulation runs at a fixed step with an interpolated draw. The HUD subscribes to state
+at a throttled rate rather than per frame, so score and health changes never drive a
+re-render on every tick.
+
+## Themes
+
+A theme is a complete presentation: palette, typography, sprites, logo, sounds, music,
+branding copy, and its set of environments. Themes are selected at **build time** — not
+by URL parameter and not by stored preference. Player-facing theme selection, if it
+ever arrives, belongs in an options screen.
+
+An environment is semantically opaque to the rules: it is "visual variant N", not
+"weather". A theme whose levels change planets rather than skies requires no changes
+outside itself.
+
+Sprites and sound effects are **procedural** — drawn as vector art and synthesised
+through Web Audio rather than loaded as assets. This keeps the MVP free of an asset
+pipeline and of licensing questions, and both sit behind interfaces so real artwork and
+recorded samples can replace them per theme without touching the engine.
+
+Dictionaries and letter generators are independent of themes. A theme may declare a
+preferred default for each, but configuration overrides it, so a generator can be
+compared against another without changing a pixel.
