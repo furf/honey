@@ -81,10 +81,11 @@ export default tseslint.config(
               allow: { to: { element: { types: { anyOf: ['engine', 'core'] } } } },
             },
 
-            // Themes are data. They may name types, never reach for behaviour.
+            // Themes are authored against the engine's drawing and audio primitives,
+            // so they sit above it. They must not reach for the rules.
             {
               from: { element: { type: 'themes' } },
-              allow: { to: { element: { types: { anyOf: ['themes', 'core'] } } } },
+              allow: { to: { element: { types: { anyOf: ['themes', 'engine'] } } } },
             },
 
             // Configuration is data shaped by core's types.

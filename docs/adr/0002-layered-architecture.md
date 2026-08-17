@@ -22,9 +22,12 @@ Four layers, each depending only on the layer beneath it through interfaces:
 - **content** — swappable strategies behind interfaces: `Dictionary`,
   `LetterGenerator`, `WordPolicy`.
 - **engine** — canvas rendering, the layer stack, pointer-to-cell hit testing, and
-  Web Audio. Knows nothing about honey, bees, or words.
+  Web Audio. Knows nothing about honey, bees, or words. It also declares the *shape*
+  of a theme, because the engine is what consumes one.
 - **themes** — palettes, typography, sprites, sounds, copy, and environments, as data
-  and draw functions the engine consumes.
+  and draw functions. Themes sit **above** the engine rather than beside it: a sprite
+  is a function written against the engine's drawing primitives, so a theme depends on
+  the engine by its nature. Themes must not reach for the rules.
 
 An **app** composition root assembles a concrete configuration from these parts.
 Dictionary, generator, theme, and level table are **independent** axes — a theme may

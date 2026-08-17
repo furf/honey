@@ -1,42 +1,78 @@
-import { useState } from 'react'
-import type { Screen } from '../core/types'
+import { useCallback, useEffect, useState } from 'react'
+import { activeTheme } from '../themes'
+import type { GameDeps } from '../core/types'
+import { randomSeed } from '../core/rng'
+import { createDeps, preloadDictionary } from './composition'
+import { GameScreen } from './GameScreen'
+import { WelcomeScreen } from './WelcomeScreen'
+import './styles.css'
 
 /**
- * Composition root and screen routing.
+ * Screen routing and nothing else.
  *
- * React owns only the screens and the HUD. The honeycomb itself is canvas, and the
- * rules live in src/core. See docs/adr/0002-layered-architecture.md.
+ * The theme is a build-time constant, not a preference or a URL parameter — see
+ * docs/design/presentation.md.
  */
 export function App() {
-  const [screen, setScreen] = useState<Screen>('welcome')
+  const theme = activeTheme()
+
+  const [screen, setScreen] = useState<'welcome' | 'playing'>('welcome')
+  const [session, setSession] = useState<{ deps: GameDeps; seed: number } | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  // The dictionary is the largest thing the game downloads, so it loads behind the
+  // welcome screen rather than blocking first paint.
+  useEffect(() => {
+    let cancelled = false
+    preloadDictionary()
+      .then(() => {
+        if (!cancelled) setLoading(false)
+      })
+      .catch((cause: unknown) => {
+        if (!cancelled) {
+          setError('Could not load the dictionary.')
+          setLoading(false)
+          console.error(cause)
+        }
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const start = useCallback((seed = randomSeed()) => {
+    createDeps(seed)
+      .then((next) => {
+        setSession(next)
+        setScreen('playing')
+      })
+      .catch((cause: unknown) => {
+        setError('Could not start the game.')
+        console.error(cause)
+      })
+  }, [])
+
+  const goHome = useCallback(() => {
+    setScreen('welcome')
+    setSession(null)
+  }, [])
 
   return (
     <main className="app">
-      {screen === 'welcome' && <Welcome onStart={() => setScreen('playing')} />}
-      {screen === 'playing' && <PlayingPlaceholder onQuit={() => setScreen('welcome')} />}
+      {screen === 'welcome' || !session ? (
+        <WelcomeScreen theme={theme} loading={loading} error={error} onStart={() => start()} />
+      ) : (
+        <GameScreen
+          // A new seed remounts the screen, which is exactly what starting over means.
+          key={session.seed}
+          deps={session.deps}
+          seed={session.seed}
+          theme={theme}
+          onExit={goHome}
+          onPlayAgain={() => start()}
+        />
+      )}
     </main>
-  )
-}
-
-function Welcome({ onStart }: { onStart: () => void }) {
-  return (
-    <section className="screen screen--welcome">
-      <h1 className="logo">Honey</h1>
-      <button className="button" type="button" onClick={onStart}>
-        Start Game
-      </button>
-      <p className="copyright">© 2026 SPARKLER*FUN</p>
-    </section>
-  )
-}
-
-function PlayingPlaceholder({ onQuit }: { onQuit: () => void }) {
-  return (
-    <section className="screen">
-      <p className="placeholder">The honeycomb goes here.</p>
-      <button className="button button--quiet" type="button" onClick={onQuit}>
-        Back
-      </button>
-    </section>
   )
 }
