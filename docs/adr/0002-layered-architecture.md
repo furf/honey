@@ -57,6 +57,14 @@ to reproduce a reported bad board.
 Import boundaries between layers are enforced by lint rule. Without enforcement the
 layering degrades quickly, and the abstraction cost is only worth paying if it holds.
 
+Enforcement uses ESLint's built-in `no-restricted-imports` rather than a dedicated
+boundaries plugin. The obvious plugin pulls in a native binary purely to resolve
+import paths, and its postinstall script is blocked by pnpm's default policy — which
+pnpm 11 treats as an install failure, breaking deployment. Every cross-layer import
+here is a relative path, so matching the specifier is sufficient and costs nothing.
+The rules are written as an allow-list per layer and inverted into a deny-list, so
+adding a layer cannot silently grant access to it.
+
 `Environment` is semantically opaque to the core — it is "visual variant N", not
 "weather". A theme whose levels change planets rather than skies needs no core
 changes.

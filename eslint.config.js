@@ -1,15 +1,53 @@
 import js from '@eslint/js'
 import tseslint from 'typescript-eslint'
-import boundaries from 'eslint-plugin-boundaries'
 import globals from 'globals'
 
 /**
  * Layer boundaries are enforced, not merely documented.
  *
- * ADR-0002 defines four layers, each depending only on the layer beneath it. That
+ * ADR-0002 defines the layers, each depending only on those beneath it. That
  * arrangement is only worth its indirection if it actually holds, and without a lint
  * rule it erodes within a week.
+ *
+ * Enforced with ESLint's built-in no-restricted-imports rather than a dedicated
+ * plugin. The obvious plugin for this pulls in a native binary purely to resolve
+ * import paths, whose postinstall script pnpm blocks by default and pnpm 11 treats as
+ * an install failure — which broke deployment. Since every cross-layer import here is
+ * a relative path, matching the specifier is sufficient and costs no dependencies.
  */
+
+const LAYERS = ['core', 'content', 'engine', 'themes', 'config', 'app']
+
+/** Import patterns that reach into a given layer, whatever the relative depth. */
+function reaching(layer) {
+  return [`**/${layer}`, `**/${layer}/**`, `../${layer}`, `../${layer}/**`]
+}
+
+/**
+ * Forbid everything except the layers this one is allowed to see.
+ *
+ * Stated as a deny-list built from an allow-list, so adding a layer cannot silently
+ * grant access to it.
+ */
+function boundary(layer, allowed) {
+  const forbidden = LAYERS.filter((other) => other !== layer && !allowed.includes(other))
+
+  return {
+    files: [`src/${layer}/**/*.{ts,tsx}`],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: forbidden.map((other) => ({
+            group: reaching(other),
+            message: `${layer} may not import ${other} — see docs/adr/0002-layered-architecture.md`,
+          })),
+        },
+      ],
+    },
+  }
+}
+
 export default tseslint.config(
   { ignores: ['dist/**', 'node_modules/**', 'tools/wordlists/raw/**'] },
 
@@ -33,81 +71,22 @@ export default tseslint.config(
     languageOptions: { globals: { ...globals.node } },
   },
 
-  {
-    files: ['src/**/*.{ts,tsx}'],
-    plugins: { boundaries },
-    settings: {
-      // Without a resolver that knows TypeScript extensions the plugin cannot follow
-      // .ts/.tsx imports, silently classifies every dependency as unknown, and
-      // reports nothing at all — a boundary rule that never fires.
-      // The pure-JS node resolver is enough here and, unlike the TypeScript
-      // resolver, pulls in no native binding that would need a build step.
-      'import/resolver': {
-        node: { extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'] },
-      },
-      'boundaries/include': ['src/**/*'],
-      // One element per layer folder; every file beneath it belongs to that layer,
-      // including files in nested folders such as src/content/dictionary.
-      'boundaries/elements': [
-        { type: 'core', pattern: 'src/core' },
-        { type: 'content', pattern: 'src/content' },
-        { type: 'engine', pattern: 'src/engine' },
-        { type: 'themes', pattern: 'src/themes' },
-        { type: 'config', pattern: 'src/config' },
-        { type: 'app', pattern: 'src/app' },
-      ],
-    },
-    rules: {
-      'boundaries/dependencies': [
-        'error',
-        {
-          default: 'disallow',
-          policies: [
-            // The rules depend on nothing. No canvas, no DOM, no React, no clock.
-            {
-              from: { element: { type: 'core' } },
-              allow: { to: { element: { type: 'core' } } },
-            },
+  // The rules depend on nothing. No canvas, no DOM, no React, no clock.
+  boundary('core', []),
 
-            // Pluggable strategies see the rules they serve, and nothing above them.
-            {
-              from: { element: { type: 'content' } },
-              allow: { to: { element: { types: { anyOf: ['content', 'core'] } } } },
-            },
+  // Pluggable strategies see the rules they serve, and nothing above them.
+  boundary('content', ['core']),
 
-            // The engine knows geometry, but nothing about honey, bees, or words.
-            {
-              from: { element: { type: 'engine' } },
-              allow: { to: { element: { types: { anyOf: ['engine', 'core'] } } } },
-            },
+  // The engine knows geometry, but nothing about honey, bees, or words.
+  boundary('engine', ['core']),
 
-            // Themes are authored against the engine's drawing and audio primitives,
-            // so they sit above it. They must not reach for the rules.
-            {
-              from: { element: { type: 'themes' } },
-              allow: { to: { element: { types: { anyOf: ['themes', 'engine'] } } } },
-            },
+  // Themes are authored against the engine's drawing primitives, so they sit above
+  // it. They must not reach for the rules.
+  boundary('themes', ['engine']),
 
-            // Configuration is data shaped by core's types.
-            {
-              from: { element: { type: 'config' } },
-              allow: { to: { element: { types: { anyOf: ['config', 'core'] } } } },
-            },
+  // Configuration is data shaped by core's types.
+  boundary('config', ['core']),
 
-            // Only the composition root may see everything at once.
-            {
-              from: { element: { type: 'app' } },
-              allow: {
-                to: {
-                  element: {
-                    types: { anyOf: ['app', 'core', 'content', 'engine', 'themes', 'config'] },
-                  },
-                },
-              },
-            },
-          ],
-        },
-      ],
-    },
-  },
+  // Only the composition root may see everything at once.
+  boundary('app', LAYERS),
 )
