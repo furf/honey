@@ -48,8 +48,15 @@ _Avoid_: Hive, score, points, total
 
 **Honey**:
 The quantity held by a cell and accumulated in the pot. Every cell has the same
-capacity; harvests and sips remove fixed fractions of that capacity.
+capacity, but a harvest removes a fraction that depends on the cell's letter, so rare
+letters pay more and empty sooner.
 _Avoid_: Nectar, currency
+
+**Family**:
+A group of words on the board sharing a stem, such as TUCK, TUCKS, TUCKED, TUCKING.
+Families are what let a player score several words in quick succession, so the board
+generator seeks them out deliberately.
+_Avoid_: Group, cluster, set, run
 
 **Reseed**:
 Replacing a cell's letter and restoring its honey to full, triggered when the cell's
@@ -70,9 +77,24 @@ occupying the cell it rests on. Leaves the board once it has filled up.
 _Avoid_: Wasp, enemy, hazard
 
 **Bee Type**:
-A kind of bee, carrying its own appetite, speed, capacity, and sprite. Levels choose
-which types can appear and may override any of their behaviour.
+A kind of bee, carrying its own appetite, speed, capacity, sprite and sound. Levels
+choose which types can appear and may override any of their behaviour.
 _Avoid_: Species, breed, variant, class
+
+**Forager**:
+The bee type drawn towards fuller cells, looking for honey. Wears a flower.
+_Avoid_: Gatherer, worker, collector
+
+**Hunter**:
+The bee type drawn towards emptier cells, looking for the player — a drained cell is a
+record of the letters they keep using. Carries a visible stinger.
+_Avoid_: Stalker, soldier, wasp, attacker
+
+**Wave**:
+A window during which bees may arrive, followed by a calm during which none do. Waves
+lengthen and calms shorten as levels progress, so pressure builds rather than being
+constant.
+_Avoid_: Swarm, round, burst, phase
 
 **Sip**:
 A bee's extraction of honey from the cell it rests on. Honey a bee takes is gone —

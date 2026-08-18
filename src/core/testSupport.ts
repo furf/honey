@@ -19,7 +19,7 @@ import type { BeeType, Cell, GameConfig, Level } from './types'
  */
 export const testConfig: GameConfig = {
   words: { minLetters: 4, maxLetters: 9 },
-  honey: { cellCapacity: 100 },
+  honey: { cellCapacity: 100, rarityHarvest: {}, rarityHarvestDefault: 1 },
   scoring: { lengthMultipliers: { 4: 1, 5: 1.4, 6: 2, 7: 3 } },
   health: {
     max: 100,
@@ -37,6 +37,13 @@ export const testConfig: GameConfig = {
     rareLetterCaps: {},
     reseedHistoryDepth: 4,
     maxGenerationAttempts: 1,
+    lengthWeights: { 4: 1 },
+    familyWeight: 0,
+    bigramWeight: 0,
+    longWordLetters: 6,
+    minLongWords: 0,
+    hillClimbSteps: 0,
+    reseedSharpness: 1,
   },
   board: { rings: 3, orientation: 'pointy' },
   timing: { simulationHz: 60, hudUpdateHz: 10 },

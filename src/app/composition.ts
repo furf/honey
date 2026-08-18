@@ -1,6 +1,6 @@
 import wordsUrl from '../content/dictionary/data/words.bin?url'
 import meta from '../content/dictionary/data/words.meta.json'
-import { createPackedDictionary, createWeightedBagGenerator } from '../content'
+import { createFamilyGenerator, createPackedDictionary } from '../content'
 import { createRng, randomSeed } from '../core/rng'
 import type { GameDeps } from '../core/types'
 import { beeTypes, gameConfig, levels } from '../config'
@@ -33,7 +33,7 @@ export async function createDeps(seed = randomSeed()): Promise<{ deps: GameDeps;
   const bytes = await preloadDictionary()
   const dictionary = createPackedDictionary(bytes, meta)
 
-  const generator = createWeightedBagGenerator({
+  const generator = createFamilyGenerator({
     dictionary,
     generation: gameConfig.generation,
     words: gameConfig.words,

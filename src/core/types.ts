@@ -26,6 +26,18 @@ export interface WordsConfig {
 export interface HoneyConfig {
   /** Honey a full cell holds. Every transfer is a percentage of this. */
   readonly cellCapacity: number
+
+  /**
+   * Multiplier on the harvest percentage, by letter.
+   *
+   * Rare letters pay more per word and so empty in fewer words, which makes them
+   * self-clearing rather than dead cells the player routes around. Capacity stays
+   * uniform, so the honey meter means the same thing everywhere.
+   * See docs/adr/0001-idle-decay-and-capacity-based-honey.md.
+   */
+  readonly rarityHarvest: Readonly<Record<string, number>>
+  /** Applied to any letter absent from the table. */
+  readonly rarityHarvestDefault: number
 }
 
 export interface ScoringConfig {
@@ -62,6 +74,32 @@ export interface GenerationConfig {
   readonly reseedHistoryDepth: number
   /** Attempts before relaxing invariants rather than hanging. */
   readonly maxGenerationAttempts: number
+
+  /**
+   * What a good board looks like, as weights over the objective.
+   *
+   * Maximising the raw count of findable words optimises into a sea of four-letter
+   * words, because short words vastly outnumber long ones. These weights are what
+   * make the generator trade quantity for length and for word families.
+   */
+  readonly lengthWeights: Readonly<Record<number, number>>
+  readonly familyWeight: number
+  readonly bigramWeight: number
+  /** Letters that make a word count as long. */
+  readonly longWordLetters: number
+  /** Long words a board must offer before it is accepted. */
+  readonly minLongWords: number
+  /** Single-cell improvements tried when refining a board. */
+  readonly hillClimbSteps: number
+  /**
+   * How sharply a reseed prefers the best replacement letter.
+   *
+   * Reseeds happen constantly during play, so a reseed that picks weakly from every
+   * candidate lets a refined board erode back to noise within one pass of the cells.
+   * Higher values concentrate on strong letters; the history penalty supplies the
+   * variety that this would otherwise cost.
+   */
+  readonly reseedSharpness: number
 }
 
 export interface BoardConfig {

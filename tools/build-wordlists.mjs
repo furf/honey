@@ -378,6 +378,49 @@ output.set(new Uint8Array(edges.buffer), header.byteLength)
 
 writeFileSync(resolve(OUT, 'words.bin'), output)
 
+// ---------------------------------------------------------------------------
+// Adjacency statistics
+// ---------------------------------------------------------------------------
+
+/**
+ * How often each symbol follows each other symbol, across the common words.
+ *
+ * The board generator uses this to place letters whose neighbours are letters that
+ * actually follow them in English, so a path across the honeycomb spells plausible
+ * fragments rather than noise. Counted over common words only: bigrams from words no
+ * player will look for are not the ones worth arranging the board around.
+ */
+function buildBigrams(commonEntries) {
+  const size = SYMBOLS.length
+  const counts = new Float64Array(size * size)
+
+  for (const { symbols } of commonEntries) {
+    for (let i = 1; i < symbols.length; i++) {
+      counts[symbols[i - 1] * size + symbols[i]] += 1
+    }
+  }
+
+  // Conditional log-probability with add-one smoothing, so an unseen pair scores
+  // badly rather than being impossible — the generator needs a gradient, not a wall.
+  const logProbs = new Array(size * size).fill(0)
+  for (let from = 0; from < size; from++) {
+    let total = 0
+    for (let to = 0; to < size; to++) total += counts[from * size + to] + 1
+    for (let to = 0; to < size; to++) {
+      logProbs[from * size + to] = Math.log((counts[from * size + to] + 1) / total)
+    }
+  }
+
+  return logProbs.map((value) => Math.round(value * 1000) / 1000)
+}
+
+const commonEntries = entries.filter((entry) => commonWords.has(entry.word))
+writeFileSync(
+  resolve(OUT, 'bigrams.json'),
+  `${JSON.stringify({ symbols: SYMBOLS, logProbs: buildBigrams(commonEntries) })}\n`,
+)
+console.error(`  bigrams over ${commonEntries.length.toLocaleString()} common words`)
+
 const meta = {
   generatedBy: 'tools/build-wordlists.mjs',
   validationSource: 'ENABLE (enable1.txt), public domain',

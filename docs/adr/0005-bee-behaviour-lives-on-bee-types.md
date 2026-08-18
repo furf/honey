@@ -28,8 +28,17 @@ Capacity is counted in **sips** (`sipCapacity`), not in honey units. A bee's vis
 therefore a fixed number of stops regardless of its appetite, and a greedier type
 costs more honey per visit rather than leaving sooner.
 
-The MVP ships a single type referenced by every level, so the indirection is present
-but carries no variety yet.
+**Forager and hunter are two types, not two moods of one type.** Intent was originally
+rolled per bee from weights on a single `worker`, which meant a level could field two
+foragers and a player could not tell one bee from another. As types they carry their
+own sprite and their own buzz, so which kind of bee is on the board is legible at a
+glance and audible without looking.
+
+A level's bee population takes **at most one of each type**, so two bees are always one
+of each rather than a pair of the same.
+
+Mid-flight intent shifting is removed. A bee that changed job halfway through a visit
+would contradict its own sprite and its own sound.
 
 ## Consequences
 
@@ -39,6 +48,10 @@ asked for, applied to the one entity most likely to gain variants.
 Because capacity is measured in sips, the swelling-abdomen fill animation maps to a
 clean fraction per sip for every type, and "this bee is nearly full" stays readable
 without knowing which type it is.
+
+Disposition now shifts across the difficulty curve by *which types a level fields*
+rather than by reweighting one type's intents — which is what `level.bees.types`
+already expressed, finally doing real work.
 
 `sipChance` is deliberately below certainty, so a bee sometimes rests on a cell
 without taking anything. A resting bee still blocks its cell, so lowering `sipChance`

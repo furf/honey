@@ -38,6 +38,13 @@ const generation: GenerationConfig = {
   rareLetterCaps: { J: 1, Qu: 1, X: 1, Z: 1, K: 2, V: 2, W: 2 },
   reseedHistoryDepth: 4,
   maxGenerationAttempts: 200,
+  lengthWeights: { 4: 1, 5: 3, 6: 9, 7: 20 },
+  familyWeight: 6,
+  bigramWeight: 40,
+  longWordLetters: 6,
+  minLongWords: 0,
+  hillClimbSteps: 0,
+  reseedSharpness: 1,
 }
 
 function makeGenerator(overrides: Partial<GenerationConfig> = {}) {

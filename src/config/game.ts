@@ -14,6 +14,17 @@ export const gameConfig: GameConfig = {
 
   honey: {
     cellCapacity: 100,
+
+    // Rare letters pay more per word and so empty in fewer words, clearing themselves
+    // off the board instead of becoming a cell the player routes around. At 1.0 a cell
+    // survives five words; at 2.5 it survives two.
+    rarityHarvest: {
+      E: 0.85, A: 0.85, I: 0.9, O: 0.9, S: 0.9, T: 0.9, R: 0.95, N: 0.95,
+      L: 1.0, U: 1.05, D: 1.05, C: 1.1, M: 1.1, P: 1.15, H: 1.15, G: 1.2,
+      B: 1.25, F: 1.3, Y: 1.3, W: 1.4, V: 1.6, K: 1.6, Qu: 2.0,
+      X: 2.5, J: 2.5, Z: 2.5,
+    },
+    rarityHarvestDefault: 1,
   },
 
   scoring: {
@@ -48,11 +59,23 @@ export const gameConfig: GameConfig = {
     vowelCeiling: 0.4,
     rareLetterCaps: { J: 1, Qu: 1, X: 1, Z: 1, K: 2, V: 2, W: 2 },
     reseedHistoryDepth: 4,
-    maxGenerationAttempts: 200,
+    maxGenerationAttempts: 6,
+
+    // Longer words must be worth disproportionately more, or the generator maximises
+    // count and fills the board with four-letter words — which is what it did.
+    lengthWeights: { 4: 1, 5: 3, 6: 9, 7: 20, 8: 34, 9: 50 },
+    familyWeight: 6,
+    bigramWeight: 40,
+    longWordLetters: 6,
+    minLongWords: 6,
+    hillClimbSteps: 45,
+    reseedSharpness: 24,
   },
 
   board: {
-    rings: 3,
+    // Two rings: 19 cells. Bigger letters, less analysis paralysis, faster games.
+    // Three is still supported and is one number away.
+    rings: 2,
     orientation: 'pointy',
   },
 

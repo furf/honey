@@ -15,3 +15,6 @@ export {
 
 export { analyse, solve, toSolverBoard } from './generation/solver'
 export { createWeightedBagGenerator } from './generation/weightedBagGenerator'
+export { createFamilyGenerator } from './generation/familyGenerator'
+export { scoreBoard, bigramScore } from './generation/objective'
+export type { BoardScore, ObjectiveWeights } from './generation/objective'

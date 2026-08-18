@@ -24,10 +24,14 @@ difficulty mechanic, and is deliberately too short to be played around. Stings c
 `config.health.stingCost` and additionally void the trail.
 
 **All honey transfers are a fixed percentage of a cell's capacity**
-(`config.honey.cellCapacity`), never of its current level. A harvest takes
-`level.harvestPercent`; a bee's sip takes `beeType.sipPercent`. Because both are
-fractions of a constant capacity, the number of words a cell survives before reseeding
-is fixed and countable.
+(`config.honey.cellCapacity`), never of its current level. A bee's sip takes
+`beeType.sipPercent`. A harvest takes `level.harvestPercent` **scaled by the rarity of
+the cell's letter**, so a `Z` pays more per word than an `E` and empties in fewer
+words.
+
+Capacity itself stays uniform. Rarity is expressed through one knob — the harvest
+percentage — rather than two, so the honey meter still means the same thing on every
+cell: how much is left, not how much it started with.
 
 ## Considered Options
 
@@ -44,8 +48,14 @@ fixed the asymptote, but leaves depletion non-linear and the honey meter dishone
 
 ## Consequences
 
-Depletion is linear and countable — a player can see how many words a cell has left
-in it, and the honey meter means exactly what it shows.
+Depletion is linear, and the honey meter means exactly what it shows: how much is
+left. It is no longer *countable* in words, because the same cell empties in a
+different number of words depending on its letter. That is an accepted loss — players
+report reading the meter as a rough sense of a letter's remaining life rather than
+counting down from it.
+
+Rare letters become self-correcting. A `J` or `X` pays well and clears itself off the
+board quickly, instead of sitting in a corner as a cell the player routes around.
 
 Bees accelerate reseeds, because their sips deplete cells toward the same empty
 threshold a harvest does. This is deliberate: a bee both robs the player and refreshes
