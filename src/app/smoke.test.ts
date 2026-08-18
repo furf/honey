@@ -114,6 +114,7 @@ function renderOnce(game: Game, layout: Layout, sweepKind: 'intro' | 'play' | 'g
     layout,
     render: renderConfig,
     environmentId: levels[0]!.environmentId,
+    cellCapacity: gameConfig.honey.cellCapacity,
     nowMs: 1000,
     sweep: 1,
     sweepKind,
@@ -189,10 +190,10 @@ describe('renderer', () => {
 
     game.state.bees.push({
       id: 1,
-      typeId: 'worker',
+      typeId: 'forager',
       at: game.state.cells.get(second!)!.at,
       cameFrom: null,
-      intent: 'forage',
+      turningTo: null,
       exiting: false,
       hops: 0,
       sipsTaken: 0,

@@ -17,7 +17,16 @@ export const honeycombTheme: Theme = {
   sprites,
   logo,
   sounds,
-  music: null,
+  // Which drones sustain in each environment. The world changing is something the
+  // player hears as well as sees.
+  music: {
+    sunnyDay: ['music.day.root', 'music.day.fifth', 'music.day.high'],
+    clearNight: ['music.night.root', 'music.night.minor'],
+    cloudyDay: ['music.dusk.root', 'music.dusk.third'],
+    forebodingNight: ['music.night.root', 'music.night.minor', 'music.storm.tritone'],
+    stormyDay: ['music.storm.root', 'music.dusk.third'],
+    stormyNight: ['music.storm.root', 'music.storm.tritone'],
+  },
   strings: {
     title: 'Honey',
     tagline: 'Find the words. Mind the bees.',

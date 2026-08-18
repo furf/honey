@@ -19,6 +19,7 @@ export { environmentById } from './theme'
 
 export {
   centredText,
+  darken,
   easeInOut,
   easeOut,
   fillHexPortion,

@@ -258,10 +258,10 @@ describe('stings', () => {
     const [q, r] = at.split(',').map(Number)
     game.state.bees.push({
       id,
-      typeId: 'worker',
+      typeId: 'forager',
       at: { q: q!, r: r! },
       cameFrom: null,
-      intent: 'wander',
+      turningTo: null,
       exiting: false,
       hops: 0,
       sipsTaken: 0,

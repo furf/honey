@@ -145,15 +145,20 @@ export interface BeeType {
   /** How long a full bee remains visible on its way off the board. */
   readonly departureMs: number
   /**
-   * How this bee chooses where to go next, as weights over the intents.
+   * What this kind of bee is for.
    *
-   * Levels override these, so a bee's disposition shifts across the difficulty
-   * curve: early bees mostly forage and ignore the player, later ones increasingly
-   * hunt the cells the player keeps returning to.
+   * Fixed per type rather than rolled per bee: a forager and a hunter look different
+   * and sound different, so a bee that changed its mind mid-visit would contradict
+   * its own sprite. Disposition shifts across the difficulty curve by which types a
+   * level fields. See docs/adr/0005-bee-behaviour-lives-on-bee-types.md.
    */
-  readonly intentWeights: Readonly<Record<BeeIntent, number>>
-  /** Chance of reconsidering its intent at each hop, so a visit is never scripted. */
-  readonly intentShiftChance: number
+  readonly intent: BeeIntent
+  /** How long the bee turns on the spot before setting off, so a hop reads as intent. */
+  readonly turnMs: number
+  /** Continuous buzz while this bee is on the board. */
+  readonly ambientSound: string
+  /** Played as it arrives, so the player hears which kind is coming. */
+  readonly approachSound: string
   /**
    * Weight every neighbour keeps regardless of intent.
    *
@@ -169,12 +174,24 @@ export interface BeeType {
 }
 
 export interface LevelBees {
+  /** Which kinds may appear. At most one of each is ever on the board at a time. */
   readonly types: readonly string[]
-  /** Bees below which one spawns immediately. */
-  readonly min: number
   /** Bees above which none spawn. */
   readonly max: number
   readonly spawnIntervalMs: number
+
+  /**
+   * How long bees may arrive for, and how long the board stays clear afterwards.
+   *
+   * Constant presence removes the suspense: a threat that is always there stops being
+   * a threat. Waves lengthen and calms shorten as levels progress.
+   */
+  readonly waveMs: number
+  readonly calmMs: number
+
+  /** Scales every bee timing this level — above 1 is faster. */
+  readonly speed: number
+
   /** Per-level overrides of any bee type field. */
   readonly overrides?: Partial<Omit<BeeType, 'id'>>
 }
@@ -209,7 +226,7 @@ export interface Cell {
   history: string[]
 }
 
-export type BeePhase = 'arriving' | 'hopping' | 'sipping' | 'leaving'
+export type BeePhase = 'arriving' | 'hopping' | 'turning' | 'sipping' | 'leaving'
 
 /**
  * What a bee is trying to do, which decides where it goes next.
@@ -226,7 +243,8 @@ export interface Bee {
   at: Axial
   /** Where it came from, so it can avoid immediately doubling back. */
   cameFrom: string | null
-  intent: BeeIntent
+  /** Cell it is turning towards, while phase is 'turning'. */
+  turningTo: string | null
   /**
    * Set once a bee is done and heading for the rim.
    *
@@ -287,7 +305,27 @@ export type GameEvent =
       readonly from: string
       readonly to: string
     }
-  | { readonly kind: 'beeArrived'; readonly beeId: number; readonly cellKey: string }
+  | {
+      readonly kind: 'beeApproaching'
+      readonly beeId: number
+      readonly typeId: string
+      readonly cellKey: string
+      /** How long the approach lasts, so the flight in can be drawn to scale. */
+      readonly durationMs: number
+    }
+  | {
+      readonly kind: 'beeTurning'
+      readonly beeId: number
+      /** Where it has decided to go, before it starts moving. */
+      readonly cellKey: string
+      readonly durationMs: number
+    }
+  | {
+      readonly kind: 'beeArrived'
+      readonly beeId: number
+      readonly cellKey: string
+      readonly typeId: string
+    }
   | { readonly kind: 'beeMoved'; readonly beeId: number; readonly cellKey: string }
   | {
       readonly kind: 'beeSipped'
@@ -327,6 +365,10 @@ export interface GameState {
   /** Milliseconds elapsed into the drain ease-in, capped at drainRampMs. */
   drainRampElapsedMs: number
   msSinceSpawn: number
+  /** Time inside the current wave or calm. */
+  waveElapsedMs: number
+  /** Whether bees may currently arrive. */
+  inWave: boolean
   elapsedMs: number
   nextBeeId: number
   /** Events produced since the caller last drained them. */

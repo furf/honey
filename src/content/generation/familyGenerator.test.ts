@@ -5,10 +5,9 @@ import { beforeAll, describe, expect, it } from 'vitest'
 import { buildAdjacency, createHoneycomb } from '../../core/honeycomb'
 import { createRng } from '../../core/rng'
 import type { Dictionary } from '../../core/ports'
-import type { Cell } from '../../core/types'
+import type { Cell, GenerationConfig, WordsConfig } from '../../core/types'
 import { createPackedDictionary } from '../dictionary/packedDictionary'
 import { isVowel } from '../dictionary/symbols'
-import { gameConfig } from '../../config/game'
 import { solve, toSolverBoard } from './solver'
 import { createFamilyGenerator } from './familyGenerator'
 
@@ -23,9 +22,47 @@ beforeAll(() => {
   )
 })
 
-const generation = gameConfig.generation
-const words = gameConfig.words
-const RINGS = gameConfig.board.rings
+/**
+ * Mirrors src/config/game.ts. Restated rather than imported because content sits below
+ * config and may not reach up for it — the boundary is what keeps the generator a
+ * swappable strategy rather than something wired to one game's settings.
+ */
+const generation: GenerationConfig = {
+    minCommonWords: 40,
+    minLongestWord: 6,
+    requireEveryCellUsed: true,
+
+    // A hand-tuned bag rather than raw English frequency: a 37-cell board that is a
+    // consonant swamp is unplayable however statistically legitimate it is.
+    letterWeights: {
+      A: 82, B: 20, C: 34, D: 42, E: 110, F: 24, G: 26, H: 30, I: 78,
+      J: 3, K: 12, L: 46, M: 28, N: 68, O: 72, P: 26, Qu: 4, R: 62,
+      S: 66, T: 74, U: 34, V: 12, W: 18, X: 3, Y: 22, Z: 3,
+    },
+
+    // A band, not a floor. Measured at 52% vowels when only a floor was enforced,
+    // which produced boards full of AEON, ARIA and RAIA rather than words players
+    // enjoy finding.
+    vowelFloor: 0.3,
+    vowelCeiling: 0.4,
+    rareLetterCaps: { J: 1, Qu: 1, X: 1, Z: 1, K: 2, V: 2, W: 2 },
+    reseedHistoryDepth: 4,
+    maxGenerationAttempts: 6,
+
+    // Longer words must be worth disproportionately more, or the generator maximises
+    // count and fills the board with four-letter words — which is what it did.
+    lengthWeights: { 4: 1, 5: 3, 6: 9, 7: 20, 8: 34, 9: 50 },
+    familyWeight: 6,
+    bigramWeight: 40,
+    longWordLetters: 6,
+    minLongWords: 6,
+    hillClimbSteps: 45,
+    reseedSharpness: 24,
+  
+}
+
+const words: WordsConfig = { minLetters: 4, maxLetters: 9 }
+const RINGS = 2
 
 function makeGenerator() {
   return createFamilyGenerator({ dictionary, generation, words })

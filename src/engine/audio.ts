@@ -13,9 +13,22 @@ export interface SoundBank {
   /** Resume the audio context. Must be called from a user gesture on mobile. */
   unlock(): Promise<void>
   play(name: string): void
+  /**
+   * Set which continuous sounds should be playing, by name.
+   *
+   * Declarative rather than start/stop, so the caller can hand over the current state
+   * of the world each frame without tracking what it started. Sounds already playing
+   * are left running, so a buzz does not restart every frame and stutter.
+   */
+  setAmbient(names: readonly string[]): void
   setMuted(muted: boolean): void
   readonly muted: boolean
   dispose(): void
+}
+
+interface Ambient {
+  readonly gain: GainNode
+  readonly stop: () => void
 }
 
 export function createSoundBank(recipes: Readonly<Record<string, SoundRecipe>>): SoundBank {
@@ -103,6 +116,52 @@ export function createSoundBank(recipes: Readonly<Record<string, SoundRecipe>>):
     }
   }
 
+  const ambient = new Map<string, Ambient>()
+
+  /** A sound that runs until told otherwise, for as long as a bee is on the board. */
+  function startAmbient(recipe: SoundRecipe): Ambient | null {
+    const ctx = ensure()
+    if (!ctx || !master) return null
+
+    const now = ctx.currentTime
+    const gain = ctx.createGain()
+    gain.gain.setValueAtTime(0, now)
+    // Fade in: a buzz that appears at full volume sounds like a click.
+    gain.gain.linearRampToValueAtTime(recipe.gain, now + 0.25)
+    gain.connect(master)
+
+    const oscillator = ctx.createOscillator()
+    oscillator.type = recipe.kind === 'buzz' ? 'sawtooth' : 'sine'
+    oscillator.frequency.setValueAtTime(recipe.frequency, now)
+
+    // For a sustained sound, `toFrequency` is a wobble rate rather than a target
+    // pitch: it is what makes a sawtooth read as an insect instead of a synthesiser,
+    // and at a fraction of a hertz it gives a music drone its slow drift. The two
+    // kinds of bee wobble at different rates, so a player can hear which is present
+    // without looking.
+    const wobble = ctx.createOscillator()
+    const wobbleGain = ctx.createGain()
+    wobble.frequency.value = recipe.toFrequency ?? 18
+    wobbleGain.gain.value = recipe.frequency * (recipe.kind === 'buzz' ? 0.07 : 0.012)
+    wobble.connect(wobbleGain).connect(oscillator.frequency)
+
+    oscillator.connect(gain)
+    oscillator.start(now)
+    wobble.start(now)
+
+    return {
+      gain,
+      stop: () => {
+        const at = ctx.currentTime
+        gain.gain.cancelScheduledValues(at)
+        gain.gain.setValueAtTime(gain.gain.value, at)
+        gain.gain.linearRampToValueAtTime(0, at + 0.3)
+        oscillator.stop(at + 0.35)
+        wobble.stop(at + 0.35)
+      },
+    }
+  }
+
   return {
     async unlock() {
       const ctx = ensure()
@@ -112,6 +171,24 @@ export function createSoundBank(recipes: Readonly<Record<string, SoundRecipe>>):
       const recipe = recipes[name]
       if (recipe) playRecipe(recipe)
     },
+    setAmbient(names: readonly string[]) {
+      const wanted = new Set(names)
+
+      for (const [name, running] of ambient) {
+        if (wanted.has(name)) continue
+        running.stop()
+        ambient.delete(name)
+      }
+
+      for (const name of wanted) {
+        if (ambient.has(name)) continue
+        const recipe = recipes[name]
+        if (!recipe) continue
+        const started = startAmbient(recipe)
+        if (started) ambient.set(name, started)
+      }
+    },
+
     setMuted(next: boolean) {
       muted = next
       if (master) master.gain.value = next ? 0 : 1
@@ -120,6 +197,8 @@ export function createSoundBank(recipes: Readonly<Record<string, SoundRecipe>>):
       return muted
     },
     dispose() {
+      for (const running of ambient.values()) running.stop()
+      ambient.clear()
       void context?.close()
       context = null
       master = null

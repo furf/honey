@@ -119,6 +119,17 @@ export function GameScreen({ deps, seed, theme, onExit, onPlayAgain }: GameScree
           }
         }
 
+        // Hand the current world to the audio engine each frame; it keeps whatever
+        // is already playing, so a buzz never restarts and stutters.
+        const environmentId = currentLevel(game).environmentId
+        sound.setAmbient([
+          ...(theme.music[environmentId] ?? []),
+          ...game.state.bees
+            .filter((bee) => bee.phase !== 'leaving')
+            .map((bee) => deps.beeTypes[bee.typeId]?.ambientSound)
+            .filter((name): name is string => name !== undefined),
+        ])
+
         const honey = new Map<string, number>()
         for (const [cellKey, cell] of game.state.cells) honey.set(cellKey, cell.honey)
         easeHoney(effects, honey, dtMs, renderConfig)
@@ -134,7 +145,8 @@ export function GameScreen({ deps, seed, theme, onExit, onPlayAgain }: GameScree
           theme,
           layout,
           render: renderConfig,
-          environmentId: currentLevel(game).environmentId,
+          environmentId,
+          cellCapacity: gameConfig.honey.cellCapacity,
           nowMs: frameMs,
           sweep: gameOverAtMs !== null ? Math.min(1, overProgress) : Math.min(1, introProgress),
           sweepKind:
@@ -193,6 +205,7 @@ export function GameScreen({ deps, seed, theme, onExit, onPlayAgain }: GameScree
 
     return () => {
       loop.stop()
+      sound.setAmbient([])
       surfaceHandle.dispose()
       canvas.removeEventListener('pointerdown', onPointerDown)
       canvas.removeEventListener('pointermove', onPointerMove)

@@ -32,9 +32,32 @@ export const sounds: Readonly<Record<string, SoundRecipe>> = {
 
   'cell.reseeded': { kind: 'tone', frequency: 700, durationMs: 260, gain: 0.1, toFrequency: 1100 },
 
-  'bee.approach': { kind: 'buzz', frequency: 150, durationMs: 900, gain: 0.1 },
+  // Approach and ambience are pitched apart per kind, so a player can hear which bee
+  // is coming and tell when both are present without looking away from the board.
+  'bee.approach.forager': { kind: 'buzz', frequency: 165, durationMs: 900, gain: 0.11 },
+  'bee.approach.hunter': { kind: 'buzz', frequency: 96, durationMs: 1100, gain: 0.13 },
+
+  // Continuous while the bee is on the board. `toFrequency` is the wobble rate here:
+  // the forager flutters, the hunter throbs.
+  'bee.ambient.forager': { kind: 'buzz', frequency: 172, durationMs: 0, gain: 0.045, toFrequency: 22 },
+  'bee.ambient.hunter': { kind: 'buzz', frequency: 88, durationMs: 0, gain: 0.055, toFrequency: 9 },
   'bee.sip': { kind: 'buzz', frequency: 190, durationMs: 260, gain: 0.08 },
   'bee.sting': { kind: 'noise', frequency: 900, durationMs: 380, gain: 0.3 },
+
+  // A slow drone bed per environment. Low, quiet and consonant, so it sits under the
+  // game rather than competing with it — and shifts as the world does.
+  'music.day.root': { kind: 'tone', frequency: 98, durationMs: 0, gain: 0.03, toFrequency: 0.08 },
+  'music.day.fifth': { kind: 'tone', frequency: 147, durationMs: 0, gain: 0.022, toFrequency: 0.05 },
+  'music.day.high': { kind: 'tone', frequency: 294, durationMs: 0, gain: 0.012, toFrequency: 0.03 },
+
+  'music.dusk.root': { kind: 'tone', frequency: 87, durationMs: 0, gain: 0.032, toFrequency: 0.06 },
+  'music.dusk.third': { kind: 'tone', frequency: 104, durationMs: 0, gain: 0.02, toFrequency: 0.04 },
+
+  'music.night.root': { kind: 'tone', frequency: 73, durationMs: 0, gain: 0.035, toFrequency: 0.05 },
+  'music.night.minor': { kind: 'tone', frequency: 87, durationMs: 0, gain: 0.024, toFrequency: 0.03 },
+
+  'music.storm.root': { kind: 'tone', frequency: 65, durationMs: 0, gain: 0.04, toFrequency: 0.04 },
+  'music.storm.tritone': { kind: 'tone', frequency: 92, durationMs: 0, gain: 0.026, toFrequency: 0.07 },
 
   'game.over': { kind: 'chord', frequency: 220, durationMs: 900, gain: 0.2, intervals: [0, 3, 7] },
   'game.start': { kind: 'chord', frequency: 392, durationMs: 420, gain: 0.16, intervals: [0, 5, 9] },

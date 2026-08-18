@@ -15,12 +15,17 @@ Colour carries meaning, and each meaning has exactly one colour.
 
 | State | Colour | Motion |
 |---|---|---|
-| Selecting | Blue | Cell borders light as the trail grows |
+| Selecting | Blue | The whole cell takes the colour as the trail grows |
 | Valid word | Green | Blink, then settle |
 | Already played | Deep bronze | Shake |
 | Not a word | Desaturated grey | Trail sags, letters fall |
 | Stung / voided | Red | Screen shake, red vignette, health bar flash |
 | Too short | — | Trail simply releases |
+
+A state colour covers the **whole cell**, not just its border — the filled portion in
+the state colour and the empty portion in a darker shade of it, so the honey line stays
+legible while the cell is unmistakably blue, green or red. A border alone was too easy
+to miss while a finger was over the board.
 
 **Red means damage and nothing else.** An invalid word is the most common non-event in
 the game, and a red slap every time is exhausting — so it desaturates rather than
@@ -40,6 +45,11 @@ survives red/green colour blindness.
 - **Reseed** — the old letter fades out, honey refills with a rising-fill animation, the
   new letter fades in. A reseed should read as a reward, not a loss.
 - **Sting** — screen shake, red vignette, health bar flash.
+- **Bee arrival** — the bee flies in from beyond the rim along the line from the board's
+  centre through its entry cell. It does not descend onto a cell: doing so made bees
+  appear *on top of* the board rather than arriving at it.
+- **Bee turning** — a bee rotates on the spot towards its next cell before setting off,
+  taking the short way round so it never spins most of a circle to face a neighbour.
 - **Intro and game over** — the honeycomb scales up from the centre, and letters fall
   away at the end, both **staggered outward by ring**. The ring stagger makes the
   honeycomb's structure legible as structure, which is the game's visual identity.
@@ -103,6 +113,11 @@ ever arrives, belongs in an options screen.
 An environment is semantically opaque to the rules: it is "visual variant N", not
 "weather". A theme whose levels change planets rather than skies requires no changes
 outside itself.
+
+Each kind of bee has a continuous buzz while it is on the board, pitched and wobbled
+differently, so a player can hear which is present — and that both are — without looking
+away. Each environment sustains a quiet drone bed, so the world changing is something
+heard as well as seen.
 
 Sprites and sound effects are **procedural** — drawn as vector art and synthesised
 through Web Audio rather than loaded as assets. This keeps the MVP free of an asset

@@ -37,6 +37,8 @@ export function createGame(deps: GameDeps, seed: number): Game {
     drainPauseRemainingMs: deps.levels[0]?.drainPauseMs ?? 0,
     drainRampElapsedMs: 0,
     msSinceSpawn: 0,
+    waveElapsedMs: 0,
+    inWave: true,
     elapsedMs: 0,
     nextBeeId: 1,
     events: [],
@@ -152,7 +154,8 @@ export function releaseTrail(game: Game): void {
   }
 
   const wordLength = lettersIn(trail, state.cells)
-  const harvest = harvestFor(trail.length, wordLength, deps.config, level)
+  const letters = trail.map((cellKey) => state.cells.get(cellKey)!.letter)
+  const harvest = harvestFor(letters, wordLength, deps.config, level)
   const { restored, pauseMs } = restoreFor(wordLength, deps.config, level)
 
   state.played.add(verdict.word)
@@ -171,7 +174,7 @@ export function releaseTrail(game: Game): void {
     healthRestored: state.health - healthBefore,
   })
 
-  for (const cellKey of trail) takeHoney(game, cellKey, harvest.perCell)
+  trail.forEach((cellKey, index) => takeHoney(game, cellKey, harvest.perCell[index]!))
 
   applyLevel(game)
 }

@@ -3,50 +3,53 @@ import { takeHoney } from './reseed'
 import type { Bee, BeeIntent, BeeType, Game, Level } from './types'
 
 /**
- * Bees: arrive, roam the honeycomb with a purpose, sip, and leave.
+ * Bees: arrive in waves, roam with a purpose, sip, and leave.
  *
- * Movement is erratic but not aimless. A bee holds an intent that biases which
- * neighbour it steps onto, and a cell's honey level is a record of how the player has
- * been playing — the cells they keep using are the empty ones. So a forager drifts
- * towards untouched honey while a hunter drifts towards the player's favourite
- * letters, looking for someone to sting.
+ * A bee's purpose comes from its type. A forager drifts towards untouched honey; a
+ * hunter drifts towards drained cells, because a cell's honey level is a record of how
+ * the player has been playing and the cells they keep using are the empty ones. The
+ * two read the same information and pull in opposite directions.
  *
- * Levels override the intent weights, so a bee's disposition shifts across the
- * difficulty curve rather than being fixed for the whole game.
+ * Bees do not come continuously. Each level alternates a wave, during which they may
+ * arrive, with a calm, during which none do — a threat that is always present stops
+ * being a threat.
  *
  * See docs/design/gameplay.md and docs/adr/0005-bee-behaviour-lives-on-bee-types.md.
  */
 
-const INTENTS: readonly BeeIntent[] = ['forage', 'hunt', 'wander']
-
-/** A bee type with the current level's overrides applied. */
+/** A bee type with the level's overrides and speed applied. */
 export function beeTypeFor(game: Game, typeId: string, level: Level): BeeType {
   const base = game.deps.beeTypes[typeId]
   if (!base) throw new Error(`unknown bee type: ${typeId}`)
-  return { ...base, ...level.bees.overrides }
+
+  const merged = { ...base, ...level.bees.overrides }
+  const speed = level.bees.speed > 0 ? level.bees.speed : 1
+  if (speed === 1) return merged
+
+  // Speed scales the clock rather than each interval, so a level quickens bees without
+  // restating every timing it did not want to change.
+  return {
+    ...merged,
+    hopIntervalMs: merged.hopIntervalMs / speed,
+    sipDurationMs: merged.sipDurationMs / speed,
+    turnMs: merged.turnMs / speed,
+    arrivalMs: merged.arrivalMs / speed,
+  }
 }
 
 /** A bee is only a hazard once it has landed and before it starts leaving. */
 export function isOnBoard(bee: Bee): boolean {
-  return bee.phase === 'hopping' || bee.phase === 'sipping'
+  return bee.phase === 'hopping' || bee.phase === 'turning' || bee.phase === 'sipping'
 }
 
 function cellKeyOf(bee: Bee): string {
   return key(bee.at)
 }
 
-function chooseIntent(game: Game, type: BeeType): BeeIntent {
-  const weights = INTENTS.map((intent) => [intent, type.intentWeights[intent] ?? 0] as const)
-  const total = weights.reduce((sum, [, weight]) => sum + weight, 0)
-  if (total <= 0) return 'wander'
-  return game.deps.rng.weighted(weights)
-}
-
 /**
- * How appealing a cell is to a bee with this intent, before the floor is added.
+ * How appealing a cell is to this intent, before the floor is added.
  *
- * Honey is expressed as a fraction of capacity so the scale is the same whatever
- * capacity is configured.
+ * Honey is a fraction of capacity so the scale holds whatever capacity is configured.
  */
 function appetite(intent: BeeIntent, fill: number): number {
   switch (intent) {
@@ -59,12 +62,7 @@ function appetite(intent: BeeIntent, fill: number): number {
   }
 }
 
-/**
- * Where a bee enters.
- *
- * Always an outer-ring cell, so bees visibly arrive from outside rather than
- * materialising in the middle of the player's route.
- */
+/** Where a bee enters: always the outer ring, so it arrives from outside the board. */
 function chooseEntry(game: Game) {
   const outer = [...game.state.cells.values()].filter(
     (cell) => cell.ring === game.deps.config.board.rings,
@@ -72,14 +70,27 @@ function chooseEntry(game: Game) {
   return outer.length > 0 ? game.deps.rng.pick(outer) : null
 }
 
+/**
+ * Which kind to send next.
+ *
+ * At most one of each type is ever present, so two bees are always one of each rather
+ * than a pair of the same — which is both fairer and legible.
+ */
+function chooseType(game: Game, level: Level): string | null {
+  const present = new Set(game.state.bees.map((bee) => bee.typeId))
+  const available = level.bees.types.filter((typeId) => !present.has(typeId))
+  return available.length > 0 ? game.deps.rng.pick(available) : null
+}
+
 function spawn(game: Game, level: Level): void {
-  const { state, deps } = game
-  if (level.bees.types.length === 0) return
+  const { state } = game
+
+  const typeId = chooseType(game, level)
+  if (typeId === null) return
 
   const entry = chooseEntry(game)
   if (!entry) return
 
-  const typeId = deps.rng.pick(level.bees.types)
   const type = beeTypeFor(game, typeId, level)
 
   state.bees.push({
@@ -87,34 +98,40 @@ function spawn(game: Game, level: Level): void {
     typeId,
     at: entry.at,
     cameFrom: null,
-    intent: chooseIntent(game, type),
+    turningTo: null,
     exiting: false,
     hops: 0,
     sipsTaken: 0,
     timerMs: type.arrivalMs,
     phase: 'arriving',
   })
+
+  state.events.push({
+    kind: 'beeApproaching',
+    beeId: state.nextBeeId - 1,
+    typeId,
+    cellKey: key(entry.at),
+    durationMs: type.arrivalMs,
+  })
 }
 
 /**
- * Pick the next cell, weighted by intent.
+ * Pick the next cell, weighted by the type's intent.
  *
  * Every neighbour keeps at least `intentFloor` of weight, so an inclination never
- * becomes a rail — a forager can still wander onto an empty cell, and the player can
- * never be certain where a bee will go.
+ * becomes a rail — a forager can still cross an empty cell.
  */
 function chooseNext(game: Game, bee: Bee, type: BeeType): string | null {
   const { state, deps } = game
   const capacity = deps.config.honey.cellCapacity
-  const here = cellKeyOf(bee)
-  const neighbours = game.adjacency.get(here)
+  const neighbours = game.adjacency.get(cellKeyOf(bee))
   if (!neighbours || neighbours.length === 0) return null
 
   const weighted = neighbours.map((neighbourKey) => {
     const cell = state.cells.get(neighbourKey)!
     const fill = capacity > 0 ? Math.max(0, Math.min(1, cell.honey / capacity)) : 0
 
-    let weight = appetite(bee.intent, fill) + type.intentFloor
+    let weight = appetite(type.intent, fill) + type.intentFloor
     // Doubling straight back reads as indecision rather than erratic movement.
     if (neighbourKey === bee.cameFrom) weight *= 1 - type.revisitAversion
 
@@ -129,67 +146,25 @@ function chooseNext(game: Game, bee: Bee, type: BeeType): string | null {
 
 function settle(game: Game, bee: Bee, type: BeeType): void {
   // A bee on its way out is full, and has no reason to stop.
-  if (bee.exiting) {
-    bee.phase = 'hopping'
-    bee.timerMs = type.hopIntervalMs
+  if (!bee.exiting && game.deps.rng.chance(type.sipChance)) {
+    bee.phase = 'sipping'
+    bee.timerMs = type.sipDurationMs
     return
   }
 
-  if (game.deps.rng.chance(type.sipChance)) {
-    bee.phase = 'sipping'
-    bee.timerMs = type.sipDurationMs
-  } else {
-    // A bee that does not sip still blocks its cell, which costs the player routing
-    // options rather than honey. That is why sipChance falls in later levels.
-    bee.phase = 'hopping'
-    bee.timerMs = type.hopIntervalMs
-  }
+  // A bee that does not sip still blocks its cell, which costs the player routing
+  // options rather than honey.
+  bee.phase = 'hopping'
+  bee.timerMs = type.hopIntervalMs
 }
 
-/** Turn the bee towards the rim. It keeps hopping until it gets there. */
 function beginExit(bee: Bee): void {
   bee.exiting = true
 }
 
-/** The bee has reached the edge and is now flying off it. */
 function leave(bee: Bee, type: BeeType): void {
   bee.phase = 'leaving'
   bee.timerMs = type.departureMs
-}
-
-/**
- * One step of the flight home.
- *
- * Any neighbour on a higher ring is one hop closer to the edge, so a greedy step
- * outward is also the shortest route — no search needed on a board this shape.
- */
-function exitStep(game: Game, bee: Bee, type: BeeType): void {
-  const { state, deps } = game
-  const here = state.cells.get(cellKeyOf(bee))!
-
-  if (here.ring >= deps.config.board.rings) {
-    leave(bee, type)
-    return
-  }
-
-  const neighbours = game.adjacency.get(cellKeyOf(bee)) ?? []
-  const outward = neighbours.filter((neighbourKey) => {
-    const cell = state.cells.get(neighbourKey)
-    return cell !== undefined && cell.ring > here.ring
-  })
-
-  const next = outward.length > 0 ? deps.rng.pick(outward) : null
-  if (next === null) {
-    leave(bee, type)
-    return
-  }
-
-  bee.cameFrom = cellKeyOf(bee)
-  bee.at = state.cells.get(next)!.at
-
-  state.events.push({ kind: 'beeMoved', beeId: bee.id, cellKey: next })
-  bee.phase = 'hopping'
-  bee.timerMs = type.hopIntervalMs
 }
 
 function sip(game: Game, bee: Bee, type: BeeType): void {
@@ -215,29 +190,73 @@ function sip(game: Game, bee: Bee, type: BeeType): void {
   bee.timerMs = type.hopIntervalMs
 }
 
-function hop(game: Game, bee: Bee, type: BeeType): void {
+/**
+ * The next cell on the way out.
+ *
+ * Any neighbour on a higher ring is one hop closer to the edge, so a greedy step
+ * outward is already the shortest route — no search needed for a board this shape.
+ */
+function exitTarget(game: Game, bee: Bee): string | null {
   const { state, deps } = game
+  const here = state.cells.get(cellKeyOf(bee))!
+  if (here.ring >= deps.config.board.rings) return null
 
-  // Out of patience counts as done, and a done bee flies out rather than vanishing.
+  const outward = (game.adjacency.get(cellKeyOf(bee)) ?? []).filter((neighbourKey) => {
+    const cell = state.cells.get(neighbourKey)
+    return cell !== undefined && cell.ring > here.ring
+  })
+
+  return outward.length > 0 ? deps.rng.pick(outward) : null
+}
+
+/**
+ * Choose a destination and turn towards it.
+ *
+ * The turn is a phase of its own rather than something that happens during travel, so
+ * a bee visibly commits to a direction before it moves — which is what makes its next
+ * move readable instead of a surprise.
+ */
+function aim(game: Game, bee: Bee, type: BeeType): void {
   if (!bee.exiting && bee.hops >= type.maxHops) beginExit(bee)
 
-  if (bee.exiting) {
-    exitStep(game, bee, type)
-    return
-  }
+  const next = bee.exiting ? exitTarget(game, bee) : chooseNext(game, bee, type)
 
-  if (deps.rng.chance(type.intentShiftChance)) bee.intent = chooseIntent(game, type)
-
-  const next = chooseNext(game, bee, type)
   if (next === null) {
-    beginExit(bee)
-    exitStep(game, bee, type)
+    if (bee.exiting) {
+      leave(bee, type)
+    } else {
+      beginExit(bee)
+      bee.phase = 'hopping'
+      bee.timerMs = type.hopIntervalMs
+    }
     return
   }
 
-  const cell = state.cells.get(next)!
+  bee.turningTo = next
+  bee.phase = 'turning'
+  bee.timerMs = type.turnMs
+
+  game.state.events.push({
+    kind: 'beeTurning',
+    beeId: bee.id,
+    cellKey: next,
+    durationMs: type.turnMs,
+  })
+}
+
+/** Complete the move the bee has already turned towards. */
+function travel(game: Game, bee: Bee, type: BeeType): void {
+  const { state } = game
+  const next = bee.turningTo
+
+  if (next === null || !state.cells.has(next)) {
+    settle(game, bee, type)
+    return
+  }
+
   bee.cameFrom = cellKeyOf(bee)
-  bee.at = cell.at
+  bee.at = state.cells.get(next)!.at
+  bee.turningTo = null
   bee.hops++
 
   state.events.push({ kind: 'beeMoved', beeId: bee.id, cellKey: next })
@@ -254,7 +273,12 @@ function stepBee(game: Game, bee: Bee, level: Level, dtMs: number): boolean {
 
   switch (bee.phase) {
     case 'arriving':
-      state.events.push({ kind: 'beeArrived', beeId: bee.id, cellKey: cellKeyOf(bee) })
+      state.events.push({
+        kind: 'beeArrived',
+        beeId: bee.id,
+        cellKey: cellKeyOf(bee),
+        typeId: bee.typeId,
+      })
       settle(game, bee, type)
       return true
 
@@ -263,7 +287,11 @@ function stepBee(game: Game, bee: Bee, level: Level, dtMs: number): boolean {
       return true
 
     case 'hopping':
-      hop(game, bee, type)
+      aim(game, bee, type)
+      return true
+
+    case 'turning':
+      travel(game, bee, type)
       return true
 
     case 'leaving':
@@ -277,33 +305,56 @@ function stepBee(game: Game, bee: Bee, level: Level, dtMs: number): boolean {
 }
 
 /**
+ * Advance the wave clock.
+ *
+ * A calm ends only once the board is clear, so a wave never begins on top of stragglers
+ * from the last one — the point of a calm is that the player gets a breather.
+ */
+function advanceWave(game: Game, level: Level, dtMs: number): void {
+  const { state } = game
+  const { waveMs, calmMs } = level.bees
+
+  if (waveMs <= 0 && calmMs <= 0) {
+    state.inWave = true
+    return
+  }
+
+  state.waveElapsedMs += dtMs
+
+  if (state.inWave) {
+    if (state.waveElapsedMs >= waveMs) {
+      state.inWave = false
+      state.waveElapsedMs = 0
+    }
+    return
+  }
+
+  if (state.waveElapsedMs >= calmMs && state.bees.length === 0) {
+    state.inWave = true
+    state.waveElapsedMs = 0
+  }
+}
+
+/**
  * Advance every bee, then top the population back up.
  *
- * A leaving bee still occupies its cell and can still sting, so it counts against the
- * maximum. It does not count towards the minimum, because a level that insists on a
- * bee being present should not be satisfied by one on its way out.
+ * Spawning happens only inside a wave. Bees already on the board finish their visit
+ * during a calm rather than vanishing.
  */
 export function stepBees(game: Game, level: Level, dtMs: number): void {
   const { state } = game
 
   state.bees = state.bees.filter((bee) => stepBee(game, bee, level, dtMs))
 
+  advanceWave(game, level, dtMs)
+
   state.msSinceSpawn += dtMs
+  if (!state.inWave) return
+  if (state.bees.length >= level.bees.max) return
+  if (state.msSinceSpawn < level.bees.spawnIntervalMs) return
 
-  const present = state.bees.length
-  const staying = state.bees.filter((bee) => bee.phase !== 'leaving').length
-
-  if (staying < level.bees.min && present < level.bees.max) {
-    spawn(game, level)
-    state.msSinceSpawn = 0
-    return
-  }
-
-  if (present < level.bees.max && state.msSinceSpawn >= level.bees.spawnIntervalMs) {
-    spawn(game, level)
-    state.msSinceSpawn = 0
-  }
+  spawn(game, level)
+  state.msSinceSpawn = 0
 }
 
-/** Exposed for tests and tuning: the ring a coordinate sits on. */
 export { ring }

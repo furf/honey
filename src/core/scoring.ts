@@ -43,12 +43,23 @@ export function byWordLength(table: ByWordLength, length: number): number {
 }
 
 export interface Harvest {
-  /** Honey removed from each cell in the word. */
-  readonly perCell: number
+  /** Honey removed from each cell, in the trail's order. */
+  readonly perCell: readonly number[]
   /** Honey removed from the board in total. */
   readonly fromBoard: number
   /** Honey added to the pot, after the length multiplier. */
   readonly toPot: number
+}
+
+/**
+ * How much a letter gives up per word, as a multiple of the level's harvest.
+ *
+ * Rare letters pay more and so empty in fewer words, which makes them self-clearing
+ * rather than a dead cell the player routes around.
+ * See docs/adr/0001-idle-decay-and-capacity-based-honey.md.
+ */
+export function rarityOf(letter: string, config: GameConfig): number {
+  return config.honey.rarityHarvest[letter] ?? config.honey.rarityHarvestDefault
 }
 
 /**
@@ -59,13 +70,15 @@ export interface Harvest {
  * faster, so a player chasing long words does not starve the honeycomb.
  */
 export function harvestFor(
-  cellCount: number,
+  letters: readonly string[],
   wordLength: number,
   config: GameConfig,
   level: Level,
 ): Harvest {
-  const perCell = config.honey.cellCapacity * level.harvestPercent
-  const fromBoard = perCell * cellCount
+  const base = config.honey.cellCapacity * level.harvestPercent
+
+  const perCell = letters.map((letter) => base * rarityOf(letter, config))
+  const fromBoard = perCell.reduce((sum, amount) => sum + amount, 0)
   const multiplier = byWordLength(config.scoring.lengthMultipliers, wordLength)
 
   return { perCell, fromBoard, toPot: fromBoard * multiplier }

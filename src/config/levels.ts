@@ -3,126 +3,180 @@ import type { Level } from '../core/types'
 /**
  * The difficulty curve, as data.
  *
- * Progression that reads as a rule is usually just a row in this table. "Bees slow
- * down on the level that introduces a second bee" is not logic — it is level 4's
- * hopIntervalMs being larger than level 3's.
+ * Ten levels rather than six. Testers reported levels passing too quickly — measured
+ * against the old thresholds the first two flipped past in three and five words, before
+ * anything had happened. Each level here is paced at roughly eight to twelve words, so
+ * a bee has room to arrive, do something and leave before the world changes again.
  *
- * Bee disposition shifts with the levels. Early bees mostly forage and barely notice
- * the player; later ones increasingly hunt, drifting towards the cells the player has
- * drained — because an empty cell is a record of the letters they keep using.
+ * Bees arrive in waves with calm between them. Constant presence removes the suspense:
+ * a threat that is always there stops being a threat. Waves lengthen and calms shorten
+ * as levels progress, so pressure builds rather than being switched on.
  *
- * sipChance *falls* as levels progress. A greedy bee fills up and leaves; a reluctant
- * one lingers, and a resting bee still blocks its cell. Lowering sipChance therefore
- * costs the player routing options rather than honey, which is the greater threat.
+ * Disposition shifts by which kinds a level fields. The first bee a player ever meets
+ * is a forager, which mostly ignores them; hunters arrive once bees are understood.
+ * Level 1 has no bees at all, so words come first.
  *
- * Level 1 has no bees at all, so a new player learns to form words before learning to
- * avoid anything.
+ * `speed` scales every bee timing, so bees quicken across the curve without restating
+ * each interval.
  */
 export const levels: readonly Level[] = [
   {
     honeyThreshold: 0,
     environmentId: 'sunnyDay',
-    healthDrainPerSecond: 0.8,
-    drainPauseMs: 12_000,
+    healthDrainPerSecond: 0.7,
+    drainPauseMs: 13000,
     harvestPercent: 0.2,
-    bees: { types: [], min: 0, max: 0, spawnIntervalMs: 0 },
+    bees: {
+      types: [],
+      max: 0,
+      spawnIntervalMs: 0,
+      waveMs: 0,
+      calmMs: 0,
+      speed: 1.0,
+    },
     transition: { sound: 'level.sunnyDay', durationMs: 800 },
   },
   {
-    honeyThreshold: 300,
-    environmentId: 'clearNight',
-    healthDrainPerSecond: 1.0,
-    drainPauseMs: 11_000,
+    honeyThreshold: 900,
+    environmentId: 'sunnyDay',
+    healthDrainPerSecond: 0.8,
+    drainPauseMs: 12000,
     harvestPercent: 0.2,
     bees: {
-      types: ['worker'],
-      min: 0,
+      types: ['forager'],
       max: 1,
-      spawnIntervalMs: 15_000,
-      overrides: {
-        sipChance: 0.9,
-        hopIntervalMs: 1500,
-        intentWeights: { forage: 9, hunt: 1, wander: 3 },
-      },
+      spawnIntervalMs: 6000,
+      waveMs: 12000,
+      calmMs: 16000,
+      speed: 1.0,
+    },
+    transition: { sound: 'level.sunnyDay', durationMs: 800 },
+  },
+  {
+    honeyThreshold: 2000,
+    environmentId: 'clearNight',
+    healthDrainPerSecond: 0.9,
+    drainPauseMs: 11500,
+    harvestPercent: 0.2,
+    bees: {
+      types: ['forager'],
+      max: 1,
+      spawnIntervalMs: 6000,
+      waveMs: 16000,
+      calmMs: 14000,
+      speed: 1.05,
     },
     transition: { sound: 'level.clearNight', durationMs: 800 },
   },
   {
-    honeyThreshold: 800,
-    environmentId: 'cloudyDay',
-    healthDrainPerSecond: 1.3,
-    drainPauseMs: 10_000,
+    honeyThreshold: 3400,
+    environmentId: 'clearNight',
+    healthDrainPerSecond: 1.0,
+    drainPauseMs: 11000,
     harvestPercent: 0.2,
     bees: {
-      types: ['worker'],
-      min: 0,
+      types: ['forager', 'hunter'],
       max: 1,
-      spawnIntervalMs: 13_000,
-      overrides: {
-        sipChance: 0.8,
-        hopIntervalMs: 1200,
-        intentWeights: { forage: 6, hunt: 2, wander: 3 },
-      },
+      spawnIntervalMs: 6000,
+      waveMs: 18000,
+      calmMs: 13000,
+      speed: 1.1,
+    },
+    transition: { sound: 'level.clearNight', durationMs: 800 },
+  },
+  {
+    honeyThreshold: 5100,
+    environmentId: 'cloudyDay',
+    healthDrainPerSecond: 1.2,
+    drainPauseMs: 10500,
+    harvestPercent: 0.2,
+    bees: {
+      types: ['forager', 'hunter'],
+      max: 1,
+      spawnIntervalMs: 5500,
+      waveMs: 22000,
+      calmMs: 12000,
+      speed: 1.15,
     },
     transition: { sound: 'level.cloudyDay', durationMs: 800 },
   },
   {
-    honeyThreshold: 1600,
-    environmentId: 'forebodingNight',
-    healthDrainPerSecond: 1.6,
-    drainPauseMs: 9_500,
+    honeyThreshold: 7100,
+    environmentId: 'cloudyDay',
+    healthDrainPerSecond: 1.4,
+    drainPauseMs: 10000,
     harvestPercent: 0.2,
     bees: {
-      types: ['worker'],
-      min: 0,
+      types: ['forager', 'hunter'],
       max: 2,
-      spawnIntervalMs: 12_000,
-      // Eased relative to level 3: a second bee arrives here, and two difficulty
-      // increases should never land at once.
-      overrides: {
-        sipChance: 0.7,
-        hopIntervalMs: 1400,
-        intentWeights: { forage: 4, hunt: 4, wander: 3 },
-      },
+      spawnIntervalMs: 5500,
+      waveMs: 24000,
+      calmMs: 11000,
+      speed: 1.2,
+    },
+    transition: { sound: 'level.cloudyDay', durationMs: 800 },
+  },
+  {
+    honeyThreshold: 9400,
+    environmentId: 'forebodingNight',
+    healthDrainPerSecond: 1.6,
+    drainPauseMs: 9500,
+    harvestPercent: 0.2,
+    bees: {
+      types: ['forager', 'hunter'],
+      max: 2,
+      spawnIntervalMs: 5000,
+      waveMs: 28000,
+      calmMs: 10000,
+      speed: 1.3,
     },
     transition: { sound: 'level.forebodingNight', durationMs: 800 },
   },
   {
-    honeyThreshold: 2800,
+    honeyThreshold: 12000,
     environmentId: 'stormyDay',
-    healthDrainPerSecond: 2.0,
-    drainPauseMs: 9_000,
+    healthDrainPerSecond: 1.9,
+    drainPauseMs: 9000,
     harvestPercent: 0.2,
     bees: {
-      types: ['worker'],
-      min: 0,
+      types: ['forager', 'hunter'],
       max: 2,
-      spawnIntervalMs: 11_000,
-      overrides: {
-        sipChance: 0.55,
-        hopIntervalMs: 1100,
-        intentWeights: { forage: 2, hunt: 6, wander: 2 },
-      },
+      spawnIntervalMs: 5000,
+      waveMs: 32000,
+      calmMs: 9000,
+      speed: 1.4,
     },
     transition: { sound: 'level.stormyDay', durationMs: 800 },
   },
   {
-    honeyThreshold: 4400,
-    environmentId: 'stormyNight',
-    healthDrainPerSecond: 2.5,
-    drainPauseMs: 8_000,
+    honeyThreshold: 15000,
+    environmentId: 'stormyDay',
+    healthDrainPerSecond: 2.2,
+    drainPauseMs: 8500,
     harvestPercent: 0.2,
     bees: {
-      types: ['worker'],
-      // The board is never bee-free at the top level.
-      min: 1,
+      types: ['forager', 'hunter'],
       max: 2,
-      spawnIntervalMs: 10_000,
-      overrides: {
-        sipChance: 0.45,
-        hopIntervalMs: 900,
-        intentWeights: { forage: 1, hunt: 9, wander: 2 },
-      },
+      spawnIntervalMs: 4500,
+      waveMs: 38000,
+      calmMs: 8000,
+      speed: 1.5,
+    },
+    transition: { sound: 'level.stormyDay', durationMs: 800 },
+  },
+  {
+    honeyThreshold: 18500,
+    environmentId: 'stormyNight',
+    healthDrainPerSecond: 2.5,
+    drainPauseMs: 8000,
+    harvestPercent: 0.2,
+    bees: {
+      types: ['forager', 'hunter'],
+      max: 2,
+      spawnIntervalMs: 4000,
+      waveMs: 45000,
+      calmMs: 7000,
+      speed: 1.6,
     },
     transition: { sound: 'level.stormyNight', durationMs: 800 },
   },

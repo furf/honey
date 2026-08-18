@@ -9,8 +9,9 @@ Vocabulary is defined in [CONTEXT.md](../../CONTEXT.md).
 
 ## The honeycomb
 
-The honeycomb is rings 0 through 3 — one centre cell and three concentric bands,
-37 cells total. Pointy-top hexagons in axial coordinates, so every cell has a direct
+The honeycomb is rings 0 through `config.board.rings` around a centre cell — two rings
+by default, 19 cells. Fewer cells means bigger letters and less analysis paralysis.
+Three rings remains supported and is one configuration value away. Pointy-top hexagons in axial coordinates, so every cell has a direct
 east and west neighbour and no direct north or south. Each cell holds a position, a
 letter, and a quantity of honey. Positions never change for the life of a game.
 
@@ -43,14 +44,17 @@ cannot be formed and are excluded from both word lists.
 ## Honey and scoring
 
 Every cell has the same capacity, `config.honey.cellCapacity`. A valid word removes
-`level.harvestPercent` of capacity from *each* cell in the word. The player's pot
+`level.harvestPercent` of capacity from each cell, **scaled by the rarity of that
+cell's letter** (`config.honey.rarityHarvest`). A `Z` gives up more than an `E`, so it
+pays better and empties in fewer words — rare letters clear themselves off the board
+instead of becoming a cell to route around. The player's pot
 receives that total multiplied by a length multiplier drawn from
 `config.scoring.lengthMultipliers`, so longer words are worth disproportionately more
 than the honey they actually remove from the board.
 
 When a cell's honey reaches zero it **reseeds**: it takes a new letter and its honey is
-restored to full. Because transfers are fractions of a constant capacity, the number of
-words a cell survives is fixed and a player can count it.
+restored to full. The honey meter shows how much is left rather than how many words
+remain, since a rare letter empties faster than a common one.
 
 ## Health
 
@@ -72,25 +76,40 @@ A bee enters on the outer ring, hops between adjacent cells, and occasionally st
 sip. It occupies exactly one cell at a time, and any trail that reaches that cell is
 stung.
 
-Bee movement is erratic, but not aimless. A bee carries an **intent** that biases which
-neighbour it steps onto:
+There are two kinds of bee, and they are different **types** rather than two moods of
+one — so each has its own sprite and its own buzz, and which is present is legible at a
+glance and audible without looking:
 
-- **Forage** — drawn towards fuller cells, looking for honey.
-- **Hunt** — drawn towards emptier cells, looking for the player. A cell's honey level
+- **Forager** — drawn towards fuller cells, looking for honey. Wears a flower and
+  carries a pollen basket.
+- **Hunter** — drawn towards emptier cells, looking for the player. A cell's honey level
   is a record of how the player has been playing, and the cells they keep using are the
-  drained ones, so an empty cell is where a sting is most likely to land.
-- **Wander** — no preference.
+  drained ones, so an empty cell is where a sting is most likely to land. Leaner, with a
+  visible stinger.
 
-Intent is drawn from `beeType.intentWeights` on arrival, and may be reconsidered at each
-hop with probability `beeType.intentShiftChance`, so a visit is never scripted. Every
-neighbour keeps at least `beeType.intentFloor` of weight regardless of intent — without
-a floor an inclination becomes a rail, and a forager could never cross an empty cell.
-A bee also avoids doubling straight back, in proportion to `beeType.revisitAversion`,
-because ping-ponging between two cells reads as indecision rather than movement.
+At most **one of each kind** is ever on the board, so two bees are always one of each
+rather than a pair of the same.
 
-Levels override the intent weights, so a bee's disposition shifts across the difficulty
-curve: early bees mostly forage and barely notice the player, later ones increasingly
-hunt.
+Movement is erratic but not aimless. Every neighbour keeps at least
+`beeType.intentFloor` of weight regardless of intent — without a floor an inclination
+becomes a rail, and a forager could never cross an empty cell. A bee also avoids
+doubling straight back, in proportion to `beeType.revisitAversion`, because
+ping-ponging between two cells reads as indecision rather than movement.
+
+Disposition shifts across the difficulty curve by **which kinds a level fields**. The
+first bee a player ever meets is a forager, which mostly ignores them; hunters arrive
+once bees are understood.
+
+Before each move a bee **turns on the spot** towards its next cell over
+`beeType.turnMs`, and only then flies. The turn is a phase of its own rather than
+something that happens during travel, so a bee visibly commits to a direction before it
+moves. It is still standing on its cell while turning, so it still stings.
+
+Bees do not arrive continuously. Each level alternates a **wave**, during which bees may
+arrive, with a **calm**, during which none do — a threat that is always present stops
+being a threat. Waves lengthen and calms shorten as levels progress. A calm ends only
+once the board is clear, so a wave never begins on top of stragglers from the last one.
+`level.bees.speed` scales every bee timing, so bees quicken across the curve.
 
 A bee is done when it fills up, or after `beeType.maxHops` if it has not — a bee that
 rarely sips would otherwise never leave at all.
@@ -114,12 +133,9 @@ A bee that does not sip still blocks its cell. Lowering `sipChance` therefore ma
 bees more obstructive per unit of honey stolen, costing the player routing options
 rather than honey.
 
-The number of bees present is kept within `level.bees.min` and `level.bees.max`: below
-the minimum one spawns immediately, below the maximum one spawns on
-`level.bees.spawnIntervalMs`. A departing bee still occupies its cell and can still
-sting, so it counts against the maximum — but it does not count towards the minimum,
-because a level that insists on a bee being present should not be satisfied by one on
-its way out.
+Bees arrive on `level.bees.spawnIntervalMs` while a wave is running, up to
+`level.bees.max`. A departing bee still occupies its cell and can still sting, so it
+counts against the maximum.
 
 ## Levels
 

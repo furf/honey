@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { byWordLength, harvestFor, levelIndexFor } from './scoring'
 import { testConfig as config, testLevel } from './testSupport'
-import type { Level } from './types'
+import type { GameConfig, Level } from './types'
 
 const level = testLevel({ harvestPercent: 0.2 })
 
@@ -23,35 +23,68 @@ describe('byWordLength', () => {
 })
 
 describe('harvestFor', () => {
+  /** testConfig carries no rarity table, so every letter harvests at the base rate. */
+  const plain = (count: number) => Array.from({ length: count }, () => 'E')
+
   it('takes a share of capacity from each cell, not of what is left', () => {
     // A share of the current level approaches zero without arriving, so cells would
     // never empty and would never reseed.
-    const harvest = harvestFor(4, 4, config, level)
-    expect(harvest.perCell).toBe(20)
+    const harvest = harvestFor(plain(4), 4, config, level)
+    expect(harvest.perCell).toEqual([20, 20, 20, 20])
     expect(harvest.fromBoard).toBe(80)
   })
 
-  it('empties a cell in a fixed, countable number of words', () => {
-    const { perCell } = harvestFor(1, 4, config, level)
-    expect(config.honey.cellCapacity / perCell).toBe(5)
+  it('empties a common letter in five words', () => {
+    const { perCell } = harvestFor(plain(1), 4, config, level)
+    expect(config.honey.cellCapacity / perCell[0]!).toBe(5)
   })
 
   it('pays the pot more than the board loses, for longer words', () => {
-    const harvest = harvestFor(6, 6, config, level)
+    const harvest = harvestFor(plain(6), 6, config, level)
     expect(harvest.fromBoard).toBe(120)
     expect(harvest.toPot).toBe(240)
   })
 
   it('pays a four-letter word at face value', () => {
-    const harvest = harvestFor(4, 4, config, level)
+    const harvest = harvestFor(plain(4), 4, config, level)
     expect(harvest.toPot).toBe(harvest.fromBoard)
   })
 
   it('charges the board by cells but pays the pot by letters', () => {
     // QUIT: three cells, four letters. The board loses three cells' worth.
-    const harvest = harvestFor(3, 4, config, level)
+    const harvest = harvestFor(plain(3), 4, config, level)
     expect(harvest.fromBoard).toBe(60)
     expect(harvest.toPot).toBe(60)
+  })
+})
+
+describe('rarity', () => {
+  const rare: GameConfig = {
+    ...config,
+    honey: { ...config.honey, rarityHarvest: { E: 0.8, Z: 2.5 }, rarityHarvestDefault: 1 },
+  }
+
+  it('takes more from a rare letter than a common one', () => {
+    const harvest = harvestFor(['Z', 'E'], 4, rare, level)
+    expect(harvest.perCell[0]).toBeGreaterThan(harvest.perCell[1]!)
+  })
+
+  it('empties a rare letter in fewer words, so it clears itself off the board', () => {
+    const words = (letter: string) =>
+      rare.honey.cellCapacity / harvestFor([letter], 4, rare, level).perCell[0]!
+
+    expect(words('Z')).toBeLessThan(words('E'))
+    expect(words('Z')).toBeCloseTo(2, 5)
+  })
+
+  it('pays the player more for using one', () => {
+    expect(harvestFor(['Z'], 4, rare, level).toPot).toBeGreaterThan(
+      harvestFor(['E'], 4, rare, level).toPot,
+    )
+  })
+
+  it('falls back to the default for a letter with no entry', () => {
+    expect(harvestFor(['K'], 4, rare, level).perCell[0]).toBe(20)
   })
 })
 

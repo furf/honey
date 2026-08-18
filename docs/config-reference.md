@@ -40,6 +40,8 @@ down on the level that introduces a second bee" is not logic; it is one cell of
 | Variable | Controls |
 |---|---|
 | `cellCapacity` | Honey a full cell holds. All transfers are percentages of this |
+| `rarityHarvest` | Multiplier on the harvest percentage, by letter — rare letters pay more and empty sooner |
+| `rarityHarvestDefault` | Applied to any letter absent from that table |
 
 ### `config.scoring`
 
@@ -69,6 +71,13 @@ down on the level that introduces a second bee" is not logic; it is one cell of
 | `rareLetterCaps` | Per-letter caps on duplicates of rare letters |
 | `reseedHistoryDepth` | How many past letters a cell remembers, to force variety on reseed |
 | `maxGenerationAttempts` | Attempts before relaxing invariants rather than hanging |
+| `lengthWeights` | Score per findable word by length — what makes the generator trade quantity for length |
+| `familyWeight` | Score for words sharing a stem, which is what lets a player score in runs |
+| `bigramWeight` | Score for neighbouring letters that actually follow one another in English |
+| `longWordLetters` | Letters that make a word count as long |
+| `minLongWords` | Long words a board must offer to be accepted |
+| `hillClimbSteps` | Single-cell improvements tried when refining a board |
+| `reseedSharpness` | How sharply a reseed prefers the best letter. Low values let a refined board erode back to noise during play |
 
 ### `config.board`
 
@@ -94,9 +103,11 @@ down on the level that introduces a second bee" is not logic; it is one cell of
 | `drainPauseMs` | How long a valid word suspends the drain |
 | `harvestPercent` | Percentage of cell capacity a harvest removes |
 | `bees.types` | Which bee types may spawn |
-| `bees.min` | Bees below which one spawns immediately |
 | `bees.max` | Bees above which none spawn |
 | `bees.spawnIntervalMs` | Cadence of spawns below the maximum |
+| `bees.waveMs` | How long bees may arrive for |
+| `bees.calmMs` | How long the board stays clear afterwards |
+| `bees.speed` | Scales every bee timing this level — above 1 is faster |
 | `bees.overrides` | Per-level overrides of any bee type field |
 | `transition.sound` | Sound marking entry into this level |
 | `transition.durationMs` | Length of the environment transition |
@@ -112,8 +123,10 @@ down on the level that introduces a second bee" is not logic; it is one cell of
 | `sipDurationMs` | Pause while sipping |
 | `arrivalMs` | How long the approach is visible before the bee can sting |
 | `departureMs` | How long a departing bee stays visible on its way out |
-| `intentWeights` | Weights over forage / hunt / wander — what this bee is inclined to do |
-| `intentShiftChance` | Chance of reconsidering intent at each hop |
+| `intent` | What this kind is for: forage or hunt. Fixed per type |
+| `turnMs` | How long it turns on the spot before setting off |
+| `ambientSound` | Continuous buzz while it is on the board |
+| `approachSound` | Played as it arrives |
 | `intentFloor` | Weight every neighbour keeps regardless of intent, so inclination never becomes a rail |
 | `revisitAversion` | How strongly a bee avoids doubling straight back, 0 to 1 |
 | `maxHops` | Hops before a bee gives up and leaves, however little it collected |
@@ -121,7 +134,8 @@ down on the level that introduces a second bee" is not logic; it is one cell of
 
 Intent is where a bee's character lives. A forager reads as indifferent to the player;
 a hunter reads as stalking them, because it drifts towards the cells they have drained.
-Levels override `intentWeights`, so disposition shifts along the difficulty curve.
+Disposition shifts along the difficulty curve by which types a level fields, and at most
+one of each kind is on the board at a time.
 
 Falling `sipChance` in later levels makes bees linger rather than fill and leave — a
 resting bee still blocks its cell, so it costs routing options rather than honey. See
@@ -136,7 +150,7 @@ resting bee still blocks its cell, so it costs routing options rather than honey
 | `sprites` | Procedural draw functions, keyed by sprite id |
 | `logo` | Wordmark for the welcome screen |
 | `sounds` | Web Audio synthesis recipes, keyed by event |
-| `music` | Declared for future use; unused in the MVP |
+| `music` | Sustained sound names per environment — the drone bed under each world |
 | `strings` | Branded copy — title, tagline, game-over message. Not functional UI labels |
 | `environments[]` | Ordered visual variants: background, ambient sound, particles, tint, optional transition renderer |
 | `prefers` | Optional default dictionary and generator, overridable by configuration |

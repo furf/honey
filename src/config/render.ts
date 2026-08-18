@@ -33,7 +33,8 @@ export interface RenderConfig {
   readonly beeTravelMs: number
   readonly beeWingHz: number
   readonly beeSize: number
-  readonly beeArriveDrop: number
+  /** How far beyond the rim a bee starts its flight in, in cell radii. */
+  readonly beeEntryDistance: number
 
   /** Per-ring delay for the intro and game-over sweeps. */
   readonly ringStaggerMs: number
@@ -70,7 +71,7 @@ export const renderConfig: RenderConfig = {
   beeTravelMs: 260,
   beeWingHz: 14,
   beeSize: 1.15,
-  beeArriveDrop: 3.2,
+  beeEntryDistance: 5.5,
 
   ringStaggerMs: 70,
   introMs: 620,

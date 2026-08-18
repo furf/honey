@@ -121,6 +121,29 @@ export function centredText(
   ctx.restore()
 }
 
+/**
+ * Darken a colour towards black.
+ *
+ * Lets a state colour supply both halves of a cell — the honey portion and the empty
+ * portion — so the honey boundary stays legible while the cell reads as blue, green or
+ * red. Without it every theme would have to declare a second shade of every state.
+ */
+export function darken(colour: string, amount: number): string {
+  const hex = colour.trim()
+  if (!hex.startsWith('#') || (hex.length !== 7 && hex.length !== 4)) return colour
+
+  const expand = hex.length === 4
+  const part = (index: number) => {
+    const raw = expand
+      ? hex[1 + index]! + hex[1 + index]!
+      : hex.slice(1 + index * 2, 3 + index * 2)
+    return Math.round(parseInt(raw, 16) * (1 - amount))
+  }
+
+  const channels = [part(0), part(1), part(2)]
+  return `rgb(${channels[0]}, ${channels[1]}, ${channels[2]})`
+}
+
 /** Linear interpolation, used all over the animation code. */
 export function lerp(from: number, to: number, t: number): number {
   return from + (to - from) * t

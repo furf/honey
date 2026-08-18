@@ -29,6 +29,14 @@ export const palette: Palette = {
   beeStripe: '#2b1a08',
   beeWing: 'rgba(255, 255, 255, 0.7)',
 
+  // The two kinds must be tellable apart while moving on a small screen, so they
+  // differ in silhouette as well as colour.
+  foragerFlower: '#ff7bb0',
+  foragerFlowerCentre: '#fff3a8',
+  foragerPollen: '#ffb31f',
+  hunterBody: '#e2892c',
+  hunterSting: '#3d1206',
+
   hudText: '#fff6e2',
   hudGood: '#4fd66f',
   hudWarn: '#f6b93b',

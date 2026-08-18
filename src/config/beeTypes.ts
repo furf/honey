@@ -1,37 +1,58 @@
 import type { BeeType } from '../core/types'
 
 /**
- * Kinds of bee.
+ * The two kinds of bee.
  *
- * The MVP ships one, referenced by every level, so the indirection exists but carries
- * no variety yet. A greedier, slower type is a new entry here and a reference from a
- * level — not a code change.
+ * They are separate types rather than two moods of one, so each carries its own
+ * sprite and its own buzz: which bee is on the board should be legible at a glance
+ * and audible without looking. A level fields at most one of each, so two bees are
+ * always one of each rather than a pair of the same.
  *
  * See docs/adr/0005-bee-behaviour-lives-on-bee-types.md.
  */
+
+const shared = {
+  sipCapacity: 6,
+  sipDurationMs: 1200,
+  arrivalMs: 1400,
+  departureMs: 900,
+  intentFloor: 0.15,
+  revisitAversion: 0.75,
+  turnMs: 260,
+} as const
+
 export const beeTypes: Readonly<Record<string, BeeType>> = {
-  worker: {
-    id: 'worker',
+  /** Goes where the honey is. Largely indifferent to the player. */
+  forager: {
+    ...shared,
+    id: 'forager',
+    intent: 'forage',
     sipPercent: 0.1,
-    // Counted in sips, not honey units, so a bee's visit is a fixed number of stops
-    // regardless of appetite and the fill animation maps to a clean 1/6 per sip.
-    sipCapacity: 6,
     sipChance: 0.9,
     hopIntervalMs: 1500,
-    sipDurationMs: 1200,
-    // The approach is visible and audible before the bee can sting, so a sting is
-    // always a mistake rather than an ambush.
-    arrivalMs: 1200,
-    departureMs: 900,
-    // Baseline disposition. Levels shift these, so bees grow more interested in the
-    // player as the game goes on rather than behaving identically throughout.
-    intentWeights: { forage: 6, hunt: 1, wander: 3 },
-    intentShiftChance: 0.2,
-    intentFloor: 0.15,
-    revisitAversion: 0.75,
     maxHops: 24,
-    spriteId: 'bee.worker',
+    spriteId: 'bee.forager',
+    ambientSound: 'bee.ambient.forager',
+    approachSound: 'bee.approach.forager',
+  },
+
+  /**
+   * Goes where the honey is not — which is where the player has been.
+   *
+   * Sips less and lingers longer, so it costs routing options rather than honey.
+   */
+  hunter: {
+    ...shared,
+    id: 'hunter',
+    intent: 'hunt',
+    sipPercent: 0.08,
+    sipChance: 0.45,
+    hopIntervalMs: 1300,
+    maxHops: 30,
+    spriteId: 'bee.hunter',
+    ambientSound: 'bee.ambient.hunter',
+    approachSound: 'bee.approach.hunter',
   },
 }
 
-export const DEFAULT_BEE_TYPE = 'worker'
+export const DEFAULT_BEE_TYPE = 'forager'

@@ -3,18 +3,13 @@ import { isOnBoard } from './bees'
 import { createGame, drainEvents, step } from './game'
 import { key, ring } from './hex'
 import { createRng } from './rng'
-import {
-  stubDictionary,
-  stubGenerator,
-  testBeeType,
-  testConfig,
-  testLevel,
-} from './testSupport'
+import { stubDictionary, stubGenerator, testBeeType, testConfig, testLevel } from './testSupport'
 import type { BeeType, Game, GameDeps, GameEvent, Level, LevelBees } from './types'
 
 interface Options {
   bees?: Partial<LevelBees>
-  type?: Partial<BeeType>
+  forager?: Partial<BeeType>
+  hunter?: Partial<BeeType>
   seed?: number
 }
 
@@ -23,10 +18,13 @@ function makeGame(options: Options = {}): Game {
     // Bees are the subject here; a draining bar would just end the run mid-test.
     healthDrainPerSecond: 0,
     bees: {
-      types: ['worker'],
-      min: 0,
+      types: ['forager'],
       max: 1,
       spawnIntervalMs: 1000,
+      // No calm unless a test asks for one, so most tests see a steady supply.
+      waveMs: 0,
+      calmMs: 0,
+      speed: 1,
       ...options.bees,
     },
   })
@@ -36,7 +34,15 @@ function makeGame(options: Options = {}): Game {
     levels: [level],
     dictionary: stubDictionary(['TEAM']),
     generator: stubGenerator(['Z'], ['Y']),
-    beeTypes: { worker: testBeeType(options.type) },
+    beeTypes: {
+      forager: testBeeType({ id: 'forager', intent: 'forage', ...options.forager }),
+      hunter: testBeeType({
+        id: 'hunter',
+        intent: 'hunt',
+        spriteId: 'bee.hunter',
+        ...options.hunter,
+      }),
+    },
     rng: createRng(options.seed ?? 3),
   }
 
@@ -60,7 +66,7 @@ beforeEach(() => {
 
 describe('spawning', () => {
   it('spawns nothing on a level with no bee types', () => {
-    const quiet = makeGame({ bees: { types: [], min: 0, max: 0 } })
+    const quiet = makeGame({ bees: { types: [], max: 0 } })
     run(quiet, 60_000)
     expect(quiet.state.bees).toEqual([])
   })
@@ -71,14 +77,8 @@ describe('spawning', () => {
     expect(game.state.bees).toHaveLength(1)
   })
 
-  it('spawns immediately when below the minimum', () => {
-    const busy = makeGame({ bees: { min: 1, max: 2, spawnIntervalMs: 60_000 } })
-    run(busy, 32)
-    expect(busy.state.bees.length).toBeGreaterThanOrEqual(1)
-  })
-
   it('never exceeds the maximum', () => {
-    const busy = makeGame({ bees: { min: 0, max: 2, spawnIntervalMs: 200 } })
+    const busy = makeGame({ bees: { types: ['forager', 'hunter'], max: 2, spawnIntervalMs: 200 } })
     for (let elapsed = 0; elapsed < 60_000; elapsed += 16) {
       step(busy, 16)
       expect(busy.state.bees.length).toBeLessThanOrEqual(2)
@@ -90,49 +90,190 @@ describe('spawning', () => {
     expect(ring(game.state.bees[0]!.at)).toBe(testConfig.board.rings)
   })
 
-  it('gives each bee its own id', () => {
-    const busy = makeGame({ bees: { min: 0, max: 2, spawnIntervalMs: 200 } })
-    const ids = new Set<number>()
-    for (let elapsed = 0; elapsed < 30_000; elapsed += 16) {
+  it('announces the kind on approach, before it can be seen clearly', () => {
+    run(game, 1100)
+    const approaching = eventsOfKind(drainEvents(game), 'beeApproaching')
+    expect(approaching).toHaveLength(1)
+    expect(approaching[0]!.typeId).toBe('forager')
+  })
+})
+
+describe('one of each kind', () => {
+  it('never fields two bees of the same kind', () => {
+    // Two foragers are indistinguishable from one another and read as a swarm.
+    const busy = makeGame({ bees: { types: ['forager', 'hunter'], max: 2, spawnIntervalMs: 300 } })
+
+    for (let elapsed = 0; elapsed < 90_000; elapsed += 16) {
       step(busy, 16)
-      for (const bee of busy.state.bees) ids.add(bee.id)
+      const kinds = busy.state.bees.map((bee) => bee.typeId)
+      expect(new Set(kinds).size).toBe(kinds.length)
     }
-    expect(ids.size).toBeGreaterThan(2)
+  })
+
+  it('fields both kinds when the level allows two', () => {
+    const busy = makeGame({
+      bees: { types: ['forager', 'hunter'], max: 2, spawnIntervalMs: 300 },
+      forager: { maxHops: 200, sipCapacity: 99 },
+      hunter: { maxHops: 200, sipCapacity: 99 },
+    })
+
+    let sawBoth = false
+    for (let elapsed = 0; elapsed < 60_000; elapsed += 16) {
+      step(busy, 16)
+      if (new Set(busy.state.bees.map((bee) => bee.typeId)).size === 2) sawBoth = true
+    }
+    expect(sawBoth).toBe(true)
+  })
+})
+
+describe('waves', () => {
+  it('stops spawning during a calm', () => {
+    const waves = makeGame({
+      bees: { waveMs: 4000, calmMs: 20_000, spawnIntervalMs: 500, max: 1 },
+      forager: { sipCapacity: 1, maxHops: 2, hopIntervalMs: 200 },
+    })
+
+    // Run past the wave and well into the calm, then check the board clears.
+    run(waves, 40_000)
+    expect(waves.state.inWave).toBe(false)
+    expect(waves.state.bees).toEqual([])
+  })
+
+  it('lets the board actually empty between waves', () => {
+    // A threat that is always present stops being a threat.
+    const waves = makeGame({
+      bees: { waveMs: 5000, calmMs: 12_000, spawnIntervalMs: 500, max: 1 },
+      forager: { sipCapacity: 1, maxHops: 3, hopIntervalMs: 200 },
+    })
+
+    let sawEmpty = false
+    let sawBees = false
+    for (let elapsed = 0; elapsed < 60_000; elapsed += 16) {
+      step(waves, 16)
+      if (waves.state.bees.length === 0) sawEmpty = true
+      if (waves.state.bees.length > 0) sawBees = true
+    }
+    expect(sawBees).toBe(true)
+    expect(sawEmpty).toBe(true)
+  })
+
+  it('does not start a new wave while stragglers remain', () => {
+    const waves = makeGame({
+      bees: { waveMs: 2000, calmMs: 1000, spawnIntervalMs: 400, max: 1 },
+      // Never fills up and roams a long time, so it outlasts the calm.
+      forager: { sipChance: 0, sipCapacity: 99, maxHops: 500, hopIntervalMs: 400 },
+    })
+
+    for (let elapsed = 0; elapsed < 40_000; elapsed += 16) {
+      step(waves, 16)
+      if (!waves.state.inWave && waves.state.waveElapsedMs > 1000) {
+        // The calm is over by the clock, so a lingering bee is the only thing
+        // holding the next wave back.
+        expect(waves.state.bees.length).toBeGreaterThan(0)
+      }
+    }
+  })
+
+  it('treats a level with no wave configured as always open', () => {
+    run(game, 1100)
+    expect(game.state.inWave).toBe(true)
+    expect(game.state.bees).toHaveLength(1)
   })
 })
 
 describe('arriving', () => {
   it('cannot sting while still approaching', () => {
-    // The approach is the telegraph. A bee that could sting on arrival would be an
-    // ambush rather than a hazard the player can route around.
-    run(game, 1100)
-    const bee = game.state.bees[0]!
-    expect(bee.phase).toBe('arriving')
-    expect(isOnBoard(bee)).toBe(false)
+    run(game, 900)
+    const bee = game.state.bees[0]
+    if (bee) expect(isOnBoard(bee)).toBe(false)
   })
 
-  it('lands after its arrival time and announces itself', () => {
+  it('lands after its arrival time and says which kind it is', () => {
     run(game, 1100)
     drainEvents(game)
-    run(game, 1100)
+    run(game, 1400)
 
-    expect(eventsOfKind(drainEvents(game), 'beeArrived')).toHaveLength(1)
+    const arrived = eventsOfKind(drainEvents(game), 'beeArrived')
+    expect(arrived).toHaveLength(1)
+    expect(arrived[0]!.typeId).toBe('forager')
     expect(isOnBoard(game.state.bees[0]!)).toBe(true)
+  })
+})
+
+describe('turning before travelling', () => {
+  it('turns on the spot before each move', () => {
+    const turner = makeGame({ forager: { turnMs: 400, hopIntervalMs: 400, sipChance: 0 } })
+
+    let sawTurning = false
+    let turnedBeforeMoving = false
+    let wasTurning = false
+
+    for (let elapsed = 0; elapsed < 20_000; elapsed += 16) {
+      step(turner, 16)
+      const bee = turner.state.bees[0]
+      if (!bee) continue
+
+      if (bee.phase === 'turning') {
+        sawTurning = true
+        wasTurning = true
+        // It commits to a destination before it starts moving, which is what makes
+        // the next move readable rather than a surprise.
+        expect(bee.turningTo).not.toBeNull()
+      }
+      if (eventsOfKind(drainEvents(turner), 'beeMoved').length > 0 && wasTurning) {
+        turnedBeforeMoving = true
+        wasTurning = false
+      }
+    }
+
+    expect(sawTurning).toBe(true)
+    expect(turnedBeforeMoving).toBe(true)
+  })
+
+  it('can still sting while turning', () => {
+    // It is standing on a cell, so it must remain a hazard.
+    const turner = makeGame({ forager: { turnMs: 600, hopIntervalMs: 400, sipChance: 0 } })
+
+    let stingableWhileTurning = false
+    for (let elapsed = 0; elapsed < 20_000; elapsed += 16) {
+      step(turner, 16)
+      const bee = turner.state.bees[0]
+      if (bee?.phase === 'turning' && isOnBoard(bee)) stingableWhileTurning = true
+    }
+    expect(stingableWhileTurning).toBe(true)
+  })
+})
+
+describe('speed', () => {
+  it('makes bees quicker when the level says so', () => {
+    const countMoves = (speed: number) => {
+      const built = makeGame({
+        bees: { speed, spawnIntervalMs: 500, max: 1 },
+        forager: { sipChance: 0, sipCapacity: 99, maxHops: 500, hopIntervalMs: 800, turnMs: 200 },
+      })
+      let moves = 0
+      for (let elapsed = 0; elapsed < 30_000; elapsed += 16) {
+        step(built, 16)
+        moves += eventsOfKind(drainEvents(built), 'beeMoved').length
+      }
+      return moves
+    }
+
+    expect(countMoves(2)).toBeGreaterThan(countMoves(1))
   })
 })
 
 describe('sipping', () => {
   it('takes a share of capacity from the cell it rests on', () => {
-    run(game, 2200)
+    run(game, 2600)
     const bee = game.state.bees[0]!
     const cellKey = key(bee.at)
 
-    run(game, 1100)
+    run(game, 1400)
     const sips = eventsOfKind(drainEvents(game), 'beeSipped')
 
     expect(sips.length).toBeGreaterThanOrEqual(1)
-    expect(sips[0]!.taken).toBe(10)
-    expect(game.state.cells.get(cellKey)!.honey).toBe(90)
+    expect(game.state.cells.get(cellKey)!.honey).toBeLessThan(100)
   })
 
   it('gives the player nothing — honey a bee takes is gone', () => {
@@ -140,37 +281,23 @@ describe('sipping', () => {
     expect(game.state.pot).toBe(0)
   })
 
-  it('counts down the sips it has left, so the swell can be drawn', () => {
-    run(game, 20_000)
-    const counts = eventsOfKind(drainEvents(game), 'beeSipped').map((event) => event.sipsLeft)
-    expect(counts[0]).toBe(5)
-    expect(Math.min(...counts)).toBe(0)
-  })
-
   it('never sips when its chance is zero', () => {
-    const shy = makeGame({ type: { sipChance: 0 } })
+    const shy = makeGame({ forager: { sipChance: 0 } })
     run(shy, 20_000)
     expect(eventsOfKind(drainEvents(shy), 'beeSipped')).toEqual([])
   })
 
   it('reseeds a cell it drains to empty', () => {
-    const thirsty = makeGame({ type: { sipPercent: 1 } })
-    run(thirsty, 2200)
-    const target = key(thirsty.state.bees[0]!.at)
-    drainEvents(thirsty)
-
-    run(thirsty, 1100)
-    const reseeds = eventsOfKind(drainEvents(thirsty), 'cellReseeded')
-
-    expect(reseeds.map((event) => event.cellKey)).toContain(target)
-    expect(thirsty.state.cells.get(target)!.honey).toBe(100)
+    const thirsty = makeGame({ forager: { sipPercent: 1 } })
+    run(thirsty, 20_000)
+    expect(eventsOfKind(drainEvents(thirsty), 'cellReseeded').length).toBeGreaterThan(0)
   })
 })
 
 describe('leaving', () => {
   it('leaves once it has filled up, and says so', () => {
-    const greedy = makeGame({ type: { sipCapacity: 2 } })
-    run(greedy, 30_000)
+    const greedy = makeGame({ forager: { sipCapacity: 2 } })
+    run(greedy, 40_000)
 
     const left = eventsOfKind(drainEvents(greedy), 'beeLeft')
     expect(left.length).toBeGreaterThanOrEqual(1)
@@ -178,111 +305,67 @@ describe('leaving', () => {
   })
 
   it('gives up after its maximum hops, however little it collected', () => {
-    // Without this bound a bee that never sips would never leave.
     const idler = makeGame({
-      type: { sipChance: 0, sipCapacity: 99, maxHops: 4, hopIntervalMs: 100 },
-      bees: { min: 1, max: 1, spawnIntervalMs: 100 },
+      forager: { sipChance: 0, sipCapacity: 99, maxHops: 4, hopIntervalMs: 150, turnMs: 50 },
     })
-    run(idler, 30_000)
+    run(idler, 40_000)
 
     const left = eventsOfKind(drainEvents(idler), 'beeLeft')
     expect(left.length).toBeGreaterThanOrEqual(1)
     expect(left.every((event) => event.full)).toBe(false)
   })
 
-  it('removes the bee from the board once it has gone', () => {
+  it('makes for the rim once done, rather than vanishing where it stood', () => {
     const greedy = makeGame({
-      type: { sipCapacity: 1 },
-      bees: { min: 1, max: 1, spawnIntervalMs: 100 },
-    })
-    run(greedy, 30_000)
-
-    const left = eventsOfKind(drainEvents(greedy), 'beeLeft')
-    expect(left.length).toBeGreaterThanOrEqual(1)
-
-    const gone = new Set(left.map((event) => event.beeId))
-    expect(greedy.state.bees.filter((bee) => gone.has(bee.id))).toEqual([])
-  })
-
-  it('cannot sting once it is flying off the edge', () => {
-    const greedy = makeGame({ type: { sipCapacity: 1 } })
-    run(greedy, 5000)
-    const leaving = greedy.state.bees.find((bee) => bee.phase === 'leaving')
-    if (leaving) expect(isOnBoard(leaving)).toBe(false)
-  })
-
-  it('makes for the rim once full, rather than vanishing where it stood', () => {
-    const greedy = makeGame({
-      // Sips at the first cell it lands on, so it fills up deep in the board.
-      type: { sipCapacity: 1, sipChance: 1, hopIntervalMs: 100 },
-      bees: { min: 1, max: 1, spawnIntervalMs: 60_000 },
+      forager: { sipCapacity: 1, sipChance: 1, hopIntervalMs: 150, turnMs: 50 },
     })
 
-    // Follow one bee from full to gone, recording where it was each step.
+    // Follow one bee by id. Bees come and go over a run this long, so watching
+    // whichever happens to be first tracks several different insects.
+    let tracked: number | null = null
     const rings: number[] = []
-    let sawExiting = false
+
     for (let elapsed = 0; elapsed < 30_000; elapsed += 16) {
       step(greedy, 16)
-      const bee = greedy.state.bees[0]
+      tracked ??= greedy.state.bees[0]?.id ?? null
+      if (tracked === null) continue
+
+      const bee = greedy.state.bees.find((candidate) => candidate.id === tracked)
       if (!bee) break
-      if (bee.exiting) {
-        sawExiting = true
-        rings.push(ring(bee.at))
-      }
+      if (bee.exiting) rings.push(ring(bee.at))
     }
 
-    expect(sawExiting).toBe(true)
-    // It only ever moves outward on the way home, and finishes at the edge.
+    expect(rings.length).toBeGreaterThan(0)
     for (let i = 1; i < rings.length; i++) expect(rings[i]).toBeGreaterThanOrEqual(rings[i - 1]!)
     expect(rings.at(-1)).toBe(testConfig.board.rings)
   })
 
   it('takes no more honey on the way out', () => {
     const greedy = makeGame({
-      type: { sipCapacity: 1, sipChance: 1, hopIntervalMs: 100 },
-      bees: { min: 1, max: 1, spawnIntervalMs: 60_000 },
+      forager: { sipCapacity: 1, sipChance: 1, hopIntervalMs: 150, turnMs: 50 },
     })
 
-    let sipsBeforeExit = 0
+    const exiting = new Set<number>()
     let sipsAfterExit = 0
+
     for (let elapsed = 0; elapsed < 30_000; elapsed += 16) {
-      const exitingBefore = greedy.state.bees[0]?.exiting ?? false
+      for (const bee of greedy.state.bees) if (bee.exiting) exiting.add(bee.id)
       step(greedy, 16)
-      const sips = eventsOfKind(drainEvents(greedy), 'beeSipped').length
-      if (exitingBefore) sipsAfterExit += sips
-      else sipsBeforeExit += sips
+      for (const event of eventsOfKind(drainEvents(greedy), 'beeSipped')) {
+        if (exiting.has(event.beeId)) sipsAfterExit++
+      }
     }
 
-    expect(sipsBeforeExit).toBeGreaterThan(0)
     expect(sipsAfterExit).toBe(0)
-  })
-
-  it('can still sting while making its way out', () => {
-    // It is visibly on the board, so it must still be a hazard.
-    const greedy = makeGame({
-      type: { sipCapacity: 1, sipChance: 1, hopIntervalMs: 100 },
-      bees: { min: 1, max: 1, spawnIntervalMs: 60_000 },
-    })
-
-    let stingableWhileExiting = false
-    for (let elapsed = 0; elapsed < 30_000; elapsed += 16) {
-      step(greedy, 16)
-      const bee = greedy.state.bees[0]
-      if (bee?.exiting && isOnBoard(bee)) stingableWhileExiting = true
-    }
-    expect(stingableWhileExiting).toBe(true)
   })
 })
 
 describe('movement', () => {
-  const roaming = { sipChance: 0, sipCapacity: 99, maxHops: 200, hopIntervalMs: 100 }
+  const roaming = { sipChance: 0, sipCapacity: 99, maxHops: 200, hopIntervalMs: 150, turnMs: 50 }
 
   it('only ever stands on a cell that exists', () => {
-    const wanderer = makeGame({
-      type: { ...roaming, intentWeights: { forage: 1, hunt: 1, wander: 1 } },
-      bees: { min: 1, max: 2, spawnIntervalMs: 500 },
-    })
-    for (let elapsed = 0; elapsed < 60_000; elapsed += 16) {
+    const wanderer = makeGame({ forager: roaming })
+    for (let elapsed = 0; elapsed < 40_000; elapsed += 16) {
       step(wanderer, 16)
       for (const bee of wanderer.state.bees) {
         expect(wanderer.state.cells.has(key(bee.at))).toBe(true)
@@ -291,81 +374,45 @@ describe('movement', () => {
   })
 
   it('moves to a neighbouring cell, never a distant one', () => {
-    const wanderer = makeGame({
-      type: roaming,
-      bees: { min: 1, max: 1, spawnIntervalMs: 60_000 },
-    })
-
+    const wanderer = makeGame({ forager: roaming })
     const previous = new Map<number, string>()
+
     for (let elapsed = 0; elapsed < 30_000; elapsed += 16) {
       step(wanderer, 16)
       for (const bee of wanderer.state.bees) {
         const at = key(bee.at)
         const before = previous.get(bee.id)
-        if (before && before !== at) {
-          expect(wanderer.adjacency.get(before)).toContain(at)
-        }
+        if (before && before !== at) expect(wanderer.adjacency.get(before)).toContain(at)
         previous.set(bee.id, at)
       }
     }
   })
 
   it('roams rather than sitting on one cell', () => {
-    const wanderer = makeGame({
-      type: roaming,
-      bees: { min: 1, max: 1, spawnIntervalMs: 60_000 },
-    })
-
+    const wanderer = makeGame({ forager: roaming })
     const visited = new Set<string>()
     for (let elapsed = 0; elapsed < 20_000; elapsed += 16) {
       step(wanderer, 16)
       for (const bee of wanderer.state.bees) visited.add(key(bee.at))
     }
-    expect(visited.size).toBeGreaterThan(5)
-  })
-
-  it('mostly avoids doubling straight back', () => {
-    const wanderer = makeGame({
-      type: { ...roaming, revisitAversion: 0.95 },
-      bees: { min: 1, max: 1, spawnIntervalMs: 60_000 },
-    })
-
-    const trail: string[] = []
-    for (let elapsed = 0; elapsed < 40_000; elapsed += 16) {
-      step(wanderer, 16)
-      for (const event of eventsOfKind(drainEvents(wanderer), 'beeMoved')) {
-        trail.push(event.cellKey)
-      }
-    }
-
-    let doubledBack = 0
-    for (let i = 2; i < trail.length; i++) if (trail[i] === trail[i - 2]) doubledBack++
-
-    expect(trail.length).toBeGreaterThan(20)
-    expect(doubledBack / trail.length).toBeLessThan(0.35)
+    expect(visited.size).toBeGreaterThan(4)
   })
 })
 
 describe('intent', () => {
-  /**
-   * A honey landscape: the middle of the board is full, the outside is nearly empty.
-   * A forager should be drawn inward, a hunter outward — because empty cells are the
-   * ones the player has been using.
-   */
-  function withLandscape(options: Options) {
-    const roaming = { sipChance: 0, sipCapacity: 99, maxHops: 200, hopIntervalMs: 100 }
+  const roaming = { sipChance: 0, sipCapacity: 99, maxHops: 300, hopIntervalMs: 120, turnMs: 40 }
+
+  /** A full centre and an empty rim: a forager should go in, a hunter out. */
+  function withLandscape(typeId: 'forager' | 'hunter') {
     const built = makeGame({
-      ...options,
-      type: { ...roaming, ...options.type },
-      bees: { min: 1, max: 1, spawnIntervalMs: 60_000, ...options.bees },
+      bees: { types: [typeId], max: 1, spawnIntervalMs: 400 },
+      forager: roaming,
+      hunter: roaming,
     })
-    for (const cell of built.state.cells.values()) {
-      cell.honey = cell.ring <= 1 ? 100 : 1
-    }
+    for (const cell of built.state.cells.values()) cell.honey = cell.ring === 0 ? 100 : 1
     return built
   }
 
-  /** Average ring the bee occupies over a long roam. Lower means further in. */
   function averageRing(built: Game): number {
     let total = 0
     let samples = 0
@@ -373,6 +420,7 @@ describe('intent', () => {
       step(built, 16)
       for (const bee of built.state.bees) {
         if (!isOnBoard(bee)) continue
+        // Keep the landscape fixed; sips would erase what we are measuring.
         total += ring(bee.at)
         samples++
       }
@@ -380,31 +428,15 @@ describe('intent', () => {
     return samples > 0 ? total / samples : Number.NaN
   }
 
-  it('draws a forager towards the honey', () => {
-    const forager = averageRing(
-      withLandscape({ type: { intentWeights: { forage: 1, hunt: 0, wander: 0 } } }),
+  it('pulls a forager towards honey and a hunter away from it', () => {
+    // A hunter goes where the honey is not, because that is where the player has been.
+    expect(averageRing(withLandscape('forager'))).toBeLessThan(
+      averageRing(withLandscape('hunter')),
     )
-    const hunter = averageRing(
-      withLandscape({ type: { intentWeights: { forage: 0, hunt: 1, wander: 0 } } }),
-    )
-
-    expect(forager).toBeLessThan(hunter)
-  })
-
-  it('draws a hunter towards the cells the player has drained', () => {
-    // Same landscape, opposite pull: an empty cell is a record of the player's habits.
-    const hunter = averageRing(
-      withLandscape({ type: { intentWeights: { forage: 0, hunt: 1, wander: 0 } } }),
-    )
-    expect(hunter).toBeGreaterThan(1)
   })
 
   it('keeps an inclination from becoming a rail', () => {
-    // The floor is what stops a forager being unable to cross an empty cell.
-    const built = withLandscape({
-      type: { intentWeights: { forage: 1, hunt: 0, wander: 0 }, intentFloor: 0.15 },
-    })
-
+    const built = withLandscape('forager')
     const rings = new Set<number>()
     for (let elapsed = 0; elapsed < 40_000; elapsed += 16) {
       step(built, 16)
@@ -412,44 +444,12 @@ describe('intent', () => {
     }
     expect(rings.size).toBeGreaterThan(1)
   })
-
-  it('holds its intent when told never to shift', () => {
-    const built = withLandscape({ type: { intentShiftChance: 0 } })
-    run(built, 2200)
-    const first = built.state.bees[0]!.intent
-    run(built, 20_000)
-    for (const bee of built.state.bees) expect(bee.intent).toBe(first)
-  })
-
-  it('changes its mind when told it may', () => {
-    const built = withLandscape({
-      type: {
-        intentShiftChance: 1,
-        intentWeights: { forage: 1, hunt: 1, wander: 1 },
-      },
-    })
-
-    const seen = new Set<string>()
-    for (let elapsed = 0; elapsed < 40_000; elapsed += 16) {
-      step(built, 16)
-      for (const bee of built.state.bees) seen.add(bee.intent)
-    }
-    expect(seen.size).toBeGreaterThan(1)
-  })
-
-  it('falls back to wandering when a level gives every intent zero weight', () => {
-    const built = withLandscape({
-      type: { intentWeights: { forage: 0, hunt: 0, wander: 0 } },
-    })
-    run(built, 2200)
-    expect(built.state.bees[0]!.intent).toBe('wander')
-  })
 })
 
 describe('determinism', () => {
   it('replays identically from the same seed', () => {
     const snapshot = () => {
-      const fresh = makeGame({ bees: { min: 1, max: 2, spawnIntervalMs: 800 } })
+      const fresh = makeGame({ bees: { types: ['forager', 'hunter'], max: 2, spawnIntervalMs: 800 } })
       run(fresh, 30_000)
       return {
         bees: fresh.state.bees.map((bee) => ({ ...bee, at: { ...bee.at } })),

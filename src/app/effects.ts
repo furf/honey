@@ -25,17 +25,33 @@ export interface Popup {
   readonly kind: 'harvest' | 'sip'
 }
 
-export interface BeeTravel {
-  readonly fromKey: string | null
-  readonly toKey: string
-  readonly startedMs: number
+/**
+ * Where a bee is visually, which is not quite where it logically is.
+ *
+ * The rules move a bee between cells instantly; this carries the flight in from
+ * off-board, the turn on the spot, and the glide between cells.
+ */
+export interface BeeVisual {
+  fromKey: string | null
+  toKey: string
+  travelStartedMs: number
+  /** Set while the bee is still flying in from outside the board. */
+  enteringUntilMs: number
+  enteringFromMs: number
+  /** Facing, in radians, and the turn currently under way. */
+  turnFrom: number
+  turnTo: number
+  turnStartedMs: number
+  turnMs: number
 }
 
 export interface Effects {
   flashes: CellFlash[]
   popups: Popup[]
   /** Where each bee is visually, which lags where it logically is. */
-  beeTravel: Map<number, BeeTravel>
+  bees: Map<number, BeeVisual>
+  /** Ambient sounds that should be playing, by name. */
+  ambient: Set<string>
   /** Cell honey as drawn, easing towards the real value. */
   drawnHoney: Map<string, number>
   shakeUntilMs: number
@@ -46,7 +62,8 @@ export function createEffects(): Effects {
   return {
     flashes: [],
     popups: [],
-    beeTravel: new Map(),
+    bees: new Map(),
+    ambient: new Set(),
     drawnHoney: new Map(),
     shakeUntilMs: 0,
     shakeStartedMs: 0,
@@ -120,21 +137,50 @@ export function applyEvent(effects: Effects, event: GameEvent, ctx: EffectContex
       ctx.play('cell.reseeded')
       break
 
-    case 'beeArrived':
-      effects.beeTravel.set(event.beeId, {
+    case 'beeApproaching':
+      effects.bees.set(event.beeId, {
         fromKey: null,
         toKey: event.cellKey,
-        startedMs: nowMs,
+        travelStartedMs: nowMs,
+        enteringFromMs: nowMs,
+        enteringUntilMs: nowMs + event.durationMs,
+        turnFrom: 0,
+        turnTo: 0,
+        turnStartedMs: nowMs,
+        turnMs: 0,
       })
+      ctx.play(`bee.approach.${event.typeId}`)
       break
 
+    case 'beeArrived': {
+      const visual = effects.bees.get(event.beeId)
+      if (visual) {
+        visual.enteringUntilMs = nowMs
+        visual.toKey = event.cellKey
+      }
+      break
+    }
+
+    case 'beeTurning': {
+      const visual = effects.bees.get(event.beeId)
+      if (visual) {
+        visual.turnFrom = visual.turnTo
+        visual.turnStartedMs = nowMs
+        visual.turnMs = event.durationMs
+        // The target angle is filled in by the renderer, which is the only thing that
+        // knows where cells sit on screen.
+        visual.turnTo = Number.NaN
+      }
+      break
+    }
+
     case 'beeMoved': {
-      const previous = effects.beeTravel.get(event.beeId)
-      effects.beeTravel.set(event.beeId, {
-        fromKey: previous?.toKey ?? null,
-        toKey: event.cellKey,
-        startedMs: nowMs,
-      })
+      const visual = effects.bees.get(event.beeId)
+      if (visual) {
+        visual.fromKey = visual.toKey
+        visual.toKey = event.cellKey
+        visual.travelStartedMs = nowMs
+      }
       break
     }
 
@@ -149,7 +195,7 @@ export function applyEvent(effects: Effects, event: GameEvent, ctx: EffectContex
       break
 
     case 'beeLeft':
-      effects.beeTravel.delete(event.beeId)
+      effects.bees.delete(event.beeId)
       break
 
     case 'levelChanged':

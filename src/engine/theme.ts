@@ -29,6 +29,11 @@ export interface Palette {
   readonly bee: string
   readonly beeStripe: string
   readonly beeWing: string
+  readonly foragerFlower: string
+  readonly foragerFlowerCentre: string
+  readonly foragerPollen: string
+  readonly hunterBody: string
+  readonly hunterSting: string
 
   readonly hudText: string
   readonly hudGood: string
@@ -89,8 +94,13 @@ export interface Theme {
   /** Draw the wordmark for the welcome screen. */
   readonly logo: (ctx: CanvasRenderingContext2D, width: number, height: number) => void
   readonly sounds: Readonly<Record<string, SoundRecipe>>
-  /** Declared for future use; unused in the MVP. */
-  readonly music: null
+  /**
+   * Sustained sounds that play while an environment is shown, keyed by environment id.
+   *
+   * Named rather than embedded, so a music bed is just more entries in `sounds` and
+   * the audio engine needs no separate notion of music.
+   */
+  readonly music: Readonly<Record<string, readonly string[]>>
   /** Branded copy. Not functional UI labels. */
   readonly strings: Readonly<Record<string, string>>
   readonly environments: readonly Environment[]

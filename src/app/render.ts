@@ -2,6 +2,7 @@ import type { Layout, Theme } from '../engine'
 import {
   cellCentre,
   centredText,
+  darken,
   easeOut,
   environmentById,
   fillHexPortion,
@@ -33,6 +34,8 @@ export interface RenderInput {
   readonly layout: Layout
   readonly render: RenderConfig
   readonly environmentId: string
+  /** Needed to draw honey as a fraction; the renderer must not assume a scale. */
+  readonly cellCapacity: number
   readonly nowMs: number
   /** 0..1 sweep used by the intro and the game-over collapse. */
   readonly sweep: number
@@ -87,6 +90,37 @@ function applyShake(
     Math.sin(nowMs * 0.08) * amplitude,
     Math.cos(nowMs * 0.11) * amplitude * 0.6,
   )
+}
+
+/**
+ * The colour a cell should wear right now, or null for its usual gold.
+ *
+ * The live trail wins over a fading flash: what the player is doing matters more than
+ * what just happened.
+ */
+function stateColourOf(
+  input: RenderInput,
+  cellKey: string,
+  flash: { flash: CellFlash; progress: number } | null,
+): string | null {
+  const { palette } = input.theme
+
+  if (input.state.trail.includes(cellKey)) return palette.trailSelecting
+  if (!flash) return null
+
+  switch (flash.flash.kind) {
+    case 'scored':
+      return palette.trailScored
+    case 'stung':
+      return palette.trailStung
+    case 'alreadyPlayed':
+      return palette.trailAlreadyPlayed
+    case 'notAWord':
+      return palette.trailInvalid
+    case 'reseeded':
+    case 'tooShort':
+      return null
+  }
 }
 
 /** How far through its life a flash is, or null if this cell has none. */
@@ -148,13 +182,22 @@ function drawCells(ctx: CanvasRenderingContext2D, input: RenderInput): void {
     roundedHexPath(ctx, x, y + depth, size, radius)
     ctx.fill()
 
-    ctx.fillStyle = palette.cellFillEmpty
+    // A cell in a trail, or flashing a verdict, takes that state's colour across its
+    // whole face rather than only its border — the state should be unmissable. The
+    // honey line stays legible because the filled and empty halves take two shades of
+    // the same colour.
+    const state = stateColourOf(input, cellKey, flash)
+    const emptyFill = state ? darken(state, 0.55) : palette.cellFillEmpty
+    const honeyFill = state ?? palette.cellFill
+
+    ctx.fillStyle = emptyFill
     roundedHexPath(ctx, x, y, size, radius)
     ctx.fill()
 
+    const capacity = input.cellCapacity
     const drawn = effects.drawnHoney.get(cellKey) ?? cell.honey
-    const fraction = drawn / 100
-    fillHexPortion(ctx, x, y, size, radius, fraction, palette.cellFill)
+    const fraction = capacity > 0 ? drawn / capacity : 0
+    fillHexPortion(ctx, x, y, size, radius, fraction, honeyFill)
 
     // Inner highlight along the top edge.
     ctx.save()
@@ -295,86 +338,129 @@ function drawTrail(ctx: CanvasRenderingContext2D, input: RenderInput): void {
 }
 
 function drawBees(ctx: CanvasRenderingContext2D, input: RenderInput): void {
-  const { state, effects, theme, layout, render, nowMs } = input
+  const { state, theme, layout, render, nowMs } = input
   if (state.bees.length === 0) return
 
   for (const bee of state.bees) {
-    const position = beePosition(bee, input)
-    if (!position) continue
+    const placed = beePlacement(bee, input)
+    if (!placed) continue
 
-    const type = bee.exiting ? 'bee.worker.full' : 'bee.worker'
-    const sprite = theme.sprites[type] ?? theme.sprites['bee.worker']
+    const type = state.bees.find((candidate) => candidate.id === bee.id)!
+    const spriteId = bee.exiting
+      ? `bee.${type.typeId}.full`
+      : `bee.${type.typeId}`
+    const sprite = theme.sprites[spriteId] ?? theme.sprites[`bee.${type.typeId}`]
     if (!sprite) continue
 
     const phase = ((nowMs / 1000) * render.beeWingHz) % 1
-    const size = layout.size * render.beeSize
 
     ctx.save()
-    ctx.globalAlpha = beeOpacity(bee, effects, nowMs, render)
-    ctx.translate(position.x, position.y)
-    // Face the way it is travelling, so a hop reads as flight rather than a slide.
-    ctx.rotate(position.angle)
-    sprite(ctx, size, phase)
+    ctx.globalAlpha = placed.alpha
+    ctx.translate(placed.x, placed.y)
+    ctx.rotate(placed.angle)
+    sprite(ctx, layout.size * render.beeSize, phase)
     ctx.restore()
   }
 }
 
 /**
- * Where a bee is drawn, which lags where it logically is.
+ * Where a bee is drawn, and which way it is pointing.
  *
- * It slides between cells over beeTravelMs rather than the whole hop interval, so it
- * settles on the cell well before it matters — a bee you can be stung by should look
- * like it is there.
+ * Three motions, in order of precedence: flying in from beyond the rim, turning on the
+ * spot towards its next cell, and gliding to it. The turn is separate from the glide
+ * so a bee visibly commits to a direction before it moves — which is what makes its
+ * next move readable rather than a surprise.
  */
-function beePosition(
+function beePlacement(
   bee: Bee,
   input: RenderInput,
-): { x: number; y: number; angle: number } | null {
+): { x: number; y: number; angle: number; alpha: number } | null {
   const { state, effects, layout, render, nowMs } = input
 
-  const travel = effects.beeTravel.get(bee.id)
+  const visual = effects.bees.get(bee.id)
   const target = state.cells.get(key(bee.at))
   if (!target) return null
 
   const to = cellCentre(layout, target.at)
 
-  if (!travel || travel.fromKey === null) {
-    // Arriving: drop in from above, so the approach is visible before it can sting.
-    if (bee.phase === 'arriving') {
-      const type = 1 - Math.max(0, Math.min(1, (nowMs - (travel?.startedMs ?? nowMs)) / 400))
-      return { x: to.x, y: to.y - layout.size * render.beeArriveDrop * type, angle: 0 }
+  if (!visual) return { x: to.x, y: to.y, angle: 0, alpha: 1 }
+
+  // ---- flying in from off-board ------------------------------------------
+  if (nowMs < visual.enteringUntilMs) {
+    const span = Math.max(1, visual.enteringUntilMs - visual.enteringFromMs)
+    const progress = easeOut((nowMs - visual.enteringFromMs) / span)
+
+    // Start outside the canvas, on the line running from the board's centre out
+    // through the entry cell. Bees used to hover above an outer cell and snap onto
+    // it, which read as appearing on top of the board rather than arriving at it.
+    const dx = to.x - layout.origin.x
+    const dy = to.y - layout.origin.y
+    const distance = Math.hypot(dx, dy) || 1
+    const reach = layout.size * render.beeEntryDistance
+
+    const startX = to.x + (dx / distance) * reach
+    const startY = to.y + (dy / distance) * reach
+
+    visual.turnTo = Math.atan2(to.y - startY, to.x - startX) + Math.PI / 2
+
+    return {
+      x: lerp(startX, to.x, progress),
+      y: lerp(startY, to.y, progress),
+      angle: visual.turnTo,
+      alpha: Math.min(1, 0.3 + progress),
     }
-    return { x: to.x, y: to.y, angle: 0 }
   }
 
-  const from = state.cells.get(travel.fromKey)
-  if (!from) return { x: to.x, y: to.y, angle: 0 }
+  // ---- turning on the spot ------------------------------------------------
+  if (bee.turningTo !== null) {
+    const next = state.cells.get(bee.turningTo)
+    if (next) {
+      const ahead = cellCentre(layout, next.at)
+      const wanted = Math.atan2(ahead.y - to.y, ahead.x - to.x) + Math.PI / 2
+      if (Number.isNaN(visual.turnTo)) visual.turnTo = wanted
+      else visual.turnTo = wanted
 
-  const progress = Math.max(0, Math.min(1, (nowMs - travel.startedMs) / render.beeTravelMs))
-  const eased = easeOut(progress)
+      const span = Math.max(1, visual.turnMs)
+      const progress = Math.max(0, Math.min(1, (nowMs - visual.turnStartedMs) / span))
+      const angle = visual.turnFrom + shortestTurn(visual.turnFrom, wanted) * easeOut(progress)
+
+      return { x: to.x, y: to.y, angle, alpha: opacityOf(bee) }
+    }
+  }
+
+  // ---- gliding between cells ----------------------------------------------
+  const from = visual.fromKey ? state.cells.get(visual.fromKey) : undefined
+  if (!from) {
+    const angle = Number.isNaN(visual.turnTo) ? 0 : visual.turnTo
+    return { x: to.x, y: to.y, angle, alpha: opacityOf(bee) }
+  }
+
   const start = cellCentre(layout, from.at)
+  const progress = Math.max(0, Math.min(1, (nowMs - visual.travelStartedMs) / render.beeTravelMs))
+  const eased = easeOut(progress)
 
-  const x = lerp(start.x, to.x, eased)
-  const y = lerp(start.y, to.y, eased)
   // The sprite is drawn nose-up, so add a quarter turn to align it with the heading.
   const angle = Math.atan2(to.y - start.y, to.x - start.x) + Math.PI / 2
+  visual.turnTo = angle
 
-  return { x, y, angle }
+  return {
+    x: lerp(start.x, to.x, eased),
+    y: lerp(start.y, to.y, eased),
+    angle,
+    alpha: opacityOf(bee),
+  }
 }
 
-function beeOpacity(
-  bee: Bee,
-  effects: Effects,
-  nowMs: number,
-  render: RenderConfig,
-): number {
-  if (bee.phase === 'arriving') {
-    const travel = effects.beeTravel.get(bee.id)
-    const since = nowMs - (travel?.startedMs ?? nowMs)
-    return Math.max(0.25, Math.min(1, since / render.beeTravelMs))
-  }
-  if (bee.phase === 'leaving') return 0.55
-  return 1
+/** Turn the short way round, so a bee never spins 350 degrees to face 10. */
+function shortestTurn(from: number, to: number): number {
+  let delta = (to - from) % (Math.PI * 2)
+  if (delta > Math.PI) delta -= Math.PI * 2
+  if (delta < -Math.PI) delta += Math.PI * 2
+  return delta
+}
+
+function opacityOf(bee: Bee): number {
+  return bee.phase === 'leaving' ? 0.55 : 1
 }
 
 /** Floating `+142` and `−10` numbers, rising from the cells they came from. */
