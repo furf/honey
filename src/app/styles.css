@@ -4,6 +4,24 @@
  * colour does not belong in CSS. The few values here are chrome, not gameplay.
  */
 
+/*
+ * One file, one weight.
+ *
+ * The range is declared as 100-900 deliberately: a static face whose declared range
+ * covers the requested weight is used as-is, where a narrow declaration would have the
+ * browser fake the missing weights. Faux bold on a rounded display face looks smeared,
+ * and a game whose letters are the product cannot afford that. Installing the variable
+ * file instead would restore real weight variation with no other change here.
+ */
+@font-face {
+  font-family: 'Fredoka';
+  src: url('/fonts/fredoka.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  /* The board redraws every frame, so it picks the face up the moment it lands. */
+  font-display: swap;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -18,13 +36,13 @@ body,
 
 body {
   /*
-   * A rounded, open face. `ui-rounded` resolves to SF Pro Rounded on Apple platforms
-   * at no cost, so a large share of mobile players get a genuinely rounded face today.
-   * Fredoka leads the stack so dropping in a subset webfont later is one @font-face
-   * rule and nothing else.
+   * Fredoka, with a rounded system face behind it so nothing reflows badly if the
+   * download is slow or blocked.
    */
   font-family: 'Fredoka', ui-rounded, 'SF Pro Rounded', 'Segoe UI Rounded', 'Nunito',
     system-ui, sans-serif;
+  /* Never synthesise a weight or a slant we did not ship. */
+  font-synthesis: none;
   background: #10203a;
   color: #fff6e2;
   /* The board is swiped, so the page itself must never pan, zoom or select. */

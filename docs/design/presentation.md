@@ -122,11 +122,20 @@ accessibility for free. Every number in it is set in **tabular figures**: the po
 counts up rather than snapping, and proportional digits made it visibly reflow on
 every tick.
 
-Type is a rounded, open-apertured face. This is a word game — the letters on the cells
-are the product — so `ui-rounded` leads the practical stack (it resolves to SF Pro
-Rounded on Apple platforms at no download cost) behind a named face that a subset
-webfont can fill later. Board letters are sized to stay readable **under** a bee, which
-sits offset to a cell's upper left rather than centred.
+The word preview sits in its own band between the header and the board, with its value
+beneath it rather than beside it, and is set as large as will fit — the available width
+divided by the letter count, so a long word shrinks to the margin and no further.
+
+Type is **Fredoka**, a rounded face with open apertures, shipped from `public/fonts`
+and used for both the board and the interface. This is a word game — the letters on the
+cells are the product — and a face that stays legible inside a hexagon at thumb size is
+worth its download. Rounded system faces sit behind it in the stack in case that
+download is slow or blocked, and `font-synthesis` is off so no weight is ever faked.
+
+Board letters are sized to stay readable **under** a bee, which sits offset to a cell's
+upper left rather than centred.
+
+Every number in the interface is set in tabular figures.
 
 The backdrop is painted once to an offscreen canvas and blitted. Layered ridges, a
 treeline of individual trees and two gradients are far too much to rebuild sixty times

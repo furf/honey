@@ -7,6 +7,17 @@
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
     />
     <meta name="theme-color" content="#7fc7e8" />
+    <!--
+      The board is canvas, and canvas silently falls back when a face has not loaded.
+      Preloading means the first painted frame already has the right letterforms.
+    -->
+    <link
+      rel="preload"
+      href="/fonts/fredoka.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
     <title>Honey</title>
   </head>
   <body>

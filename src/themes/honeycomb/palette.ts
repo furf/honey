@@ -54,11 +54,9 @@ export const palette: Palette = {
 /**
  * A rounded, open-apertured face.
  *
- * This is a word game: the letters on the cells are the product, and they were
- * previously set in whatever the browser reached for first. `ui-rounded` resolves to
- * SF Pro Rounded on Apple platforms and costs nothing, so a large share of mobile
- * players get a genuinely rounded face today. `Fredoka` leads the stack so dropping
- * in a subset webfont later is one @font-face rule and no other change.
+ * This is a word game: the letters on the cells are the product. Fredoka is shipped
+ * from public/fonts and declared in styles.css; the rounded system faces behind it
+ * only matter if that download is slow or blocked.
  */
 const STACK = '"Fredoka", ui-rounded, "SF Pro Rounded", "Segoe UI Rounded", "Nunito", system-ui, sans-serif'
 
