@@ -84,6 +84,7 @@ function fakeContext() {
     clearRect: noop('clearRect'),
     setTransform: noop('setTransform'),
     createLinearGradient: () => ({ addColorStop: () => undefined }),
+    createRadialGradient: () => ({ addColorStop: () => undefined }),
     fillText(text: string) {
       calls.push('fillText')
       ctx.texts.push(text)

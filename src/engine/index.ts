@@ -17,12 +17,16 @@ export type {
 } from './theme'
 export { environmentById } from './theme'
 
+export type { EnvironmentCache } from './environmentCache'
+export { createEnvironmentCache } from './environmentCache'
+
 export {
   centredText,
   darken,
   easeInOut,
   easeOut,
-  fillHexPortion,
+  fillHoney,
+  pourHoney,
   hexPath,
   lerp,
   roundedHexPath,

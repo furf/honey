@@ -1,5 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { computeLayout, cellNear, createLoop, createSoundBank, createSurface } from '../engine'
+import {
+  cellNear,
+  computeLayout,
+  createEnvironmentCache,
+  createLoop,
+  createSoundBank,
+  createSurface,
+} from '../engine'
 import type { Layout, SoundBank, Surface, Theme } from '../engine'
 import {
   beginTrail,
@@ -79,6 +86,7 @@ export function GameScreen({ deps, seed, theme, onExit, onPlayAgain }: GameScree
 
     const game: Game = createGame(deps, seed)
     const effects = createEffects()
+    const environments = createEnvironmentCache()
 
     let layout: Layout = computeLayout(1, 1, layoutOptions())
     const surfaceHandle = createSurface(canvas, (surface: Surface) => {
@@ -147,6 +155,8 @@ export function GameScreen({ deps, seed, theme, onExit, onPlayAgain }: GameScree
           render: renderConfig,
           environmentId,
           cellCapacity: gameConfig.honey.cellCapacity,
+          environments,
+          dpr: surfaceHandle.surface.dpr,
           nowMs: frameMs,
           sweep: gameOverAtMs !== null ? Math.min(1, overProgress) : Math.min(1, introProgress),
           sweepKind:

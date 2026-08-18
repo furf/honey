@@ -54,6 +54,8 @@ export interface Effects {
   ambient: Set<string>
   /** Cell honey as drawn, easing towards the real value. */
   drawnHoney: Map<string, number>
+  /** When each cell's honey was last disturbed, so the surface can settle. */
+  honeyDisturbed: Map<string, number>
   shakeUntilMs: number
   shakeStartedMs: number
 }
@@ -65,6 +67,7 @@ export function createEffects(): Effects {
     bees: new Map(),
     ambient: new Set(),
     drawnHoney: new Map(),
+    honeyDisturbed: new Map(),
     shakeUntilMs: 0,
     shakeStartedMs: 0,
   }
@@ -100,6 +103,8 @@ export function applyEvent(effects: Effects, event: GameEvent, ctx: EffectContex
         startedMs: nowMs,
         kind: 'harvest',
       })
+      // Taking honey disturbs it; the surface sloshes and settles.
+      for (const cellKey of event.cellKeys) effects.honeyDisturbed.set(cellKey, nowMs)
       ctx.play('word.scored')
       break
 
@@ -191,6 +196,7 @@ export function applyEvent(effects: Effects, event: GameEvent, ctx: EffectContex
         startedMs: nowMs,
         kind: 'sip',
       })
+      effects.honeyDisturbed.set(event.cellKey, nowMs)
       ctx.play('bee.sip')
       break
 

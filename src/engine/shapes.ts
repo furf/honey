@@ -75,31 +75,125 @@ function towards(from: { x: number; y: number }, to: { x: number; y: number }, d
   return { x: from.x + (dx / length) * clamped, y: from.y + (dy / length) * clamped }
 }
 
+export interface HoneySurface {
+  /** 0..1 of the cell's height. */
+  readonly fraction: number
+  /** How far the surface bows, in cell radii. Liquids are not flat. */
+  readonly meniscus: number
+  /** Ripple height in cell radii, decaying to zero after a disturbance. */
+  readonly ripple: number
+  /** Ripple phase, so successive crests travel across the surface. */
+  readonly ripplePhase: number
+  readonly waves: number
+  /** Strength of the specular band along the surface, 0 to 1. */
+  readonly gloss: number
+}
+
 /**
- * Fill a hexagon partially from the bottom, for a honey level.
+ * Fill a hexagon from the bottom with something that behaves like a liquid.
+ *
+ * A flat edge was what made a cell read as coloured plastic. Honey has a curved
+ * surface that catches light, and it sloshes when the level changes — so harvesting
+ * is visible as an event rather than a number quietly going down.
  *
  * Clipping to the hexagon rather than drawing a smaller one keeps the meter honest:
- * the filled area is proportional to height, and the shape still reads as one cell.
+ * the filled area stays proportional to height.
  */
-export function fillHexPortion(
+export function fillHoney(
   ctx: CanvasRenderingContext2D,
   x: number,
   y: number,
   size: number,
   radius: number,
-  fraction: number,
+  surface: HoneySurface,
   style: string | CanvasGradient,
+  glossStyle: string,
 ): void {
-  const clamped = Math.max(0, Math.min(1, fraction))
-  if (clamped <= 0) return
+  const fraction = Math.max(0, Math.min(1, surface.fraction))
+  if (fraction <= 0) return
 
   ctx.save()
   roundedHexPath(ctx, x, y, size, radius)
   ctx.clip()
 
-  const top = y + size - 2 * size * clamped
+  const level = y + size - 2 * size * fraction
+  const bow = size * surface.meniscus
+  const left = x - size
+  const right = x + size
+
+  // The surface: a shallow bow, plus a decaying ripple riding on top of it.
+  const surfaceAt = (t: number): number => {
+    const curve = Math.sin(Math.PI * t) * bow
+    const wave =
+      Math.sin(t * Math.PI * surface.waves * 2 + surface.ripplePhase) *
+      size *
+      surface.ripple
+    return level - curve + wave
+  }
+
+  ctx.beginPath()
+  ctx.moveTo(left, surfaceAt(0))
+  const steps = 14
+  for (let step = 1; step <= steps; step++) ctx.lineTo(left + (right - left) * (step / steps), surfaceAt(step / steps))
+  ctx.lineTo(right, y + size * 1.2)
+  ctx.lineTo(left, y + size * 1.2)
+  ctx.closePath()
+
   ctx.fillStyle = style
-  ctx.fillRect(x - size, top, size * 2, size * 2)
+  ctx.fill()
+
+  // A specular band sitting just under the surface is most of what sells "wet".
+  if (surface.gloss > 0 && fraction < 0.995) {
+    ctx.globalAlpha = surface.gloss
+    ctx.strokeStyle = glossStyle
+    ctx.lineWidth = Math.max(1, size * 0.07)
+    ctx.beginPath()
+    ctx.moveTo(left, surfaceAt(0) + size * 0.05)
+    for (let step = 1; step <= steps; step++) {
+      ctx.lineTo(left + (right - left) * (step / steps), surfaceAt(step / steps) + size * 0.05)
+    }
+    ctx.stroke()
+  }
+
+  ctx.restore()
+}
+
+/**
+ * A stream of honey falling into a cell, for the moment after a reseed.
+ *
+ * Honey arrives from above; a level that simply rose out of the floor read as a bar
+ * chart filling rather than a cell being refilled.
+ */
+export function pourHoney(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  size: number,
+  radius: number,
+  reach: number,
+  width: number,
+  style: string | CanvasGradient,
+): void {
+  if (reach <= 0) return
+
+  ctx.save()
+  roundedHexPath(ctx, x, y, size, radius)
+  ctx.clip()
+
+  const half = size * width
+  const top = y - size
+  const bottom = top + size * 2 * Math.min(1, reach)
+
+  ctx.fillStyle = style
+  ctx.beginPath()
+  ctx.moveTo(x - half, top)
+  ctx.lineTo(x + half, top)
+  // Narrows as it falls, the way a real stream necks down.
+  ctx.quadraticCurveTo(x + half * 0.7, bottom, x, bottom + half * 0.8)
+  ctx.quadraticCurveTo(x - half * 0.7, bottom, x - half, top)
+  ctx.closePath()
+  ctx.fill()
+
   ctx.restore()
 }
 

@@ -13,6 +13,10 @@ export interface Palette {
   /** The honeycomb's own colours. Constant across every environment. */
   readonly cellFill: string
   readonly cellFillEmpty: string
+  /** Warm light through the wax at the centre of an empty cell. */
+  readonly cellWaxLit: string
+  /** The specular band along the honey surface. */
+  readonly honeyGloss: string
   readonly cellEdge: string
   readonly cellShadow: string
   readonly cellHighlight: string

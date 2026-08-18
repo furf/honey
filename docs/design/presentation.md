@@ -9,6 +9,18 @@ Zynga's casual titles: saturated colour, soft depth, generous motion. The honeyc
 itself is gold and amber and stays constant across all environments; the world around
 it is what changes.
 
+The direction is **material truth rather than more colour**. Cheap games draw shapes;
+the gap between this and a professional one is that wax should look soft and
+translucent, honey should look viscous and heavy, and the world should look painted
+rather than interpolated. Every visual decision below is in service of that.
+
+**The signature is that honey behaves like honey.** Its surface is a curved meniscus,
+not a flat edge; it carries a specular band so it reads as wet; it ripples and settles
+when a harvest or a sip disturbs it; and a reseeded cell is refilled by a stream
+pouring in from above rather than a level rising out of the floor. This is also what
+makes the rarity economy legible as a physical fact — a `Z` visibly empties in two
+gulps where an `E` sips down over five.
+
 ## Colour language
 
 Colour carries meaning, and each meaning has exactly one colour.
@@ -26,6 +38,10 @@ A state colour covers the **whole cell**, not just its border — the filled por
 the state colour and the empty portion in a darker shade of it, so the honey line stays
 legible while the cell is unmistakably blue, green or red. A border alone was too easy
 to miss while a finger was over the board.
+
+There is deliberately **no line drawn through a trail's cells**. The cells already
+carry the selection colour across their whole face, and a ribbon over the top of that
+said the same thing twice while covering the letters underneath.
 
 **Red means damage and nothing else.** An invalid word is the most common non-event in
 the game, and a red slap every time is exhausting — so it desaturates rather than
@@ -97,7 +113,19 @@ environment → fx-behind → honeycomb → honey fill → letters → trail →
 ```
 
 The HUD is DOM above the canvas rather than drawn, so it gets text rendering and
-accessibility for free.
+accessibility for free. Every number in it is set in **tabular figures**: the pot
+counts up rather than snapping, and proportional digits made it visibly reflow on
+every tick.
+
+Type is a rounded, open-apertured face. This is a word game — the letters on the cells
+are the product — so `ui-rounded` leads the practical stack (it resolves to SF Pro
+Rounded on Apple platforms at no download cost) behind a named face that a subset
+webfont can fill later. Board letters are sized to stay readable **under** a bee, which
+sits offset to a cell's upper left rather than centred.
+
+The backdrop is painted once to an offscreen canvas and blitted. Layered ridges, a
+treeline of individual trees and two gradients are far too much to rebuild sixty times
+a second for a picture that does not change.
 
 Simulation runs at a fixed step with an interpolated draw. The HUD subscribes to state
 at a throttled rate rather than per frame, so score and health changes never drive a

@@ -17,7 +17,14 @@ body,
 }
 
 body {
-  font-family: 'Trebuchet MS', 'Segoe UI', system-ui, sans-serif;
+  /*
+   * A rounded, open face. `ui-rounded` resolves to SF Pro Rounded on Apple platforms
+   * at no cost, so a large share of mobile players get a genuinely rounded face today.
+   * Fredoka leads the stack so dropping in a subset webfont later is one @font-face
+   * rule and nothing else.
+   */
+  font-family: 'Fredoka', ui-rounded, 'SF Pro Rounded', 'Segoe UI Rounded', 'Nunito',
+    system-ui, sans-serif;
   background: #10203a;
   color: #fff6e2;
   /* The board is swiped, so the page itself must never pan, zoom or select. */
@@ -80,18 +87,19 @@ body {
   padding: 0.8rem 2.25rem;
   border: none;
   border-radius: 999px;
-  background: #f6b93b;
+  background: #e8a021;
   color: #4a2408;
   font: inherit;
-  font-weight: 800;
+  font-weight: 600;
   font-size: 1.125rem;
-  box-shadow: 0 4px 0 #a8641a;
+  letter-spacing: 0.02em;
+  box-shadow: 0 4px 0 #8f5514;
   cursor: pointer;
 }
 
 .button:active:not(:disabled) {
   transform: translateY(2px);
-  box-shadow: 0 2px 0 #a8641a;
+  box-shadow: 0 2px 0 #8f5514;
 }
 
 .button:disabled {
@@ -163,7 +171,7 @@ body {
   background: #4fd66f;
 }
 .health__bar--warn {
-  background: #f6b93b;
+  background: #e8a021;
 }
 .health__bar--danger {
   background: #ef3b36;
@@ -175,14 +183,20 @@ body {
   display: grid;
   place-items: center;
   font-size: 0.75rem;
-  font-weight: 800;
+  font-weight: 700;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  /* Fixed-width digits: without them a falling percentage jitters as it counts. */
+  font-variant-numeric: tabular-nums;
 }
 
 .pot__value {
   font-size: 1.5rem;
-  font-weight: 900;
+  font-weight: 700;
+  letter-spacing: 0.01em;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  /* The pot counts up rather than snapping, so proportional digits made the number
+     visibly reflow on every tick. */
+  font-variant-numeric: tabular-nums;
 }
 
 .trail {
@@ -200,14 +214,15 @@ body {
 
 .trail__word {
   font-size: clamp(1.5rem, 7vw, 2.25rem);
-  font-weight: 900;
-  letter-spacing: 0.08em;
+  font-weight: 600;
+  letter-spacing: 0.14em;
   text-shadow: 0 2px 6px rgba(0, 0, 0, 0.55);
 }
 
 .trail__preview {
   font-size: 1rem;
-  font-weight: 800;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
   color: #4fd66f;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
 }
@@ -263,9 +278,10 @@ body {
 
 .overlay__score {
   font-size: clamp(3rem, 16vw, 5rem);
-  font-weight: 900;
-  color: #f6b93b;
-  text-shadow: 0 4px 0 #a8641a;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: #e8a021;
+  text-shadow: 0 4px 0 #8f5514;
   line-height: 1;
 }
 

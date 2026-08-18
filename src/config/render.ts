@@ -12,12 +12,30 @@ export interface RenderConfig {
   readonly cellCornerRadius: number
   readonly cellGap: number
   readonly cellDepth: number
+  /** Warmth of the glow through the wax, so the comb reads as translucent. */
+  readonly waxGlow: number
+  readonly waxRim: number
 
-  readonly trailWidth: number
-  readonly trailGlow: number
+  readonly trailRing: number
 
   /** How long a cell's drawn honey takes to catch up with its real level. */
   readonly honeyTweenMs: number
+
+  /**
+   * The honey surface.
+   *
+   * Honey is a liquid, and liquids have a curved surface that catches light and
+   * settles after it is disturbed. Drawing a flat edge is what made the board read as
+   * coloured plastic rather than a comb with something in it.
+   */
+  readonly honeyMeniscus: number
+  readonly honeyRippleMs: number
+  readonly honeyRippleAmplitude: number
+  readonly honeyRippleWaves: number
+  readonly honeyGloss: number
+  /** How long honey takes to pour back in after a reseed. */
+  readonly honeyPourMs: number
+  readonly honeyPourWidth: number
 
   readonly scoredFlashMs: number
   readonly scoredBlinks: number
@@ -33,6 +51,15 @@ export interface RenderConfig {
   readonly beeTravelMs: number
   readonly beeWingHz: number
   readonly beeSize: number
+  /**
+   * Where a bee sits relative to its cell's centre, in cell radii.
+   *
+   * Offset to the upper left rather than centred, so the letter underneath stays
+   * readable — a bee sitting on the glyph hides the one thing the player needs.
+   * It overhangs the cell edge slightly, which also helps it read as *on* the board
+   * rather than *in* a slot.
+   */
+  readonly beeOffset: { readonly x: number; readonly y: number }
   /** How far beyond the rim a bee starts its flight in, in cell radii. */
   readonly beeEntryDistance: number
 
@@ -52,11 +79,20 @@ export const renderConfig: RenderConfig = {
   cellCornerRadius: 0.2,
   cellGap: 0.06,
   cellDepth: 0.09,
+  waxGlow: 0.35,
+  waxRim: 0.055,
 
-  trailWidth: 0.16,
-  trailGlow: 0.5,
+  trailRing: 0.1,
 
   honeyTweenMs: 400,
+
+  honeyMeniscus: 0.13,
+  honeyRippleMs: 620,
+  honeyRippleAmplitude: 0.1,
+  honeyRippleWaves: 2.5,
+  honeyGloss: 0.42,
+  honeyPourMs: 520,
+  honeyPourWidth: 0.17,
 
   scoredFlashMs: 620,
   scoredBlinks: 3,
@@ -70,7 +106,8 @@ export const renderConfig: RenderConfig = {
 
   beeTravelMs: 260,
   beeWingHz: 14,
-  beeSize: 1.15,
+  beeSize: 0.82,
+  beeOffset: { x: -0.4, y: -0.44 },
   beeEntryDistance: 5.5,
 
   ringStaggerMs: 70,

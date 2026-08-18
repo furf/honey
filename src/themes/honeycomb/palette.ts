@@ -9,13 +9,17 @@ import type { Palette, Typography } from '../../engine'
  * game and a red slap every time is exhausting.
  */
 export const palette: Palette = {
-  cellFill: '#f6b93b',
-  cellFillEmpty: '#c98a3c',
-  cellEdge: '#a8641a',
-  cellShadow: 'rgba(93, 47, 6, 0.45)',
-  cellHighlight: 'rgba(255, 240, 190, 0.75)',
-  letter: '#4a2408',
-  letterDim: 'rgba(74, 36, 8, 0.35)',
+  // Wax, not orange plastic: a touch yellower than before, and lit from within so the
+  // comb reads as translucent.
+  cellFill: '#e8a021',
+  cellFillEmpty: '#b8843c',
+  cellWaxLit: '#e2b366',
+  honeyGloss: 'rgba(255, 246, 205, 0.85)',
+  cellEdge: '#8f5514',
+  cellShadow: 'rgba(74, 36, 8, 0.42)',
+  cellHighlight: 'rgba(255, 244, 205, 0.9)',
+  letter: '#5a2c09',
+  letterDim: 'rgba(90, 44, 9, 0.35)',
 
   trailSelecting: '#3aa6f0',
   trailScored: '#4fd66f',
@@ -43,8 +47,21 @@ export const palette: Palette = {
   hudDanger: '#ef3b36',
 }
 
+/**
+ * A rounded, open-apertured face.
+ *
+ * This is a word game: the letters on the cells are the product, and they were
+ * previously set in whatever the browser reached for first. `ui-rounded` resolves to
+ * SF Pro Rounded on Apple platforms and costs nothing, so a large share of mobile
+ * players get a genuinely rounded face today. `Fredoka` leads the stack so dropping
+ * in a subset webfont later is one @font-face rule and no other change.
+ */
+const STACK = '"Fredoka", ui-rounded, "SF Pro Rounded", "Segoe UI Rounded", "Nunito", system-ui, sans-serif'
+
 export const typography: Typography = {
-  letters: '800 1px "Trebuchet MS", "Segoe UI", system-ui, sans-serif',
-  ui: '700 1px "Trebuchet MS", "Segoe UI", system-ui, sans-serif',
-  letterScale: 0.82,
+  letters: `600 1px ${STACK}`,
+  ui: `600 1px ${STACK}`,
+  // Eased back from 0.82: the bee now sits over the cell's upper left, and the glyph
+  // needs room to stay legible underneath it.
+  letterScale: 0.78,
 }

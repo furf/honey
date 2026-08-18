@@ -1,12 +1,13 @@
-import type { Layout, Theme } from '../engine'
+import type { EnvironmentCache, Layout, Theme } from '../engine'
 import {
   cellCentre,
   centredText,
   darken,
   easeOut,
   environmentById,
-  fillHexPortion,
+  fillHoney,
   lerp,
+  pourHoney,
   roundedHexPath,
 } from '../engine'
 import { key } from '../core/hex'
@@ -36,6 +37,9 @@ export interface RenderInput {
   readonly environmentId: string
   /** Needed to draw honey as a fraction; the renderer must not assume a scale. */
   readonly cellCapacity: number
+  /** Paints the backdrop once and blits it. Absent in tests, which draw directly. */
+  readonly environments?: EnvironmentCache
+  readonly dpr?: number
   readonly nowMs: number
   /** 0..1 sweep used by the intro and the game-over collapse. */
   readonly sweep: number
@@ -49,7 +53,11 @@ export function renderGame(ctx: CanvasRenderingContext2D, input: RenderInput): v
   applyShake(ctx, effects, render, nowMs)
 
   const environment = environmentById(theme, input.environmentId)
-  environment.draw(ctx, layout.width, layout.height, nowMs)
+  if (input.environments) {
+    input.environments.draw(ctx, environment, layout.width, layout.height, input.dpr ?? 1)
+  } else {
+    environment.draw(ctx, layout.width, layout.height, nowMs)
+  }
 
   drawFallingLetters(ctx, input)
   drawCells(ctx, input)
@@ -177,7 +185,7 @@ function drawCells(ctx: CanvasRenderingContext2D, input: RenderInput): void {
     }
 
     // Dimensionality: a dropped slab beneath the face, not a blur. Cheap, and it
-    // survives being drawn 37 times a frame on a mid-range phone.
+    // survives being drawn every frame on a mid-range phone.
     ctx.fillStyle = palette.cellShadow
     roundedHexPath(ctx, x, y + depth, size, radius)
     ctx.fill()
@@ -190,27 +198,66 @@ function drawCells(ctx: CanvasRenderingContext2D, input: RenderInput): void {
     const emptyFill = state ? darken(state, 0.55) : palette.cellFillEmpty
     const honeyFill = state ?? palette.cellFill
 
-    ctx.fillStyle = emptyFill
+    // Empty wax, lit from within rather than filled flat: comb is translucent, and a
+    // warm centre is most of what separates wax from plastic.
+    const glow = ctx.createRadialGradient(x, y - size * 0.2, size * 0.1, x, y, size * 1.15)
+    glow.addColorStop(0, state ? darken(state, 0.42) : palette.cellWaxLit)
+    glow.addColorStop(1, emptyFill)
+    ctx.fillStyle = glow
     roundedHexPath(ctx, x, y, size, radius)
     ctx.fill()
 
     const capacity = input.cellCapacity
     const drawn = effects.drawnHoney.get(cellKey) ?? cell.honey
     const fraction = capacity > 0 ? drawn / capacity : 0
-    fillHexPortion(ctx, x, y, size, radius, fraction, honeyFill)
 
-    // Inner highlight along the top edge.
+    const disturbed = effects.honeyDisturbed.get(cellKey)
+    const settle =
+      disturbed === undefined
+        ? 0
+        : Math.max(0, 1 - (nowMs - disturbed) / render.honeyRippleMs)
+
+    const honeyGradient = ctx.createLinearGradient(x, y - size, x, y + size)
+    honeyGradient.addColorStop(0, honeyFill)
+    honeyGradient.addColorStop(1, darken(honeyFill, 0.22))
+
+    fillHoney(
+      ctx,
+      x,
+      y,
+      size,
+      radius,
+      {
+        fraction,
+        meniscus: render.honeyMeniscus,
+        ripple: render.honeyRippleAmplitude * settle * settle,
+        ripplePhase: (nowMs / 90) % (Math.PI * 2),
+        waves: render.honeyRippleWaves,
+        gloss: render.honeyGloss,
+      },
+      honeyGradient,
+      palette.honeyGloss,
+    )
+
+    // A reseeded cell is refilled from above, not from the floor.
+    if (flash?.flash.kind === 'reseeded') {
+      const pour = 1 - Math.min(1, (flash.progress * flash.flash.durationMs) / render.honeyPourMs)
+      pourHoney(ctx, x, y, size, radius, pour * 2, render.honeyPourWidth, honeyGradient)
+    }
+
+    // Light catching the upper rim of the wax.
     ctx.save()
     roundedHexPath(ctx, x, y, size, radius)
     ctx.clip()
+    ctx.globalAlpha = render.waxGlow
     ctx.strokeStyle = palette.cellHighlight
-    ctx.lineWidth = Math.max(1, size * 0.08)
-    roundedHexPath(ctx, x, y + size * 0.06, size * 0.94, radius)
+    ctx.lineWidth = Math.max(1, size * render.waxRim * 2)
+    roundedHexPath(ctx, x, y + size * 0.07, size * 0.93, radius)
     ctx.stroke()
     ctx.restore()
 
     ctx.strokeStyle = palette.cellEdge
-    ctx.lineWidth = Math.max(1, size * 0.045)
+    ctx.lineWidth = Math.max(1, size * 0.04)
     roundedHexPath(ctx, x, y, size, radius)
     ctx.stroke()
 
@@ -294,35 +341,24 @@ function drawCellFlash(
   ctx.restore()
 }
 
-/** The blue ribbon following the player's finger. */
+/**
+ * The selected cells.
+ *
+ * No connecting line. The cells themselves already carry the selection colour across
+ * their whole face, and a ribbon drawn over the top of that was saying the same thing
+ * twice while covering the letters underneath it.
+ */
 function drawTrail(ctx: CanvasRenderingContext2D, input: RenderInput): void {
   const { state, theme, layout, render } = input
   if (state.trail.length === 0) return
 
-  const points = state.trail.map((cellKey) => {
-    const cell = state.cells.get(cellKey)!
-    return cellCentre(layout, cell.at)
-  })
-
   ctx.save()
-  ctx.lineCap = 'round'
-  ctx.lineJoin = 'round'
   ctx.strokeStyle = theme.palette.trailSelecting
-  ctx.shadowColor = theme.palette.trailSelecting
-  ctx.shadowBlur = layout.size * render.trailGlow
+  ctx.lineWidth = Math.max(2, layout.size * render.trailRing)
 
-  if (points.length > 1) {
-    ctx.lineWidth = layout.size * render.trailWidth
-    ctx.beginPath()
-    ctx.moveTo(points[0]!.x, points[0]!.y)
-    for (const point of points.slice(1)) ctx.lineTo(point.x, point.y)
-    ctx.stroke()
-  }
-
-  // Ring every selected cell, so the trail is legible even as a single tap.
-  ctx.lineWidth = Math.max(2, layout.size * 0.1)
   for (const cellKey of state.trail) {
-    const cell = state.cells.get(cellKey)!
+    const cell = state.cells.get(cellKey)
+    if (!cell) continue
     const { x, y } = cellCentre(layout, cell.at)
     roundedHexPath(
       ctx,
@@ -356,7 +392,13 @@ function drawBees(ctx: CanvasRenderingContext2D, input: RenderInput): void {
 
     ctx.save()
     ctx.globalAlpha = placed.alpha
-    ctx.translate(placed.x, placed.y)
+    // Offset towards the cell's upper left, overhanging the edge a little, so the
+    // letter underneath stays readable — a centred bee hides the one thing the
+    // player needs to see.
+    ctx.translate(
+      placed.x + layout.size * render.beeOffset.x,
+      placed.y + layout.size * render.beeOffset.y,
+    )
     ctx.rotate(placed.angle)
     sprite(ctx, layout.size * render.beeSize, phase)
     ctx.restore()
