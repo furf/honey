@@ -295,7 +295,10 @@ export type GameEvent =
     }
   | {
       readonly kind: 'stung'
+      /** Where the sting happened. */
       readonly cellKey: string
+      /** Every cell that was in the voided trail — the whole word is lost, not one cell. */
+      readonly cellKeys: readonly string[]
       readonly beeId: number
       readonly healthLost: number
     }

@@ -9,9 +9,10 @@ import type { Palette, Typography } from '../../engine'
  * game and a red slap every time is exhausting.
  */
 export const palette: Palette = {
-  // Wax, not orange plastic: a touch yellower than before, and lit from within so the
-  // comb reads as translucent.
-  cellFill: '#e8a021',
+  // Wax, not orange plastic: lit from within so the comb reads as translucent. The
+  // honey itself is bright and saturated — it is the thing the whole board is about,
+  // and a muted amber made a full cell look like an empty one.
+  cellFill: '#ffb01c',
   cellFillEmpty: '#b8843c',
   cellWaxLit: '#e2b366',
   honeyGloss: 'rgba(255, 246, 205, 0.85)',
@@ -20,6 +21,9 @@ export const palette: Palette = {
   cellHighlight: 'rgba(255, 244, 205, 0.9)',
   letter: '#5a2c09',
   letterDim: 'rgba(90, 44, 9, 0.35)',
+  // On a blue, green or red cell the brown glyph loses contrast; white holds against
+  // all three.
+  letterOnState: '#ffffff',
 
   trailSelecting: '#3aa6f0',
   trailScored: '#4fd66f',

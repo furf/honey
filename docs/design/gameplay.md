@@ -27,9 +27,13 @@ On release, the trail is judged in this order:
 
 1. **Too short** — fewer than `config.words.minLetters` letters. No penalty, no sound,
    no feedback beyond the trail releasing. The player evidently changed their mind.
-2. **Stung** — the trail reached a cell occupied by a bee. Resolved at the moment of
-   contact, not on release: the trail is voided immediately, nothing is harvested, and
-   the player loses `config.health.stingCost`.
+2. **Stung** — the trail and a bee met. Resolved at the moment of contact, not on
+   release: the trail is voided immediately, nothing is harvested, and the player loses
+   `config.health.stingCost`. This runs **both ways** — swiping into a bee and a bee
+   landing on a cell the player is currently holding are the same event from opposite
+   directions, and it would be arbitrary for only one to cost anything. The whole trail
+   is voided and marked, not just the cell where they met, because the whole word is
+   what was lost.
 3. **Already played** — a valid word the player already found this game. No honey, no
    health, but distinct feedback, because the player did find a real word and deserves
    to know why it did not score.

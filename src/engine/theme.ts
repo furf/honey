@@ -22,6 +22,8 @@ export interface Palette {
   readonly cellHighlight: string
   readonly letter: string
   readonly letterDim: string
+  /** Glyph colour on a cell wearing a state colour, where the usual letter loses contrast. */
+  readonly letterOnState: string
 
   /** Trail states. Red means damage and only damage. */
   readonly trailSelecting: string

@@ -31,13 +31,16 @@ Colour carries meaning, and each meaning has exactly one colour.
 | Valid word | Green | Blink, then settle |
 | Already played | Deep bronze | Shake |
 | Not a word | Desaturated grey | Trail sags, letters fall |
-| Stung / voided | Red | Screen shake, red vignette, health bar flash |
+| Stung / voided | Red | The entire trail turns red; screen shake, health bar flash |
 | Too short | — | Trail simply releases |
 
 A state colour covers the **whole cell**, not just its border — the filled portion in
 the state colour and the empty portion in a darker shade of it, so the honey line stays
 legible while the cell is unmistakably blue, green or red. A border alone was too easy
 to miss while a finger was over the board.
+
+On a cell wearing a state colour the letter is drawn **white**: the usual brown glyph
+loses contrast against blue, green and red alike.
 
 There is deliberately **no line drawn through a trail's cells**. The cells already
 carry the selection colour across their whole face, and a ribbon over the top of that
@@ -58,8 +61,10 @@ survives red/green colour blindness.
 - **Trail voided** — the letters in the word preview jostle loose and fall *behind* the
   honeycomb. This is the reason the render stack carries an effects layer beneath the
   cells as well as above them.
-- **Reseed** — the old letter fades out, honey refills with a rising-fill animation, the
-  new letter fades in. A reseed should read as a reward, not a loss.
+- **Reseed** — the cell blinks several times, the old letter fades out, honey pours
+  back in from above, and the new letter fades in with a slight overshoot as it lands.
+  A letter changing quietly under a player's thumb is easy to miss entirely, so the
+  change is announced rather than merely happening.
 - **Sting** — screen shake, red vignette, health bar flash.
 - **Bee arrival** — the bee flies in from beyond the rim along the line from the board's
   centre through its entry cell. It does not descend onto a cell: doing so made bees

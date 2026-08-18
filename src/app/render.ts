@@ -219,7 +219,7 @@ function drawCells(ctx: CanvasRenderingContext2D, input: RenderInput): void {
 
     const honeyGradient = ctx.createLinearGradient(x, y - size, x, y + size)
     honeyGradient.addColorStop(0, honeyFill)
-    honeyGradient.addColorStop(1, darken(honeyFill, 0.22))
+    honeyGradient.addColorStop(1, darken(honeyFill, 0.14))
 
     fillHoney(
       ctx,
@@ -231,7 +231,7 @@ function drawCells(ctx: CanvasRenderingContext2D, input: RenderInput): void {
         fraction,
         meniscus: render.honeyMeniscus,
         ripple: render.honeyRippleAmplitude * settle * settle,
-        ripplePhase: (nowMs / 90) % (Math.PI * 2),
+        ripplePhase: (nowMs / render.honeyRipplePeriodMs) % (Math.PI * 2),
         waves: render.honeyRippleWaves,
         gloss: render.honeyGloss,
       },
@@ -264,14 +264,23 @@ function drawCells(ctx: CanvasRenderingContext2D, input: RenderInput): void {
     if (flash) drawCellFlash(ctx, input, x, y, size, radius, flash)
 
     // A reseeding cell swaps its letter at the midpoint of the effect, so the old one
-    // is gone before the new one appears rather than crossfading into mush.
+    // is gone before the new one appears rather than crossfading into mush. The new
+    // letter then lands with a slight overshoot, because a letter changing quietly
+    // under a player's thumb is easy to miss entirely.
     const reseeding = flash?.flash.kind === 'reseeded'
-    const letterAlpha = reseeding
-      ? Math.abs(((flash?.progress ?? 0) - 0.5) * 2)
-      : 1
+    const half = flash ? (flash.progress - 0.5) * 2 : 0
+    const letterAlpha = reseeding ? Math.abs(half) : 1
+    const letterScale =
+      reseeding && half > 0 ? 1 + render.reseedPop * (1 - easeOut(half)) : 1
 
     if (input.sweepKind !== 'gameOver' && letterAlpha > 0.01) {
+      ctx.save()
       ctx.globalAlpha = alpha * letterAlpha
+      if (letterScale !== 1) {
+        ctx.translate(x, y)
+        ctx.scale(letterScale, letterScale)
+        ctx.translate(-x, -y)
+      }
       const fontSize = size * typography.letterScale
       centredText(
         ctx,
@@ -279,8 +288,9 @@ function drawCells(ctx: CanvasRenderingContext2D, input: RenderInput): void {
         x,
         y,
         typography.letters.replace('1px', `${fontSize}px`),
-        palette.letter,
+        state ? palette.letterOnState : palette.letter,
       )
+      ctx.restore()
     }
 
     ctx.restore()
@@ -325,8 +335,9 @@ function drawCellFlash(
       strength = 1 - easeOut(progress)
       break
     case 'reseeded':
+      // Blink, so a letter changing is announced rather than merely happening.
       colour = palette.cellHighlight
-      strength = Math.sin(progress * Math.PI) * 0.5
+      strength = Math.abs(Math.sin(progress * Math.PI * render.reseedBlinks)) * (1 - progress * 0.35)
       break
     case 'tooShort':
       return

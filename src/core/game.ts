@@ -3,6 +3,7 @@ import { advanceDrain, clampHealth, restoreFor } from './health'
 import { harvestFor, levelIndexFor } from './scoring'
 import { judgeTrail, lettersIn, stepTrail } from './trail'
 import { isOnBoard, stepBees } from './bees'
+import { applySting, endIfDead } from './damage'
 import { takeHoney } from './reseed'
 import { key } from './hex'
 import type { Game, GameDeps, GameState, Level } from './types'
@@ -60,24 +61,6 @@ function beeOn(game: Game, cellKey: string): number | null {
   return null
 }
 
-/**
- * A sting resolves the instant the trail touches a bee, not on release.
- *
- * Waiting for release would let a player drag through a bee and still be judged on
- * the word, which makes bees a tax rather than an obstacle to route around.
- */
-function sting(game: Game, cellKey: string, beeId: number): void {
-  const { state, deps } = game
-  const cost = deps.config.health.stingCost
-
-  state.trail = []
-  state.dragVoided = true
-  state.health = clampHealth(state.health - cost, deps.config)
-  state.events.push({ kind: 'stung', cellKey, beeId, healthLost: cost })
-
-  endIfDead(game)
-}
-
 export function beginTrail(game: Game, cellKey: string): void {
   const { state } = game
   if (state.screen !== 'playing') return
@@ -87,7 +70,7 @@ export function beginTrail(game: Game, cellKey: string): void {
 
   const beeId = beeOn(game, cellKey)
   if (beeId !== null) {
-    sting(game, cellKey, beeId)
+    applySting(game, cellKey, beeId)
     return
   }
 
@@ -109,7 +92,7 @@ export function moveTrail(game: Game, cellKey: string): void {
   if (effect === 'extended') {
     const beeId = beeOn(game, cellKey)
     if (beeId !== null) {
-      sting(game, cellKey, beeId)
+      applySting(game, cellKey, beeId)
       return
     }
   }
@@ -187,16 +170,6 @@ function applyLevel(game: Game): void {
   const from = state.levelIndex
   state.levelIndex = next
   state.events.push({ kind: 'levelChanged', from, to: next })
-}
-
-function endIfDead(game: Game): boolean {
-  const { state } = game
-  if (state.health > 0 || state.screen === 'gameOver') return state.screen === 'gameOver'
-
-  state.screen = 'gameOver'
-  state.trail = []
-  state.events.push({ kind: 'gameOver', pot: state.pot })
-  return true
 }
 
 /**

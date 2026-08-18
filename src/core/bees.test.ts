@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { isOnBoard } from './bees'
-import { createGame, drainEvents, step } from './game'
+import { beginTrail, createGame, drainEvents, moveTrail, step } from './game'
 import { key, ring } from './hex'
 import { createRng } from './rng'
 import { stubDictionary, stubGenerator, testBeeType, testConfig, testLevel } from './testSupport'
@@ -443,6 +443,94 @@ describe('intent', () => {
       for (const bee of built.state.bees) if (isOnBoard(bee)) rings.add(ring(bee.at))
     }
     expect(rings.size).toBeGreaterThan(1)
+  })
+})
+
+describe('stinging a held trail', () => {
+  const CENTRE = key({ q: 0, r: 0 })
+
+  /** Start a two-cell trail, then park a bee one hop from its end, aimed at it. */
+  function trailAndBee() {
+    const built = makeGame()
+    const near = built.adjacency.get(CENTRE)![0]!
+
+    beginTrail(built, CENTRE)
+    moveTrail(built, near)
+
+    const from = built.adjacency
+      .get(near)!
+      .find((cellKey) => cellKey !== CENTRE && !built.state.trail.includes(cellKey))!
+
+    built.state.bees.push({
+      id: 99,
+      typeId: 'forager',
+      at: built.state.cells.get(from)!.at,
+      cameFrom: null,
+      turningTo: near,
+      exiting: false,
+      hops: 0,
+      sipsTaken: 0,
+      timerMs: 0,
+      phase: 'turning',
+    })
+
+    return { game: built, near }
+  }
+
+  it('stings when a bee lands on a cell the player is holding', () => {
+    // The hazard runs both ways: swiping into a bee and a bee flying onto the trail
+    // are the same event from opposite directions.
+    const { game: built, near } = trailAndBee()
+    const health = built.state.health
+
+    step(built, 16)
+
+    const stung = eventsOfKind(drainEvents(built), 'stung')
+    expect(stung).toHaveLength(1)
+    expect(stung[0]!.cellKey).toBe(near)
+    expect(built.state.health).toBeLessThan(health)
+  })
+
+  it('voids the whole trail, and reports every cell that was in it', () => {
+    const { game: built, near } = trailAndBee()
+
+    step(built, 16)
+
+    expect(built.state.trail).toEqual([])
+    expect(eventsOfKind(drainEvents(built), 'stung')[0]!.cellKeys).toEqual([CENTRE, near])
+  })
+
+  it('ignores the rest of the drag until the player lifts', () => {
+    const { game: built } = trailAndBee()
+    step(built, 16)
+    drainEvents(built)
+
+    moveTrail(built, built.adjacency.get(CENTRE)![1]!)
+    expect(built.state.trail).toEqual([])
+  })
+
+  it('leaves an empty trail alone', () => {
+    const built = makeGame()
+    const target = built.adjacency.get(CENTRE)![0]!
+
+    built.state.bees.push({
+      id: 98,
+      typeId: 'forager',
+      at: built.state.cells.get(CENTRE)!.at,
+      cameFrom: null,
+      turningTo: target,
+      exiting: false,
+      hops: 0,
+      sipsTaken: 0,
+      timerMs: 0,
+      phase: 'turning',
+    })
+
+    const health = built.state.health
+    step(built, 16)
+
+    expect(eventsOfKind(drainEvents(built), 'stung')).toEqual([])
+    expect(built.state.health).toBe(health)
   })
 })
 

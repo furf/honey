@@ -1,4 +1,5 @@
 import { key, ring } from './hex'
+import { applySting } from './damage'
 import { takeHoney } from './reseed'
 import type { Bee, BeeIntent, BeeType, Game, Level } from './types'
 
@@ -244,6 +245,19 @@ function aim(game: Game, bee: Bee, type: BeeType): void {
   })
 }
 
+/**
+ * A bee landing on a cell the player is holding stings them.
+ *
+ * The hazard runs both ways: swiping into a bee and a bee flying onto your trail are
+ * the same event from opposite directions, and it would be arbitrary for only one to
+ * cost anything.
+ */
+function stingIfOnTrail(game: Game, bee: Bee, cellKey: string): boolean {
+  if (!game.state.trail.includes(cellKey)) return false
+  applySting(game, cellKey, bee.id)
+  return true
+}
+
 /** Complete the move the bee has already turned towards. */
 function travel(game: Game, bee: Bee, type: BeeType): void {
   const { state } = game
@@ -260,6 +274,7 @@ function travel(game: Game, bee: Bee, type: BeeType): void {
   bee.hops++
 
   state.events.push({ kind: 'beeMoved', beeId: bee.id, cellKey: next })
+  stingIfOnTrail(game, bee, next)
   settle(game, bee, type)
 }
 
@@ -279,6 +294,7 @@ function stepBee(game: Game, bee: Bee, level: Level, dtMs: number): boolean {
         cellKey: cellKeyOf(bee),
         typeId: bee.typeId,
       })
+      stingIfOnTrail(game, bee, cellKeyOf(bee))
       settle(game, bee, type)
       return true
 

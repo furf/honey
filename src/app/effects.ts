@@ -121,8 +121,10 @@ export function applyEvent(effects: Effects, event: GameEvent, ctx: EffectContex
       break
 
     case 'stung':
+      // The whole word is lost, so the whole trail turns red — marking only the point
+      // of contact understates what was taken.
       effects.flashes.push({
-        cellKeys: [event.cellKey],
+        cellKeys: event.cellKeys,
         kind: 'stung',
         startedMs: nowMs,
         durationMs: render.stungMs,

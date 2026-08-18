@@ -32,6 +32,8 @@ export interface RenderConfig {
   readonly honeyRippleMs: number
   readonly honeyRippleAmplitude: number
   readonly honeyRippleWaves: number
+  /** Milliseconds per radian of ripple travel. Higher is slower, and honey is slow. */
+  readonly honeyRipplePeriodMs: number
   readonly honeyGloss: number
   /** How long honey takes to pour back in after a reseed. */
   readonly honeyPourMs: number
@@ -39,6 +41,10 @@ export interface RenderConfig {
 
   readonly scoredFlashMs: number
   readonly scoredBlinks: number
+  /** Blinks when a cell takes a new letter, so the change is impossible to miss. */
+  readonly reseedBlinks: number
+  /** How far the new letter overshoots as it lands, as a scale factor. */
+  readonly reseedPop: number
   readonly rejectedMs: number
   readonly stungMs: number
   readonly shakeMs: number
@@ -86,11 +92,15 @@ export const renderConfig: RenderConfig = {
 
   honeyTweenMs: 400,
 
-  honeyMeniscus: 0.13,
-  honeyRippleMs: 620,
-  honeyRippleAmplitude: 0.1,
-  honeyRippleWaves: 2.5,
-  honeyGloss: 0.42,
+  // Curvature kept, depth eased: the bow reads as a meniscus rather than a bowl.
+  honeyMeniscus: 0.075,
+  // Honey is viscous. A fast, tall, many-crested ripple read as water — so the wave
+  // is shallower, longer and much slower, and takes longer to settle.
+  honeyRippleMs: 900,
+  honeyRippleAmplitude: 0.028,
+  honeyRippleWaves: 1,
+  honeyRipplePeriodMs: 260,
+  honeyGloss: 0.45,
   honeyPourMs: 520,
   honeyPourWidth: 0.17,
 
@@ -100,7 +110,9 @@ export const renderConfig: RenderConfig = {
   stungMs: 520,
   shakeMs: 250,
   shakeAmplitude: 9,
-  reseedMs: 760,
+  reseedMs: 820,
+  reseedBlinks: 3,
+  reseedPop: 0.35,
   popupMs: 950,
   popupRise: 1.7,
 
@@ -115,7 +127,8 @@ export const renderConfig: RenderConfig = {
   gameOverMs: 900,
 
   boardMargin: 0.08,
-  topInset: 96,
+  // Header, then the trail band beneath it, then the board.
+  topInset: 158,
   bottomInset: 76,
   pointerTolerance: 0.22,
 }

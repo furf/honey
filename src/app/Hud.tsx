@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react'
 import { gameConfig } from '../config'
 
 /**
@@ -34,12 +35,22 @@ export function Hud({ pot, health, word, preview, muted, onToggleMute }: HudProp
       </div>
 
       {/*
-        The trail preview sits above the honeycomb. Once a trail could score it also
-        shows what it is worth, which is how a player learns the economy — by watching
-        the number move rather than being told.
+        The trail preview sits in its own band between the header and the honeycomb,
+        with the value beneath the word rather than beside it — a number alongside the
+        letters competed with them for the same glance.
+
+        The word is set as large as will fit: CSS divides the available width by the
+        letter count, which needs no resize listener because it is expressed in vw.
       */}
       <div className="trail" aria-live="polite">
-        {word && <span className="trail__word">{word}</span>}
+        {word && (
+          <span
+            className="trail__word"
+            style={{ '--trail-len': Math.max(word.length, 3) } as CSSProperties}
+          >
+            {word}
+          </span>
+        )}
         {preview > 0 && <span className="trail__preview">+{preview.toLocaleString()}</span>}
       </div>
 
