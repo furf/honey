@@ -40,6 +40,9 @@ src/app/       composition root, screens, HUD.
 Read these before changing behaviour — most "why is it like this?" questions are
 answered there rather than in the code.
 
+- **[docs/status.md](./docs/status.md)** — where things stand: what is unfinished, what
+  was tried and rejected, and what nobody has measured yet. Read this first if you are
+  picking the project up.
 - **[CONTEXT.md](./CONTEXT.md)** — the glossary. Words used here mean specific things:
   a *trail* is not a *word*, a *sip* is not a *sting*, and the player's score is the
   *pot*.
