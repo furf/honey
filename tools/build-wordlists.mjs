@@ -20,6 +20,8 @@ import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
+import { createBanFilter } from './wordlists/ban-filter.mjs'
+
 const HERE = dirname(fileURLToPath(import.meta.url))
 const ROOT = resolve(HERE, '..')
 const RAW = resolve(ROOT, 'tools/wordlists/raw')
@@ -256,8 +258,15 @@ if (QU_INDEX === undefined) throw new Error('symbol table must contain Qu')
 if (SYMBOLS.length > 32) throw new Error('symbol index must fit in 5 bits')
 
 console.error('Reading ENABLE...')
-const enable = readEnable()
-console.error(`  ${enable.length.toLocaleString()} words of ${MIN_LETTERS}-${MAX_LETTERS} letters`)
+const unfiltered = readEnable()
+console.error(`  ${unfiltered.length.toLocaleString()} words of ${MIN_LETTERS}-${MAX_LETTERS} letters`)
+
+// Filtered here, before anything else sees the list: the dictionary, the common
+// subset, the bigram statistics and the packed output are all built from what is left,
+// so a banned word cannot be scored, counted, or built into a board.
+const isBanned = createBanFilter()
+const enable = unfiltered.filter((entry) => !isBanned(entry.word))
+console.error(`  ${(unfiltered.length - enable.length).toLocaleString()} removed by the banned list`)
 
 console.error('Reading frequency counts...')
 const counts = readFrequencies()

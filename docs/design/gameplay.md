@@ -40,6 +40,13 @@ On release, the trail is judged in this order:
 4. **Not a word** — absent from the dictionary. No honey, no health cost.
 5. **Valid** — harvested and scored.
 
+Some words are **banned**: profanity, slurs, and explicit sexual vocabulary are removed
+from the dictionary before it ships, so they can neither be scored nor counted by the
+board generator. The line is register rather than subject — clinical and anatomical
+terms stay in play. A banned word is simply absent, so tracing one gives the ordinary
+"not a word" response with no hint that anything was filtered. See
+[ADR-0007](../adr/0007-banned-words.md).
+
 The `Qu` cell is a single cell bearing two characters. It counts as two letters toward
 `config.words.minLetters` and toward the length multiplier, so a four-letter word
 containing it is drawn across three cells. Words containing a Q not followed by a U

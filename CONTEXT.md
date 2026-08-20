@@ -38,6 +38,12 @@ A trail that the player has released and that passed validation — long enough,
 present in the dictionary, and not already played this game.
 _Avoid_: Match, find, solution
 
+**Banned Word**:
+A term the game will not accept: profanity, slurs, and explicit sexual vocabulary.
+Removed from the dictionary before it ships, so it can neither be scored nor built
+into a board. Clinical and anatomical terms are not banned.
+_Avoid_: Blocked word, filtered word, blacklist, profanity list
+
 **Harvest**:
 The transfer of honey from a word's cells into the pot.
 _Avoid_: Score, collect, points
