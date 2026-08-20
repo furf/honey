@@ -5,9 +5,13 @@
  */
 
 /*
- * Two faces, two jobs. Nunito reads: it carries the letters on the board and every
- * word of interface text. Poetsen One announces: it sets the word being spelled, and
- * nothing else.
+ * One face, every job. Nunito carries the letters on the board, the word being spelled
+ * above it, and every word of interface text; weight is what separates them.
+ *
+ * Poetsen One is still declared and still shipped, but nothing currently asks for it.
+ * Its @font-face costs no bandwidth — a face is fetched when something uses it, not
+ * when it is declared — so it stays available rather than being deleted along with a
+ * licence file that documents what the game ships.
  *
  * Both declare a 100-900 range deliberately. Where a family ships as a single static
  * weight, a declared range covering the requested weight means the browser uses the
@@ -278,18 +282,26 @@ body {
 
 /*
  * As large as will fit. The width available is the viewport minus a margin, divided
- * by the letter count — 0.78em is the advance of an uppercase glyph at this tracking,
- * so a long word shrinks to the edge of the margin and no further.
+ * by the letter count — 0.86em is the advance of an uppercase glyph at this tracking,
+ * so a long word shrinks to the edge of the margin and no further. Nunito sets wider
+ * than the display face this replaced (0.69em against 0.61em before tracking), so the
+ * divisor grew with it; leaving it alone would have let a long word run past the
+ * margin.
+ *
+ * The divisor is an average advance, not the widest one, so a long run of the widest
+ * glyphs still overruns — a trail of ten W's does, as it did under the previous face.
+ * Sizing for the worst case would shrink every ordinary word to pay for a string no
+ * dictionary contains; the plate's max-width is what bounds the damage.
  */
 /*
- * The one place a display face appears. It sets the word being spelled and nothing
- * else, which is what keeps it an announcement rather than a texture.
+ * The word is set in the same face and weight as the board, so the trail reads as the
+ * letters the player is picking up rather than as a separate announcement.
  */
 .trail__word {
-  font-family: 'Poetsen One', 'Nunito', ui-rounded, system-ui, sans-serif;
+  font-family: 'Nunito', ui-rounded, 'SF Pro Rounded', 'Segoe UI Rounded', system-ui, sans-serif;
   --trail-len: 4;
-  font-size: min(3.5rem, calc((100vw - 2.5rem) / (var(--trail-len) * 0.78)));
-  font-weight: 600;
+  font-size: min(3.5rem, calc((100vw - 2.5rem) / (var(--trail-len) * 0.86)));
+  font-weight: 800;
   letter-spacing: 0.1em;
   /* Tracking adds a trailing gap; pull it back so the word stays optically centred. */
   text-indent: 0.1em;

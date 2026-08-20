@@ -27,6 +27,14 @@ export interface Palette {
   readonly letterDim: string
   /** Glyph colour on a cell wearing a state colour, where the usual letter loses contrast. */
   readonly letterOnState: string
+  /**
+   * The two edges of a letter stamped into the wax, drawn behind the glyph itself.
+   *
+   * Both are translucent so one pair works over honey gold and over a blue, green or
+   * red state cell, rather than needing a second pair per state.
+   */
+  readonly letterEmbossHighlight: string
+  readonly letterEmbossShadow: string
 
   /** Trail states. Red means damage and only damage. */
   readonly trailSelecting: string

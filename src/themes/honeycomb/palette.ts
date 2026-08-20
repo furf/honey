@@ -29,6 +29,10 @@ export const palette: Palette = {
   // On a blue, green or red cell the brown glyph loses contrast; white holds against
   // all three.
   letterOnState: '#ffffff',
+  // Wax lit from above: the lower lip of a stamped letter catches the light, the upper
+  // lip falls into shadow. Kept translucent so the cell's own colour shows through.
+  letterEmbossHighlight: 'rgba(255, 248, 214, 0.5)',
+  letterEmbossShadow: 'rgba(58, 26, 6, 0.45)',
 
   trailSelecting: '#3aa6f0',
   trailScored: '#4fd66f',
@@ -63,9 +67,9 @@ export const palette: Palette = {
  * from public/fonts and declared in styles.css; the rounded system faces behind it
  * only matter if that download is slow or blocked.
  *
- * The board deliberately does not use the display face. Poetsen One sets the word
- * being spelled and nothing else — a display face across nineteen cells would compete
- * with the honey rather than sit in it.
+ * The board and the word being spelled above it are set in the same face, so the trail
+ * reads as the letters the player is picking up. Weight, not family, is what tells the
+ * two apart from the interface around them.
  */
 const STACK = '"Nunito", ui-rounded, "SF Pro Rounded", "Segoe UI Rounded", system-ui, sans-serif'
 
