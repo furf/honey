@@ -132,11 +132,21 @@ The word preview sits in its own band between the header and the board, with its
 beneath it rather than beside it, and is set as large as will fit — the available width
 divided by the letter count, so a long word shrinks to the margin and no further.
 
-Type is **Fredoka**, a rounded face with open apertures, shipped from `public/fonts`
-and used for both the board and the interface. This is a word game — the letters on the
-cells are the product — and a face that stays legible inside a hexagon at thumb size is
-worth its download. Rounded system faces sit behind it in the stack in case that
-download is slow or blocked, and `font-synthesis` is off so no weight is ever faked.
+Two faces, two jobs, both shipped from `public/fonts`.
+
+**Nunito** reads: it sets the letters on the board and every word of interface text.
+This is a word game — the letters on the cells are the product — and a rounded face
+with open apertures stays legible inside a hexagon at thumb size.
+
+**Poetsen One** announces: it sets the word being spelled above the board, and nothing
+else. Confining the display face to one element is what keeps it an announcement rather
+than a texture; across nineteen cells it would compete with the honey rather than sit
+in it. The value beneath the word stays in Nunito, because it annotates the word rather
+than being part of it, and a display face has no tabular figures to stop it twitching
+as the trail grows.
+
+Rounded system faces sit behind both in the stack in case a download is slow or
+blocked, and `font-synthesis` is off so no weight is ever faked.
 
 Board letters are sized to stay readable **under** a bee, which sits offset to a cell's
 upper left rather than centred.

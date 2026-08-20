@@ -25,7 +25,10 @@ the font, and that a modified font is not redistributed under a Reserved Font Na
 Both are satisfied by shipping `OFL.txt` beside the file and not modifying it.
 
 Fonts are recorded with their provenance in `public/fonts/README.md`, because the
-dependency tooling cannot see them.
+dependency tooling cannot see them. Each family keeps its `OFL.txt` beside it; those
+files must not be separated from the font they cover. Where a family declares a
+Reserved Font Name — Poetsen One does — it may ship as-is but a modified version must
+not carry that name.
 
 **Carve-out two: MPL-2.0 is permitted for unmodified build tooling that never reaches
 the bundle.** MPL-2.0 is file-level copyleft — its obligations attach to the covered

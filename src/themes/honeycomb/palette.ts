@@ -59,11 +59,15 @@ export const palette: Palette = {
 /**
  * A rounded, open-apertured face.
  *
- * This is a word game: the letters on the cells are the product. Fredoka is shipped
+ * This is a word game: the letters on the cells are the product. Nunito is shipped
  * from public/fonts and declared in styles.css; the rounded system faces behind it
  * only matter if that download is slow or blocked.
+ *
+ * The board deliberately does not use the display face. Poetsen One sets the word
+ * being spelled and nothing else — a display face across nineteen cells would compete
+ * with the honey rather than sit in it.
  */
-const STACK = '"Fredoka", ui-rounded, "SF Pro Rounded", "Segoe UI Rounded", "Nunito", system-ui, sans-serif'
+const STACK = '"Nunito", ui-rounded, "SF Pro Rounded", "Segoe UI Rounded", system-ui, sans-serif'
 
 export const typography: Typography = {
   letters: `600 1px ${STACK}`,

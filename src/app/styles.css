@@ -5,20 +5,30 @@
  */
 
 /*
- * One file, one weight.
+ * Two faces, two jobs. Nunito reads: it carries the letters on the board and every
+ * word of interface text. Poetsen One announces: it sets the word being spelled, and
+ * nothing else.
  *
- * The range is declared as 100-900 deliberately: a static face whose declared range
- * covers the requested weight is used as-is, where a narrow declaration would have the
- * browser fake the missing weights. Faux bold on a rounded display face looks smeared,
- * and a game whose letters are the product cannot afford that. Installing the variable
- * file instead would restore real weight variation with no other change here.
+ * Both declare a 100-900 range deliberately. Where a family ships as a single static
+ * weight, a declared range covering the requested weight means the browser uses the
+ * face as-is; a narrow declaration would have it synthesise the rest, and faux bold on
+ * a rounded face looks smeared. Where a family is variable, the same declaration lets
+ * its real weights work. `font-synthesis: none` on the body backs this up.
  */
 @font-face {
-  font-family: 'Fredoka';
-  src: url('/fonts/fredoka.woff2') format('woff2');
+  font-family: 'Nunito';
+  src: url('/fonts/nunito/nunito.woff2') format('woff2');
   font-weight: 100 900;
   font-style: normal;
   /* The board redraws every frame, so it picks the face up the moment it lands. */
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Poetsen One';
+  src: url('/fonts/poetsen_one/poetsen_one.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
   font-display: swap;
 }
 
@@ -36,11 +46,11 @@ body,
 
 body {
   /*
-   * Fredoka, with a rounded system face behind it so nothing reflows badly if the
+   * Nunito, with a rounded system face behind it so nothing reflows badly if the
    * download is slow or blocked.
    */
-  font-family: 'Fredoka', ui-rounded, 'SF Pro Rounded', 'Segoe UI Rounded', 'Nunito',
-    system-ui, sans-serif;
+  font-family: 'Nunito', ui-rounded, 'SF Pro Rounded', 'Segoe UI Rounded', system-ui,
+    sans-serif;
   /* Never synthesise a weight or a slant we did not ship. */
   font-synthesis: none;
   background: #10203a;
@@ -254,7 +264,12 @@ body {
  * by the letter count — 0.78em is the advance of an uppercase glyph at this tracking,
  * so a long word shrinks to the edge of the margin and no further.
  */
+/*
+ * The one place a display face appears. It sets the word being spelled and nothing
+ * else, which is what keeps it an announcement rather than a texture.
+ */
 .trail__word {
+  font-family: 'Poetsen One', 'Nunito', ui-rounded, system-ui, sans-serif;
   --trail-len: 4;
   font-size: min(3.5rem, calc((100vw - 2.5rem) / (var(--trail-len) * 0.78)));
   font-weight: 600;
