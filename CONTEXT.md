@@ -13,13 +13,19 @@ One hexagon on the board. Holds a position, a letter, and a quantity of honey.
 _Avoid_: Tile, square, space
 
 **Ring**:
-A concentric band of cells around the board's center, numbered 0 (the single center
-cell) through 3 (the outer band). The board is exactly rings 0–3, or 37 cells.
+A concentric band of cells around the board's centre. Ring 0 is the single centre cell,
+ring 1 is the six around it, and so on. How many rings the board has is a setting; two
+rings, or 19 cells, is the default.
 _Avoid_: Row, layer, orbit
 
 **Honeycomb**:
-The whole board — all 37 cells and their arrangement.
+The whole board — every cell and their arrangement.
 _Avoid_: Grid, hive, comb
+
+**Slab**:
+The single piece of wax the cells are cut into, drawn as one shape behind them all.
+It gives the board its mass; the cells' own borders give it depth.
+_Avoid_: Comb, backing, tray, plate
 
 **Letter**:
 The character shown on a cell. Usually one character; `Qu` is a single letter

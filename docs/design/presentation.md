@@ -1,8 +1,14 @@
 # Presentation
 
-Visual, audible, and interaction decisions. Timings and colours are named by their
-theme or configuration variable rather than their value — see
-[config-reference.md](../config-reference.md).
+How the game looks, sounds and responds, and why.
+
+**If you only read one thing:** the honeycomb is drawn on a canvas by code in
+`src/app/render.ts`; the header, the word above the board and the game-over card are
+ordinary HTML. Colours and fonts come from a *theme* (`src/themes/`), and every timing
+and size comes from `src/config/render.ts`. Nothing visual is hard-coded in the rules.
+
+This document names the setting rather than the number — see
+[config-reference.md](../config-reference.md) for the values.
 
 The overall aesthetic is bright, lively, and subtly dimensional, in the register of
 Zynga's casual titles: saturated colour, soft depth, generous motion. The honeycomb
@@ -65,12 +71,17 @@ survives red/green colour blindness.
   back in from above, and the new letter fades in with a slight overshoot as it lands.
   A letter changing quietly under a player's thumb is easy to miss entirely, so the
   change is announced rather than merely happening.
-- **Sting** — screen shake, red vignette, health bar flash.
+- **Sting** — three things at once, because damage has to register even if the player is
+  looking at the far side of the board: the screen shakes, red closes in from the edges
+  of the screen, and the health bar pulses.
 - **Bee arrival** — the bee flies in from beyond the rim along the line from the board's
   centre through its entry cell. It does not descend onto a cell: doing so made bees
   appear *on top of* the board rather than arriving at it.
 - **Bee turning** — a bee rotates on the spot towards its next cell before setting off,
   taking the short way round so it never spins most of a circle to face a neighbour.
+- **Bee filling** — a bee swells a little with every sip and glows once nearly full, so
+  "this one is almost done" is readable while it still matters, rather than only at the
+  moment it turns for home.
 - **Intro and game over** — the honeycomb scales up from the centre, and letters fall
   away at the end, both **staggered outward by ring**. The ring stagger makes the
   honeycomb's structure legible as structure, which is the game's visual identity.
@@ -79,8 +90,10 @@ survives red/green colour blindness.
   the fallback. The engine knows *that* a transition is running and for how long, the
   theme knows what it looks like.
 
-`prefers-reduced-motion` is honoured automatically with no UI: screen shake and the
-sting vignette are exactly the effects that harm motion-sensitive players.
+`prefers-reduced-motion` is honoured automatically, with no setting to find. If the
+device asks for reduced motion, the screen shake is skipped entirely and CSS animations
+are cut to nothing. These are exactly the effects that make motion-sensitive players
+ill, so the game reads the operating system's answer rather than asking again.
 
 ## Screens and HUD
 

@@ -39,6 +39,8 @@ export const testConfig: GameConfig = {
     maxGenerationAttempts: 1,
     lengthWeights: { 4: 1 },
     familyWeight: 0,
+    stemLetters: 4,
+    familyExponent: 1.5,
     bigramWeight: 0,
     longWordLetters: 6,
     minLongWords: 0,

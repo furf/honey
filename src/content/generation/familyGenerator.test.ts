@@ -53,6 +53,8 @@ const generation: GenerationConfig = {
     // count and fills the board with four-letter words — which is what it did.
     lengthWeights: { 4: 1, 5: 3, 6: 9, 7: 20, 8: 34, 9: 50 },
     familyWeight: 6,
+  stemLetters: 4,
+  familyExponent: 1.5,
     bigramWeight: 40,
     longWordLetters: 6,
     minLongWords: 6,

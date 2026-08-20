@@ -99,7 +99,13 @@ function towards(from: { x: number; y: number }, to: { x: number; y: number }, d
   return { x: from.x + (dx / length) * clamped, y: from.y + (dy / length) * clamped }
 }
 
-export interface HoneySurface {
+/**
+ * A liquid surface in a cell.
+ *
+ * Named for the shape, not the game: the engine draws geometry and never learns that
+ * this happens to be honey.
+ */
+export interface LiquidSurface {
   /** 0..1 of the cell's height. */
   readonly fraction: number
   /** How far the surface bows, in cell radii. Liquids are not flat. */
@@ -111,25 +117,27 @@ export interface HoneySurface {
   readonly waves: number
   /** Strength of the specular band along the surface, 0 to 1. */
   readonly gloss: number
+  /** Points sampled along the surface. More is smoother and slower. */
+  readonly steps: number
 }
 
 /**
  * Fill a hexagon from the bottom with something that behaves like a liquid.
  *
- * A flat edge was what made a cell read as coloured plastic. Honey has a curved
- * surface that catches light, and it sloshes when the level changes — so harvesting
- * is visible as an event rather than a number quietly going down.
+ * A flat edge reads as coloured plastic. A liquid has a curved surface that catches
+ * light and sloshes when its level changes, which is what makes a change of level an
+ * event rather than a number quietly going down.
  *
  * Clipping to the hexagon rather than drawing a smaller one keeps the meter honest:
  * the filled area stays proportional to height.
  */
-export function fillHoney(
+export function fillLiquid(
   ctx: CanvasRenderingContext2D,
   x: number,
   y: number,
   size: number,
   radius: number,
-  surface: HoneySurface,
+  surface: LiquidSurface,
   style: string | CanvasGradient,
   glossStyle: string,
 ): void {
@@ -155,9 +163,10 @@ export function fillHoney(
     return level - curve + wave
   }
 
+  const steps = Math.max(2, surface.steps)
+
   ctx.beginPath()
   ctx.moveTo(left, surfaceAt(0))
-  const steps = 14
   for (let step = 1; step <= steps; step++) ctx.lineTo(left + (right - left) * (step / steps), surfaceAt(step / steps))
   ctx.lineTo(right, y + size * 1.2)
   ctx.lineTo(left, y + size * 1.2)
@@ -183,12 +192,12 @@ export function fillHoney(
 }
 
 /**
- * A stream of honey falling into a cell, for the moment after a reseed.
+ * A stream falling into a cell, for the moment after it is refilled.
  *
- * Honey arrives from above; a level that simply rose out of the floor read as a bar
- * chart filling rather than a cell being refilled.
+ * Liquid arrives from above; a level that simply rose out of the floor reads as a bar
+ * chart filling rather than a vessel being refilled.
  */
-export function pourHoney(
+export function pourStream(
   ctx: CanvasRenderingContext2D,
   x: number,
   y: number,

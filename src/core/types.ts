@@ -84,6 +84,10 @@ export interface GenerationConfig {
    */
   readonly lengthWeights: Readonly<Record<number, number>>
   readonly familyWeight: number
+  /** How many leading letters count as a shared stem. */
+  readonly stemLetters: number
+  /** How sharply a family beats the same number of unrelated words. */
+  readonly familyExponent: number
   readonly bigramWeight: number
   /** Letters that make a word count as long. */
   readonly longWordLetters: number
@@ -235,7 +239,7 @@ export type BeePhase = 'arriving' | 'hopping' | 'turning' | 'sipping' | 'leaving
  * keep using are the empty ones. So the two purposeful intents pull in opposite
  * directions — a forager goes where the food is, a hunter goes where the player is.
  */
-export type BeeIntent = 'forage' | 'hunt' | 'wander'
+export type BeeIntent = 'forage' | 'hunt'
 
 export interface Bee {
   readonly id: number
@@ -312,6 +316,8 @@ export type GameEvent =
       readonly kind: 'beeApproaching'
       readonly beeId: number
       readonly typeId: string
+      /** From the bee type's configuration, so the sound is not built by convention. */
+      readonly approachSound: string
       readonly cellKey: string
       /** How long the approach lasts, so the flight in can be drawn to scale. */
       readonly durationMs: number

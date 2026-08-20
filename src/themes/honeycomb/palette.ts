@@ -17,9 +17,9 @@ export const palette: Palette = {
   cellWaxLit: '#e2b366',
   honeyGloss: 'rgba(255, 246, 205, 0.85)',
   cellEdge: '#8f5514',
-  // The board is cut from one piece of comb. Cells sit in it rather than on it.
-  combSlab: '#b07826',
-  combSlabEdge: '#7d4a11',
+  // The board is cut from one slab of wax. Cells sit in it rather than on it.
+  slabFill: '#b07826',
+  slabEdge: '#7d4a11',
   cellShadow: 'rgba(74, 36, 8, 0.42)',
   cellHighlight: 'rgba(255, 244, 205, 0.9)',
   // Deeper than it was: against bright honey the old brown read as muddy beside the

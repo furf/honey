@@ -22,8 +22,17 @@ Four layers, each depending only on the layer beneath it through interfaces:
 - **content** — swappable strategies behind interfaces: `Dictionary`,
   `LetterGenerator`, `WordPolicy`.
 - **engine** — canvas rendering, the layer stack, pointer-to-cell hit testing, and
-  Web Audio. Knows nothing about honey, bees, or words. It also declares the *shape*
-  of a theme, because the engine is what consumes one.
+  Web Audio. Its *behaviour* knows nothing about honey, bees, or words: it draws a
+  hexagon, fills one with a liquid, plays a sound. Every function here is named for the
+  shape or the sound, never for what the game happens to use it for — `fillLiquid`, not
+  `fillHoney`.
+
+  The one exception is deliberate. The engine declares the *shape* of a theme, and a
+  theme is a vocabulary the game supplies, so its slots are named after game concepts
+  (`cellFill`, `slabFill`, `trailStung`). That is the point of the type: it is the list
+  of things a theme must answer for. The rule is therefore about behaviour, not about
+  every identifier — engine code may not *do* anything game-specific, but the theme
+  contract it publishes necessarily *names* game-specific things.
 - **themes** — palettes, typography, sprites, sounds, copy, and environments, as data
   and draw functions. Themes sit **above** the engine rather than beside it: a sprite
   is a function written against the engine's drawing primitives, so a theme depends on

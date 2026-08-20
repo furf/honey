@@ -1,29 +1,39 @@
 # Fonts
 
-All three are licensed under the SIL Open Font License 1.1. Each family keeps its
-`OFL.txt` alongside it — the OFL requires the licence to travel with the font software,
-so those files must not be separated from the `.woff2` they cover.
+Both fonts are licensed under the SIL Open Font License 1.1. Each keeps its `OFL.txt`
+in the same folder — the licence has to travel with the font file, so don't separate
+them.
 
-Permitted under the font carve-out in
-[ADR-0004](../../docs/adr/0004-permissive-licences-only.md): the OFL is permissive and
-imposes nothing on work *set* in the font, only on the font software itself.
+They're allowed here under the font exception in
+[ADR-0004](../../docs/adr/0004-permissive-licences-only.md): the OFL puts conditions on
+the font file itself, not on anything you set in it.
 
-| Family | File | Used for | Source |
+| Font | File | Used for | Where it came from |
 |---|---|---|---|
 | Nunito | `nunito/nunito.woff2` | Letters on the board, and all interface text | https://fonts.google.com/specimen/Nunito |
-| Poetsen One | `poetsen_one/poetsen_one.woff2` | The word preview above the board | https://fonts.google.com/specimen/Poetsen+One |
-| Fredoka | `fredoka/fredoka.woff2` | **Nothing.** Kept for comparison | https://fonts.google.com/specimen/Fredoka |
+| Poetsen One | `poetsen_one/poetsen_one.woff2` | The word being spelled, above the board | https://fonts.google.com/specimen/Poetsen+One |
 
-Poetsen One carries the **Reserved Font Name "Poetsen"**. It may be shipped as-is, but
-a modified version must not be distributed under that name.
+Poetsen One has a **Reserved Font Name** ("Poetsen"). You can ship it as-is. If you ever
+modify the file, you can't distribute the result under that name.
 
-Fredoka is currently unreferenced and still ships, because Vite copies this directory
-verbatim. Delete the folder to save its weight from the build.
+## Why the weights look odd
 
-## Declaring a weight
+Each `@font-face` says `font-weight: 100 900`, which looks wrong for a font that only
+has one weight. It's deliberate.
 
-Each `@font-face` declares `font-weight: 100 900` deliberately. Where a family is a
-single static weight, a declared range that covers the requested weight means the
-browser uses the face as-is; a narrow declaration would have it synthesise the rest,
-and faux bold on a rounded display face looks smeared. `font-synthesis: none` backs
-this up. Where a family is variable, the same declaration lets its real weights work.
+If a font file contains a single weight and you declare only that weight, the browser
+will *fake* the others by smearing the letters — "faux bold". Declaring a range tells
+the browser to use the real file for any weight you ask for instead. `font-synthesis:
+none` in the stylesheet is the belt to that braces.
+
+If you later drop in a variable version of either font, this same declaration lets its
+real weights work. Nothing else needs to change.
+
+## Adding a font
+
+1. Put the `.woff2` and its `OFL.txt` in a new folder here.
+2. Add an `@font-face` block in `src/app/styles.css`.
+3. Add a `<link rel="preload">` in `index.html` — the board is drawn on a canvas, and
+   canvas silently falls back to a system font if the real one hasn't loaded yet.
+4. Add a row to the table above. The licence checker can't see fonts, so this file is
+   the only record that they were checked.

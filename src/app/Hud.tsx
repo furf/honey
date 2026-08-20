@@ -11,20 +11,22 @@ import { gameConfig } from '../config'
 export interface HudProps {
   readonly pot: number
   readonly health: number
+  /** Rises on every sting. The bar flashes once each time it changes. */
+  readonly stings: number
   readonly word: string
   readonly preview: number
   readonly muted: boolean
   readonly onToggleMute: () => void
 }
 
-export function Hud({ pot, health, word, preview, muted, onToggleMute }: HudProps) {
+export function Hud({ pot, health, stings, word, preview, muted, onToggleMute }: HudProps) {
   const percent = Math.max(0, Math.min(100, (health / gameConfig.health.max) * 100))
   const state = percent > 50 ? 'good' : percent > 20 ? 'warn' : 'danger'
 
   return (
     <>
       <div className="hud hud--top">
-        <div className="health" role="meter" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(percent)} aria-label="Health">
+        <div key={stings} className="health health--hit" role="meter" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(percent)} aria-label="Health">
           <div className={`health__bar health__bar--${state}`} style={{ width: `${percent}%` }} />
           <span className="health__label">{Math.round(percent)}%</span>
         </div>

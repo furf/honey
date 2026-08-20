@@ -46,6 +46,8 @@ export function createFamilyGenerator(options: FamilyGeneratorOptions): LetterGe
     familyWeight: generation.familyWeight,
     bigramWeight: generation.bigramWeight,
     longWordLetters: generation.longWordLetters,
+    stemLetters: generation.stemLetters,
+    familyExponent: generation.familyExponent,
   }
 
   const pool = SYMBOLS.map(
@@ -78,6 +80,7 @@ export function createFamilyGenerator(options: FamilyGeneratorOptions): LetterGe
   const acceptable = (score: BoardScore): boolean =>
     score.commonWords >= generation.minCommonWords &&
     score.longWords >= generation.minLongWords &&
+    score.longestWord >= generation.minLongestWord &&
     (!generation.requireEveryCellUsed || score.unusedCells === 0)
 
   // ---- letter bookkeeping -------------------------------------------------
@@ -241,7 +244,7 @@ export function createFamilyGenerator(options: FamilyGeneratorOptions): LetterGe
       const { counts, vowels } = countLetters(cells)
       const candidates = candidatesFor(cell, counts, vowels, cells.size)
 
-      const raw: { letter: string; score: number; variety: number }[] = []
+      const raw: { letter: string; score: number; variety: number; keeps: boolean }[] = []
       let bestScore = 0
 
       for (const candidate of candidates) {
@@ -255,10 +258,18 @@ export function createFamilyGenerator(options: FamilyGeneratorOptions): LetterGe
 
         const total = Math.max(0, score.total)
         if (total > bestScore) bestScore = total
-        raw.push({ letter: candidate, score: total, variety })
+        raw.push({ letter: candidate, score: total, variety, keeps: acceptable(score) })
       }
 
       cell.letter = original
+
+      // Prefer letters that leave the board still passing every invariant. A reseed
+      // is the one place the board changes during play, so this is where a good board
+      // quietly turns into a bad one. If nothing keeps it acceptable — a board can be
+      // pushed below the bar by bees alone — fall back to the whole field rather than
+      // refusing to reseed.
+      const viable = raw.filter((candidate) => candidate.keeps)
+      const field = viable.length > 0 ? viable : raw
 
       // Weight by how close a candidate is to the best one, raised to a power.
       // Weighting by raw score barely distinguishes a great letter from a poor one —
@@ -266,7 +277,7 @@ export function createFamilyGenerator(options: FamilyGeneratorOptions): LetterGe
       // erodes back to noise within a single pass of reseeds. Measured: 158 findable
       // words down to 28 after reseeding every cell once.
       const scored: (readonly [string, number])[] = []
-      for (const candidate of raw) {
+      for (const candidate of field) {
         const relative = bestScore > 0 ? candidate.score / bestScore : 0
         const weight = Math.pow(relative, generation.reseedSharpness) * candidate.variety
         if (weight > 0) scored.push([candidate.letter, weight])

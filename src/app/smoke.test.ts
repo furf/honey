@@ -116,6 +116,8 @@ function renderOnce(game: Game, layout: Layout, sweepKind: 'intro' | 'play' | 'g
     render: renderConfig,
     environmentId: levels[0]!.environmentId,
     cellCapacity: gameConfig.honey.cellCapacity,
+    beeTypes,
+    reducedMotion: false,
     nowMs: 1000,
     sweep: 1,
     sweepKind,

@@ -50,8 +50,6 @@ export interface Effects {
   popups: Popup[]
   /** Where each bee is visually, which lags where it logically is. */
   bees: Map<number, BeeVisual>
-  /** Ambient sounds that should be playing, by name. */
-  ambient: Set<string>
   /** Cell honey as drawn, easing towards the real value. */
   drawnHoney: Map<string, number>
   /** When each cell's honey was last disturbed, so the surface can settle. */
@@ -65,7 +63,6 @@ export function createEffects(): Effects {
     flashes: [],
     popups: [],
     bees: new Map(),
-    ambient: new Set(),
     drawnHoney: new Map(),
     honeyDisturbed: new Map(),
     shakeUntilMs: 0,
@@ -156,7 +153,7 @@ export function applyEvent(effects: Effects, event: GameEvent, ctx: EffectContex
         turnStartedMs: nowMs,
         turnMs: 0,
       })
-      ctx.play(`bee.approach.${event.typeId}`)
+      ctx.play(event.approachSound)
       break
 
     case 'beeArrived': {

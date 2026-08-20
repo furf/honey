@@ -20,9 +20,10 @@ impossible.
 
 A **bee type** owns behaviour: `sipPercent`, `sipCapacity`, `sipChance`,
 `hopIntervalMs`, `sipDurationMs`, and its sprite. A **level** declares which types can
-spawn (`level.bees.types`), how many may be present (`level.bees.min` /
-`level.bees.max`), how often they arrive (`level.bees.spawnIntervalMs`), and **may
-override any field of a type it spawns**.
+spawn (`level.bees.types`), how many may be present at once (`level.bees.max`), how
+often they arrive (`level.bees.spawnIntervalMs`), when they may arrive at all
+(`level.bees.waveMs` / `level.bees.calmMs`), how fast everything they do runs
+(`level.bees.speed`), and **may override any field of a type it spawns**.
 
 Capacity is counted in **sips** (`sipCapacity`), not in honey units. A bee's visit is
 therefore a fixed number of stops regardless of its appetite, and a greedier type

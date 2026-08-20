@@ -5,14 +5,14 @@ import {
   darken,
   easeOut,
   environmentById,
-  fillHoney,
+  fillLiquid,
   lerp,
-  pourHoney,
+  pourStream,
   roundedHexPath,
   roundedHexSubpath,
 } from '../engine'
 import { key } from '../core/hex'
-import type { Bee, Cell, GameState } from '../core/types'
+import type { Bee, BeeType, Cell, GameState } from '../core/types'
 import type { RenderConfig } from '../config/render'
 import type { CellFlash, Effects } from './effects'
 
@@ -41,6 +41,15 @@ export interface RenderInput {
   /** Paints the backdrop once and blits it. Absent in tests, which draw directly. */
   readonly environments?: EnvironmentCache
   readonly dpr?: number
+  /**
+   * Bee behaviour by type id.
+   *
+   * The renderer needs the configured sprite id and the sip capacity; building either
+   * by convention meant the configured fields were quietly dead.
+   */
+  readonly beeTypes: Readonly<Record<string, BeeType>>
+  /** When motion is reduced, the screen never shakes. */
+  readonly reducedMotion: boolean
   readonly nowMs: number
   /** 0..1 sweep used by the intro and the game-over collapse. */
   readonly sweep: number
@@ -51,7 +60,7 @@ export function renderGame(ctx: CanvasRenderingContext2D, input: RenderInput): v
   const { effects, theme, layout, render, nowMs } = input
 
   ctx.save()
-  applyShake(ctx, effects, render, nowMs)
+  if (!input.reducedMotion) applyShake(ctx, effects, render, nowMs)
 
   const environment = environmentById(theme, input.environmentId)
   if (input.environments) {
@@ -66,6 +75,7 @@ export function renderGame(ctx: CanvasRenderingContext2D, input: RenderInput): v
   drawTrail(ctx, input)
   drawBees(ctx, input)
   drawPopups(ctx, input)
+  drawStingVignette(ctx, input)
 
   if (environment.tint) {
     ctx.save()
@@ -75,6 +85,40 @@ export function renderGame(ctx: CanvasRenderingContext2D, input: RenderInput): v
     ctx.restore()
   }
 
+  ctx.restore()
+}
+
+/**
+ * Red closing in from the edges when the player is stung.
+ *
+ * Damage is the one thing that has to register even if the player's eyes are on the
+ * far side of the board, and a flash on one cell does not carry that far.
+ */
+function drawStingVignette(ctx: CanvasRenderingContext2D, input: RenderInput): void {
+  const { effects, theme, layout, render, nowMs } = input
+
+  const sting = effects.flashes.find((flash) => flash.kind === 'stung')
+  if (!sting) return
+
+  const progress = (nowMs - sting.startedMs) / sting.durationMs
+  if (progress < 0 || progress > 1) return
+
+  const radius = Math.hypot(layout.width, layout.height) / 2
+  const vignette = ctx.createRadialGradient(
+    layout.width / 2,
+    layout.height / 2,
+    radius * render.vignetteInner,
+    layout.width / 2,
+    layout.height / 2,
+    radius,
+  )
+  vignette.addColorStop(0, 'rgba(0, 0, 0, 0)')
+  vignette.addColorStop(1, theme.palette.trailStung)
+
+  ctx.save()
+  ctx.globalAlpha = (1 - easeOut(progress)) * render.vignetteStrength
+  ctx.fillStyle = vignette
+  ctx.fillRect(0, 0, layout.width, layout.height)
   ctx.restore()
 }
 
@@ -162,12 +206,12 @@ function ringAlpha(input: RenderInput, cell: Cell): number {
 }
 
 /**
- * The comb the cells are cut into.
+ * The slab of wax the cells are cut into.
  *
  * Every cell's outline, inflated and filled as a single shape, so overlapping hexagons
- * merge into one slab of wax with one shadow beneath it. Nineteen separate tiles with
- * nineteen shadows read as a grid of buttons; a board that is swiped across should
- * read as one continuous surface.
+ * merge into one piece with one shadow beneath it. Drawn separately, each cell casts
+ * its own shadow and the honeycomb reads as a tray of loose buttons; a board that is
+ * swiped across should read as one continuous surface.
  *
  * The cells keep their own borders and shadows on top — the slab supplies the mass,
  * the borders supply the depth.
@@ -191,14 +235,14 @@ function drawSlab(ctx: CanvasRenderingContext2D, input: RenderInput): void {
   ctx.shadowColor = theme.palette.cellShadow
   ctx.shadowBlur = layout.size * render.slabShadowBlur
   ctx.shadowOffsetY = layout.size * render.slabShadowOffset
-  ctx.fillStyle = theme.palette.combSlab
+  ctx.fillStyle = theme.palette.slabFill
   ctx.fill()
 
   // Stroked without the shadow, so the rim is a crisp edge rather than a smear.
   ctx.shadowColor = 'transparent'
   ctx.shadowBlur = 0
   ctx.shadowOffsetY = 0
-  ctx.strokeStyle = theme.palette.combSlabEdge
+  ctx.strokeStyle = theme.palette.slabEdge
   ctx.lineWidth = Math.max(1, layout.size * render.slabEdgeWidth)
   ctx.stroke()
   ctx.restore()
@@ -240,13 +284,13 @@ function drawCells(ctx: CanvasRenderingContext2D, input: RenderInput): void {
     // honey line stays legible because the filled and empty halves take two shades of
     // the same colour.
     const state = stateColourOf(input, cellKey, flash)
-    const emptyFill = state ? darken(state, 0.55) : palette.cellFillEmpty
+    const emptyFill = state ? darken(state, render.stateEmptyShade) : palette.cellFillEmpty
     const honeyFill = state ?? palette.cellFill
 
     // Empty wax, lit from within rather than filled flat: comb is translucent, and a
     // warm centre is most of what separates wax from plastic.
     const glow = ctx.createRadialGradient(x, y - size * 0.2, size * 0.1, x, y, size * 1.15)
-    glow.addColorStop(0, state ? darken(state, 0.42) : palette.cellWaxLit)
+    glow.addColorStop(0, state ? darken(state, render.stateGlowShade) : palette.cellWaxLit)
     glow.addColorStop(1, emptyFill)
     ctx.fillStyle = glow
     roundedHexPath(ctx, x, y, size, radius)
@@ -266,7 +310,7 @@ function drawCells(ctx: CanvasRenderingContext2D, input: RenderInput): void {
     honeyGradient.addColorStop(0, honeyFill)
     honeyGradient.addColorStop(1, darken(honeyFill, 0.14))
 
-    fillHoney(
+    fillLiquid(
       ctx,
       x,
       y,
@@ -279,6 +323,7 @@ function drawCells(ctx: CanvasRenderingContext2D, input: RenderInput): void {
         ripplePhase: (nowMs / render.honeyRipplePeriodMs) % (Math.PI * 2),
         waves: render.honeyRippleWaves,
         gloss: render.honeyGloss,
+        steps: render.honeySurfaceSteps,
       },
       honeyGradient,
       palette.honeyGloss,
@@ -287,7 +332,7 @@ function drawCells(ctx: CanvasRenderingContext2D, input: RenderInput): void {
     // A reseeded cell is refilled from above, not from the floor.
     if (flash?.flash.kind === 'reseeded') {
       const pour = 1 - Math.min(1, (flash.progress * flash.flash.durationMs) / render.honeyPourMs)
-      pourHoney(ctx, x, y, size, radius, pour * 2, render.honeyPourWidth, honeyGradient)
+      pourStream(ctx, x, y, size, radius, pour * 2, render.honeyPourWidth, honeyGradient)
     }
 
     // Light catching the upper rim of the wax.
@@ -297,12 +342,12 @@ function drawCells(ctx: CanvasRenderingContext2D, input: RenderInput): void {
     ctx.globalAlpha = render.waxGlow
     ctx.strokeStyle = palette.cellHighlight
     ctx.lineWidth = Math.max(1, size * render.waxRim * 2)
-    roundedHexPath(ctx, x, y + size * 0.07, size * 0.93, radius)
+    roundedHexPath(ctx, x, y + size * render.waxRim, size * (1 - render.waxRim * 1.3), radius)
     ctx.stroke()
     ctx.restore()
 
     ctx.strokeStyle = palette.cellEdge
-    ctx.lineWidth = Math.max(1, size * 0.04)
+    ctx.lineWidth = Math.max(1, size * render.cellEdgeWidth)
     roundedHexPath(ctx, x, y, size, radius)
     ctx.stroke()
 
@@ -398,11 +443,11 @@ function drawCellFlash(
 }
 
 /**
- * The selected cells.
+ * The cells in the trail.
  *
- * No connecting line. The cells themselves already carry the selection colour across
- * their whole face, and a ribbon drawn over the top of that was saying the same thing
- * twice while covering the letters underneath it.
+ * No connecting line. The cells themselves already carry the trail colour across their
+ * whole face, and a ribbon drawn over the top of that said the same thing twice while
+ * covering the letters underneath it.
  */
 function drawTrail(ctx: CanvasRenderingContext2D, input: RenderInput): void {
   const { state, theme, layout, render } = input
@@ -437,13 +482,12 @@ function drawBees(ctx: CanvasRenderingContext2D, input: RenderInput): void {
     const placed = beePlacement(bee, input)
     if (!placed) continue
 
-    const type = state.bees.find((candidate) => candidate.id === bee.id)!
-    const spriteId = bee.exiting
-      ? `bee.${type.typeId}.full`
-      : `bee.${type.typeId}`
-    const sprite = theme.sprites[spriteId] ?? theme.sprites[`bee.${type.typeId}`]
-    if (!sprite) continue
+    // The sprite id comes from configuration, not from the type id by convention.
+    const type = input.beeTypes[bee.typeId]
+    const sprite = type ? theme.sprites[type.spriteId] : undefined
+    if (!sprite || !type) continue
 
+    const fullness = type.sipCapacity > 0 ? bee.sipsTaken / type.sipCapacity : 0
     const phase = ((nowMs / 1000) * render.beeWingHz) % 1
 
     ctx.save()
@@ -456,7 +500,7 @@ function drawBees(ctx: CanvasRenderingContext2D, input: RenderInput): void {
       placed.y + layout.size * render.beeOffset.y,
     )
     ctx.rotate(placed.angle)
-    sprite(ctx, layout.size * render.beeSize, phase)
+    sprite(ctx, layout.size * render.beeSize, phase, fullness)
     ctx.restore()
   }
 }
@@ -515,14 +559,13 @@ function beePlacement(
     if (next) {
       const ahead = cellCentre(layout, next.at)
       const wanted = Math.atan2(ahead.y - to.y, ahead.x - to.x) + Math.PI / 2
-      if (Number.isNaN(visual.turnTo)) visual.turnTo = wanted
-      else visual.turnTo = wanted
+      visual.turnTo = wanted
 
       const span = Math.max(1, visual.turnMs)
       const progress = Math.max(0, Math.min(1, (nowMs - visual.turnStartedMs) / span))
       const angle = visual.turnFrom + shortestTurn(visual.turnFrom, wanted) * easeOut(progress)
 
-      return { x: to.x, y: to.y, angle, alpha: opacityOf(bee) }
+      return { x: to.x, y: to.y, angle, alpha: opacityOf(bee, render) }
     }
   }
 
@@ -530,7 +573,7 @@ function beePlacement(
   const from = visual.fromKey ? state.cells.get(visual.fromKey) : undefined
   if (!from) {
     const angle = Number.isNaN(visual.turnTo) ? 0 : visual.turnTo
-    return { x: to.x, y: to.y, angle, alpha: opacityOf(bee) }
+    return { x: to.x, y: to.y, angle, alpha: opacityOf(bee, render) }
   }
 
   const start = cellCentre(layout, from.at)
@@ -545,7 +588,7 @@ function beePlacement(
     x: lerp(start.x, to.x, eased),
     y: lerp(start.y, to.y, eased),
     angle,
-    alpha: opacityOf(bee),
+    alpha: opacityOf(bee, render),
   }
 }
 
@@ -557,8 +600,8 @@ function shortestTurn(from: number, to: number): number {
   return delta
 }
 
-function opacityOf(bee: Bee): number {
-  return bee.phase === 'leaving' ? 0.55 : 1
+function opacityOf(bee: Bee, render: RenderConfig): number {
+  return bee.phase === 'leaving' ? render.beeLeavingAlpha : 1
 }
 
 /** Floating `+142` and `−10` numbers, rising from the cells they came from. */

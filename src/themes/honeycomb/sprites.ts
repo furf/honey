@@ -24,11 +24,16 @@ interface BeeStyle {
 }
 
 function drawBee(style: BeeStyle): Sprite {
-  return (ctx, size, phase) => {
+  return (ctx, size, phase, level) => {
     const body = size * 0.5
     const wingBeat = Math.sin(phase * Math.PI * 2)
+    // Swells with every sip rather than only once it is full, so "this one is nearly
+    // done" is readable while it still matters.
+    const fullness = Math.max(0, Math.min(1, level))
 
     ctx.save()
+    ctx.save()
+    ctx.scale(1 + fullness * 0.16, 1 + fullness * 0.1)
 
     // Wings first, so the body sits over them.
     ctx.fillStyle = palette.beeWing
@@ -64,6 +69,19 @@ function drawBee(style: BeeStyle): Sprite {
     ctx.fill()
 
     style.marks(ctx, body)
+    ctx.restore()
+
+    // A full bee glows, which is the last step of the same tell.
+    if (fullness > 0.85) {
+      ctx.globalAlpha = (fullness - 0.85) / 0.15
+      ctx.shadowColor = palette.bee
+      ctx.shadowBlur = size * 0.35
+      ctx.beginPath()
+      ctx.ellipse(0, 0, body * style.slim, body, 0, 0, Math.PI * 2)
+      ctx.fillStyle = palette.bee
+      ctx.fill()
+    }
+
     ctx.restore()
   }
 }
@@ -132,23 +150,9 @@ const hunter = drawBee({
   },
 })
 
-/** A bee that has fed: swollen and glowing, which is the "leaving soon" tell. */
-function fullOf(sprite: Sprite): Sprite {
-  return (ctx, size, phase) => {
-    ctx.save()
-    ctx.shadowColor = palette.bee
-    ctx.shadowBlur = size * 0.35
-    ctx.scale(1.18, 1.1)
-    sprite(ctx, size, phase)
-    ctx.restore()
-  }
-}
-
 export const sprites: Readonly<Record<string, Sprite>> = {
   'bee.forager': forager,
-  'bee.forager.full': fullOf(forager),
   'bee.hunter': hunter,
-  'bee.hunter.full': fullOf(hunter),
 }
 
 /**

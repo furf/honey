@@ -50,6 +50,8 @@ interface HudState {
   word: string
   preview: number
   gameOver: boolean
+  /** Bumped on every sting, so the health bar can flash once per hit. */
+  stings: number
 }
 
 export function GameScreen({ deps, seed, theme, onExit, onPlayAgain }: GameScreenProps) {
@@ -64,6 +66,7 @@ export function GameScreen({ deps, seed, theme, onExit, onPlayAgain }: GameScree
     word: '',
     preview: 0,
     gameOver: false,
+    stings: 0,
   })
 
   const toggleMute = useCallback(() => {
@@ -98,6 +101,16 @@ export function GameScreen({ deps, seed, theme, onExit, onPlayAgain }: GameScree
       layoutOptions(),
     )
 
+    // Honoured without asking: a screen shake and a red vignette are exactly the
+    // effects that make motion-sensitive players ill.
+    const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
+    let reducedMotion = motionQuery.matches
+    const onMotionPreference = () => {
+      reducedMotion = motionQuery.matches
+    }
+    motionQuery.addEventListener('change', onMotionPreference)
+
+    let stings = 0
     const startedMs = performance.now()
     let gameOverAtMs: number | null = null
     let lastHudMs = 0
@@ -122,6 +135,7 @@ export function GameScreen({ deps, seed, theme, onExit, onPlayAgain }: GameScree
             play: (name) => sound.play(name),
           })
           if (event.kind === 'gameOver') gameOverAtMs = frameMs
+          if (event.kind === 'stung') stings++
           if (event.kind === 'levelChanged') {
             sound.play(deps.levels[event.to]?.transition.sound ?? '')
           }
@@ -155,6 +169,8 @@ export function GameScreen({ deps, seed, theme, onExit, onPlayAgain }: GameScree
           render: renderConfig,
           environmentId,
           cellCapacity: gameConfig.honey.cellCapacity,
+          beeTypes: deps.beeTypes,
+          reducedMotion,
           environments,
           dpr: surfaceHandle.surface.dpr,
           nowMs: frameMs,
@@ -166,7 +182,7 @@ export function GameScreen({ deps, seed, theme, onExit, onPlayAgain }: GameScree
         // Throttled so score and health changes never drive a re-render per frame.
         if (frameMs - lastHudMs >= 1000 / gameConfig.timing.hudUpdateHz) {
           lastHudMs = frameMs
-          setHud(readHud(game))
+          setHud(readHud(game, stings))
         }
       },
     })
@@ -230,6 +246,7 @@ export function GameScreen({ deps, seed, theme, onExit, onPlayAgain }: GameScree
     canvas.addEventListener('pointercancel', onPointerUp)
 
     return () => {
+      motionQuery.removeEventListener('change', onMotionPreference)
       document.removeEventListener('visibilitychange', onVisibility)
       window.removeEventListener('pagehide', onPageHide)
       loop.stop()
@@ -255,6 +272,7 @@ export function GameScreen({ deps, seed, theme, onExit, onPlayAgain }: GameScree
       <Hud
         pot={hud.pot}
         health={hud.health}
+        stings={hud.stings}
         word={hud.word}
         preview={hud.preview}
         muted={muted}
@@ -283,7 +301,7 @@ function layoutOptions() {
   }
 }
 
-function readHud(game: Game): HudState {
+function readHud(game: Game, stings: number): HudState {
   const { state } = game
   const word = state.trail
     .map((cellKey) => state.cells.get(cellKey)?.letter ?? '')
@@ -297,6 +315,7 @@ function readHud(game: Game): HudState {
     word,
     preview: previewValue(game),
     gameOver: state.screen === 'gameOver',
+    stings,
   }
 }
 

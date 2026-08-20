@@ -35,6 +35,7 @@ export function beeTypeFor(game: Game, typeId: string, level: Level): BeeType {
     sipDurationMs: merged.sipDurationMs / speed,
     turnMs: merged.turnMs / speed,
     arrivalMs: merged.arrivalMs / speed,
+    departureMs: merged.departureMs / speed,
   }
 }
 
@@ -58,8 +59,6 @@ function appetite(intent: BeeIntent, fill: number): number {
       return fill
     case 'hunt':
       return 1 - fill
-    case 'wander':
-      return 0.5
   }
 }
 
@@ -111,6 +110,7 @@ function spawn(game: Game, level: Level): void {
     kind: 'beeApproaching',
     beeId: state.nextBeeId - 1,
     typeId,
+    approachSound: type.approachSound,
     cellKey: key(entry.at),
     durationMs: type.arrivalMs,
   })

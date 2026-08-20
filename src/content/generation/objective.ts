@@ -17,6 +17,19 @@ export interface ObjectiveWeights {
   readonly lengthWeights: Readonly<Record<number, number>>
   /** Score for words that share a stem, which is what lets a player score in runs. */
   readonly familyWeight: number
+  /**
+   * How many leading letters count as a shared stem.
+   *
+   * Four matches TUCK across TUCKS, TUCKED and TUCKING.
+   */
+  readonly stemLetters: number
+  /**
+   * How sharply a family beats the same number of unrelated words.
+   *
+   * Above 1, each extra member of a family is worth more than the last, which is what
+   * makes the generator chase runs rather than scattered pairs.
+   */
+  readonly familyExponent: number
   /** Score for neighbouring letters that actually follow one another in English. */
   readonly bigramWeight: number
   /** Letters that make a word count as "long" for the invariant. */
@@ -27,15 +40,14 @@ export interface BoardScore {
   readonly total: number
   readonly commonWords: number
   readonly longWords: number
+  /** Letters in the longest findable common word. */
+  readonly longestWord: number
   /** Words belonging to a family of two or more. */
   readonly familyWords: number
   readonly largestFamily: number
   readonly unusedCells: number
   readonly lengthHistogram: ReadonlyMap<number, number>
 }
-
-/** Words sharing their first four letters, such as TUCK / TUCKS / TUCKED / TUCKING. */
-const STEM_LETTERS = 4
 
 function weightFor(weights: Readonly<Record<number, number>>, length: number): number {
   let best = 0
@@ -56,6 +68,9 @@ function weightFor(weights: Readonly<Record<number, number>>, length: number): n
  * Taken in whichever direction reads better, because a trail may be drawn either way
  * across the same pair.
  */
+/** Log-probability assigned to a letter pair the corpus never contained. */
+const UNSEEN_PAIR = -12
+
 export function bigramScore(board: SolverBoard, logProbs: readonly number[], size: number): number {
   let total = 0
   let pairs = 0
@@ -68,7 +83,9 @@ export function bigramScore(board: SolverBoard, logProbs: readonly number[], siz
       if (neighbour <= index) continue
       const to = board.symbols[neighbour]!
       if (to < 0) continue
-      total += Math.max(logProbs[from * size + to] ?? -12, logProbs[to * size + from] ?? -12)
+      // An unseen pair scores badly rather than being impossible, so the search still
+      // has a gradient to climb.
+      total += Math.max(logProbs[from * size + to] ?? UNSEEN_PAIR, logProbs[to * size + from] ?? UNSEEN_PAIR)
       pairs++
     }
   }
@@ -92,13 +109,15 @@ export function scoreBoard(
 
   let wordScore = 0
   let longWords = 0
+  let longestWord = 0
 
   for (const word of common) {
     histogram.set(word.length, (histogram.get(word.length) ?? 0) + 1)
     wordScore += weightFor(weights.lengthWeights, word.length)
     if (word.length >= weights.longWordLetters) longWords++
+    if (word.length > longestWord) longestWord = word.length
 
-    const stem = word.slice(0, STEM_LETTERS)
+    const stem = word.slice(0, weights.stemLetters)
     families.set(stem, (families.get(stem) ?? 0) + 1)
 
     for (const index of paths.get(word)!) used[index] = 1
@@ -111,7 +130,7 @@ export function scoreBoard(
   let largestFamily = 0
   for (const count of families.values()) {
     if (count < 2) continue
-    familyScore += Math.pow(count - 1, 1.5)
+    familyScore += Math.pow(count - 1, weights.familyExponent)
     familyWords += count
     if (count > largestFamily) largestFamily = count
   }
@@ -128,6 +147,7 @@ export function scoreBoard(
     total,
     commonWords: common.size,
     longWords,
+    longestWord,
     familyWords,
     largestFamily,
     unusedCells,

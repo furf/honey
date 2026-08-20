@@ -15,6 +15,7 @@ export interface RenderConfig {
   /** Warmth of the glow through the wax, so the comb reads as translucent. */
   readonly waxGlow: number
   readonly waxRim: number
+  readonly cellEdgeWidth: number
 
   /**
    * The slab of comb behind the cells.
@@ -27,6 +28,15 @@ export interface RenderConfig {
   readonly slabShadowBlur: number
   readonly slabShadowOffset: number
   readonly slabEdgeWidth: number
+
+  /** How far a state colour is darkened for the empty part of a cell. */
+  readonly stateEmptyShade: number
+  /** How far a state colour is darkened for the lit centre of an empty cell. */
+  readonly stateGlowShade: number
+  /** Opacity of a bee once it is fading off the board. */
+  readonly beeLeavingAlpha: number
+  /** Points sampled along a honey surface. More is smoother and slower. */
+  readonly honeySurfaceSteps: number
 
   readonly trailRing: number
 
@@ -61,6 +71,9 @@ export interface RenderConfig {
   readonly stungMs: number
   readonly shakeMs: number
   readonly shakeAmplitude: number
+  /** Red closing in from the edges on a sting. Where the clear centre ends, 0 to 1. */
+  readonly vignetteInner: number
+  readonly vignetteStrength: number
   readonly reseedMs: number
   readonly popupMs: number
   readonly popupRise: number
@@ -99,10 +112,16 @@ export const renderConfig: RenderConfig = {
   cellDepth: 0.09,
   waxGlow: 0.35,
   waxRim: 0.055,
+  cellEdgeWidth: 0.04,
   slabInflate: 1.17,
   slabShadowBlur: 0.55,
   slabShadowOffset: 0.22,
   slabEdgeWidth: 0.05,
+
+  stateEmptyShade: 0.55,
+  stateGlowShade: 0.42,
+  beeLeavingAlpha: 0.55,
+  honeySurfaceSteps: 14,
 
   trailRing: 0.1,
 
@@ -126,6 +145,8 @@ export const renderConfig: RenderConfig = {
   stungMs: 520,
   shakeMs: 250,
   shakeAmplitude: 9,
+  vignetteInner: 0.35,
+  vignetteStrength: 0.55,
   reseedMs: 820,
   reseedBlinks: 3,
   reseedPop: 0.35,

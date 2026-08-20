@@ -1,6 +1,12 @@
 # Configuration Reference
 
-Every tunable quantity in the game, what it controls, and where it lives.
+Every number you can change to alter how the game plays or looks, what it does, and
+which file it lives in.
+
+**If you only read one thing:** the game's rules code contains no numbers. Everything a
+designer might want to adjust — how fast health drains, how much honey a word pays, how
+often bees arrive, how big a hexagon is — is a named value in `src/config/`. Change it
+there and the behaviour changes; nothing else needs editing.
 
 **This file deliberately records no values.** Values live in code, under
 `src/config/`, and are expected to change constantly during playtesting. The concepts
@@ -73,6 +79,8 @@ down on the level that introduces a second bee" is not logic; it is one cell of
 | `maxGenerationAttempts` | Attempts before relaxing invariants rather than hanging |
 | `lengthWeights` | Score per findable word by length — what makes the generator trade quantity for length |
 | `familyWeight` | Score for words sharing a stem, which is what lets a player score in runs |
+| `stemLetters` | How many leading letters count as a shared stem (4 matches TUCK across TUCKS, TUCKED, TUCKING) |
+| `familyExponent` | How sharply a family beats the same number of unrelated words. Above 1, each extra member is worth more than the last |
 | `bigramWeight` | Score for neighbouring letters that actually follow one another in English |
 | `longWordLetters` | Letters that make a word count as long |
 | `minLongWords` | Long words a board must offer to be accepted |
@@ -141,11 +149,77 @@ Falling `sipChance` in later levels makes bees linger rather than fill and leave
 resting bee still blocks its cell, so it costs routing options rather than honey. See
 [ADR-0005](./adr/0005-bee-behaviour-lives-on-bee-types.md).
 
+## `renderConfig` — how it looks and moves
+
+Lives in `src/config/render.ts`, separate from `GameConfig` because none of it is a
+rule: changing any value here alters how the game *looks*, never how it *behaves*.
+Sizes are given as fractions of a cell's radius, so the board scales to any screen
+without a second set of numbers.
+
+### The honeycomb
+
+| Variable | Controls |
+|---|---|
+| `cellCornerRadius` | How rounded a cell's corners are |
+| `cellGap` | Space between neighbouring cells |
+| `cellDepth` | How far a cell's shadow sits below it |
+| `cellEdgeWidth` | Thickness of a cell's outline |
+| `waxGlow` / `waxRim` | Strength and width of the light along a cell's upper edge |
+| `slabInflate` | How far the wax slab extends past the cells, which is what makes the walls between them |
+| `slabShadowBlur` / `slabShadowOffset` | The single shadow under the whole board |
+| `slabEdgeWidth` | Thickness of the slab's outer rim |
+
+### Honey
+
+| Variable | Controls |
+|---|---|
+| `honeyTweenMs` | How long drawn honey takes to catch up with the real level |
+| `honeyMeniscus` | How far the surface bows. Liquids are not flat |
+| `honeyGloss` | Strength of the highlight on the surface, which is what makes it look wet |
+| `honeySurfaceSteps` | Points sampled along the surface. More is smoother and slower |
+| `honeyRippleMs` | How long the surface takes to settle after being disturbed |
+| `honeyRippleAmplitude` / `honeyRippleWaves` / `honeyRipplePeriodMs` | Height, number of crests, and speed of the ripple. Honey is viscous: small, single-crested and slow |
+| `honeyPourMs` / `honeyPourWidth` | The stream that refills a cell after it reseeds |
+
+### Feedback
+
+| Variable | Controls |
+|---|---|
+| `scoredFlashMs` / `scoredBlinks` | The green blink on a scored word |
+| `rejectedMs` | How long a rejected word's colour lingers |
+| `reseedMs` / `reseedBlinks` / `reseedPop` | The blink, and the overshoot as a new letter lands |
+| `stungMs` | How long the red on a stung trail lasts |
+| `shakeMs` / `shakeAmplitude` | The screen shake on a sting. Skipped entirely when the device asks for reduced motion |
+| `vignetteInner` / `vignetteStrength` | Red closing in from the edges of the screen on a sting |
+| `popupMs` / `popupRise` | The floating `+142` and `−10` numbers |
+| `trailRing` | Ring weight on a selected cell |
+| `stateEmptyShade` / `stateGlowShade` | How far a state colour is darkened for the empty part of a cell, so the honey line stays visible |
+
+### Bees
+
+| Variable | Controls |
+|---|---|
+| `beeSize` | Size of a bee against a cell |
+| `beeOffset` | Where a bee sits relative to a cell's centre. Offset so the letter underneath stays readable |
+| `beeTravelMs` | How long a bee takes to slide between cells |
+| `beeWingHz` | Wingbeat speed |
+| `beeEntryDistance` | How far beyond the board a bee starts its flight in |
+| `beeLeavingAlpha` | How faint a bee is once it is leaving |
+
+### Layout and motion
+
+| Variable | Controls |
+|---|---|
+| `boardMargin` | Breathing room around the board |
+| `topInset` / `bottomInset` | Space reserved above and below the board for the header and controls |
+| `pointerTolerance` | How far outside a cell a finger may stray before the trail drops it |
+| `ringStaggerMs` / `introMs` / `gameOverMs` | The ring-by-ring sweeps when a game opens and closes |
+
 ## `theme` — presentation only
 
 | Slot | Holds |
 |---|---|
-| `palette` | Colours, including the state colours in [presentation.md](./design/presentation.md) |
+| `palette` | Colours, including the state colours in [presentation.md](./design/presentation.md) and the wax slab behind the cells |
 | `typography` | Type families and scales |
 | `sprites` | Procedural draw functions, keyed by sprite id |
 | `logo` | Wordmark for the welcome screen |

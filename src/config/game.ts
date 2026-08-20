@@ -44,8 +44,8 @@ export const gameConfig: GameConfig = {
     minLongestWord: 6,
     requireEveryCellUsed: true,
 
-    // A hand-tuned bag rather than raw English frequency: a 37-cell board that is a
-    // consonant swamp is unplayable however statistically legitimate it is.
+    // A hand-tuned bag rather than raw English letter frequency. A board that comes
+    // out as a consonant swamp is unplayable however statistically legitimate it is.
     letterWeights: {
       A: 82, B: 20, C: 34, D: 42, E: 110, F: 24, G: 26, H: 30, I: 78,
       J: 3, K: 12, L: 46, M: 28, N: 68, O: 72, P: 26, Qu: 4, R: 62,
@@ -65,6 +65,8 @@ export const gameConfig: GameConfig = {
     // count and fills the board with four-letter words — which is what it did.
     lengthWeights: { 4: 1, 5: 3, 6: 9, 7: 20, 8: 34, 9: 50 },
     familyWeight: 6,
+    stemLetters: 4,
+    familyExponent: 1.5,
     bigramWeight: 40,
     longWordLetters: 6,
     minLongWords: 6,

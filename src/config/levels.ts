@@ -101,10 +101,13 @@ export const levels: readonly Level[] = [
     transition: { sound: 'level.cloudyDay', durationMs: 800 },
   },
   {
+    // The level that introduces a second bee. Drain holds at the previous rate and
+    // bees slow down, so a player meets one new thing at a time rather than three.
+    // The curve is data: this is a lower `speed` in one row, not a rule in code.
     honeyThreshold: 7100,
     environmentId: 'cloudyDay',
-    healthDrainPerSecond: 1.4,
-    drainPauseMs: 10000,
+    healthDrainPerSecond: 1.2,
+    drainPauseMs: 10500,
     harvestPercent: 0.2,
     bees: {
       types: ['forager', 'hunter'],
@@ -112,7 +115,7 @@ export const levels: readonly Level[] = [
       spawnIntervalMs: 5500,
       waveMs: 24000,
       calmMs: 11000,
-      speed: 1.2,
+      speed: 1.05,
     },
     transition: { sound: 'level.cloudyDay', durationMs: 800 },
   },

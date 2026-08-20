@@ -1,11 +1,18 @@
 # Gameplay Rules
 
-The rules a player experiences, stated as concepts. Every quantity is named by its
-configuration variable rather than its value — see [config-reference.md](../config-reference.md).
-Values live in code and are expected to change with playtesting; the rules here are
-not.
+What the game does, from the player's side.
 
-Vocabulary is defined in [CONTEXT.md](../../CONTEXT.md).
+**The game in a paragraph:** letters sit on hexagonal cells. You drag across touching
+cells to spell a word. A valid word takes honey out of every cell you used and adds it
+to your pot, which is the score. Cells that run out of honey get a new letter. Your
+health drains all the time and is topped up by finding words, so you have to keep
+scoring to stay alive. Bees wander the board; touching one costs health and loses the
+word you were building.
+
+This document names each setting rather than its value — the numbers live in code and
+change with playtesting, the rules here don't. See
+[config-reference.md](../config-reference.md) for the values, and
+[CONTEXT.md](../../CONTEXT.md) for what each term means.
 
 ## The honeycomb
 
@@ -128,8 +135,12 @@ rarely sips would otherwise never leave at all.
 A done bee then **flies to the nearest exit** rather than disappearing from where it
 stood. It stops sipping and steps outward each hop until it reaches the outer ring, then
 leaves the board. On a hexagonal honeycomb any neighbour on a higher ring is one hop
-closer to the edge, so stepping outward is already the shortest route. It is still
-visibly present on the way out, and still stings anything that touches it.
+closer to the edge, so stepping outward is already the shortest route.
+
+It still stings on the way out. The one exception is the last moment, once it has
+reached the edge and is fading from view: a bee drawn at half opacity is visibly gone,
+and stinging from there would feel like being hit by something that is not on the
+board.
 
 Bees are telegraphed. A bee is visible approaching from off-board with an audible buzz
 before it lands, so a sting is never a surprise — only a mistake. As a bee fills, its
@@ -178,8 +189,8 @@ that cell has held, so a cell that reseeds repeatedly does not keep returning th
 letter. Recent history depth is `config.generation.reseedHistoryDepth`.
 
 The letter pool is a hand-tuned bag with caps on duplicate rare letters, rather than
-raw English frequency, because a 37-cell board that happens to be a consonant swamp is
-unplayable however statistically legitimate it is.
+raw English letter frequency, because a board that happens to come out as a consonant
+swamp is unplayable however statistically legitimate it is.
 
 Vowels are held inside a **band**, not merely above a floor. A floor alone leaves the
 remaining cells drawing from a bag that is itself vowel-heavy, and boards drift to

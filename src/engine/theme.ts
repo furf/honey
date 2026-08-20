@@ -18,9 +18,9 @@ export interface Palette {
   /** The specular band along the honey surface. */
   readonly honeyGloss: string
   readonly cellEdge: string
-  /** The wax the comb is cut from, drawn as one shape behind every cell. */
-  readonly combSlab: string
-  readonly combSlabEdge: string
+  /** The slab of wax the cells are cut into, drawn as one shape behind them all. */
+  readonly slabFill: string
+  readonly slabEdge: string
   readonly cellShadow: string
   readonly cellHighlight: string
   readonly letter: string
@@ -59,8 +59,19 @@ export interface Typography {
   readonly letterScale: number
 }
 
-/** Anything drawable the theme owns, keyed by sprite id. */
-export type Sprite = (ctx: CanvasRenderingContext2D, size: number, phase: number) => void
+/**
+ * Anything drawable the theme owns, keyed by sprite id.
+ *
+ * `phase` is a 0..1 animation clock; `level` is a 0..1 measure of how far along the
+ * thing is — for a bee, how full it is. Both are generic on purpose: the engine hands
+ * numbers to a draw function and never learns what they mean.
+ */
+export type Sprite = (
+  ctx: CanvasRenderingContext2D,
+  size: number,
+  phase: number,
+  level: number,
+) => void
 
 /**
  * A visual variant of the world around the honeycomb.

@@ -40,6 +40,8 @@ const generation: GenerationConfig = {
   maxGenerationAttempts: 200,
   lengthWeights: { 4: 1, 5: 3, 6: 9, 7: 20 },
   familyWeight: 6,
+  stemLetters: 4,
+  familyExponent: 1.5,
   bigramWeight: 40,
   longWordLetters: 6,
   minLongWords: 0,
