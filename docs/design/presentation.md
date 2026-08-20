@@ -149,7 +149,10 @@ Two faces, two jobs, both shipped from `public/fonts`.
 
 **Nunito** reads: it sets the letters on the board and every word of interface text.
 This is a word game — the letters on the cells are the product — and a rounded face
-with open apertures stays legible inside a hexagon at thumb size.
+with open apertures stays legible inside a hexagon at thumb size. Board letters are set
+extra-bold and interface text semibold: a cell is glanced at through a bee, a state tint
+and a flash, while interface text is actually read. The shipped Nunito is variable across
+200-1000, so both are weights the face draws rather than ones the browser fakes.
 
 **Poetsen One** announces: it sets the word being spelled above the board, and nothing
 else. Confining the display face to one element is what keeps it an announcement rather

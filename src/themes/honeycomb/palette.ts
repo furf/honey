@@ -70,7 +70,11 @@ export const palette: Palette = {
 const STACK = '"Nunito", ui-rounded, "SF Pro Rounded", "Segoe UI Rounded", system-ui, sans-serif'
 
 export const typography: Typography = {
-  letters: `600 1px ${STACK}`,
+  // Extra-bold on the board. The letters are read at a glance through a bee, a state
+  // tint and a flash, and semibold left them thinner than the cell they sit in. The
+  // shipped Nunito is variable across 200-1000, so this is a drawn weight, not a faked
+  // one. Interface text stays semibold: it is read, not glanced at.
+  letters: `800 1px ${STACK}`,
   ui: `600 1px ${STACK}`,
   // Eased back from 0.82: the bee now sits over the cell's upper left, and the glyph
   // needs room to stay legible underneath it.
