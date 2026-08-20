@@ -41,17 +41,22 @@ export function Hud({ pot, health, word, preview, muted, onToggleMute }: HudProp
 
         The word is set as large as will fit: CSS divides the available width by the
         letter count, which needs no resize listener because it is expressed in vw.
+
+        It sits on a dark plate because the band floats over whichever environment the
+        level is showing, and white on a pale sky was the weakest contrast on screen.
       */}
       <div className="trail" aria-live="polite">
         {word && (
-          <span
-            className="trail__word"
-            style={{ '--trail-len': Math.max(word.length, 3) } as CSSProperties}
-          >
-            {word}
-          </span>
+          <div className="trail__plate">
+            <span
+              className="trail__word"
+              style={{ '--trail-len': Math.max(word.length, 3) } as CSSProperties}
+            >
+              {word}
+            </span>
+            {preview > 0 && <span className="trail__preview">+{preview.toLocaleString()}</span>}
+          </div>
         )}
-        {preview > 0 && <span className="trail__preview">+{preview.toLocaleString()}</span>}
       </div>
 
       <button

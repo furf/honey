@@ -34,15 +34,17 @@ export const sounds: Readonly<Record<string, SoundRecipe>> = {
 
   // Approach and ambience are pitched apart per kind, so a player can hear which bee
   // is coming and tell when both are present without looking away from the board.
-  // Kept quiet: a buzz that runs for minutes has to sit under the game, not on it.
-  'bee.approach.forager': { kind: 'buzz', frequency: 165, durationMs: 900, gain: 0.055 },
-  'bee.approach.hunter': { kind: 'buzz', frequency: 96, durationMs: 1100, gain: 0.07 },
+  // Kept very quiet, and gentler in timbre than it was. A buzz that runs for minutes
+  // has to sit under the game rather than on it; players found the earlier one
+  // annoying, which was as much the sawtooth edge as the level.
+  'bee.approach.forager': { kind: 'buzz', frequency: 165, durationMs: 900, gain: 0.032 },
+  'bee.approach.hunter': { kind: 'buzz', frequency: 96, durationMs: 1100, gain: 0.042 },
 
   // Continuous while the bee is on the board. `toFrequency` is the wobble rate here:
   // the forager flutters, the hunter throbs.
-  'bee.ambient.forager': { kind: 'buzz', frequency: 172, durationMs: 0, gain: 0.018, toFrequency: 22 },
-  'bee.ambient.hunter': { kind: 'buzz', frequency: 88, durationMs: 0, gain: 0.024, toFrequency: 9 },
-  'bee.sip': { kind: 'buzz', frequency: 190, durationMs: 260, gain: 0.045 },
+  'bee.ambient.forager': { kind: 'buzz', frequency: 172, durationMs: 0, gain: 0.007, toFrequency: 16 },
+  'bee.ambient.hunter': { kind: 'buzz', frequency: 88, durationMs: 0, gain: 0.010, toFrequency: 7 },
+  'bee.sip': { kind: 'buzz', frequency: 190, durationMs: 260, gain: 0.024 },
   'bee.sting': { kind: 'noise', frequency: 900, durationMs: 380, gain: 0.3 },
 
   // A slow drone bed per environment. Low, quiet and consonant, so it sits under the

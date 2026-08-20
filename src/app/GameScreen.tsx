@@ -207,6 +207,22 @@ export function GameScreen({ deps, seed, theme, onExit, onPlayAgain }: GameScree
       releaseTrail(game)
     }
 
+    // Locking a phone or switching apps stops the render loop, but not the audio
+    // graph — a sustained buzz otherwise keeps playing out of a pocket.
+    const onVisibility = () => {
+      const hidden = document.visibilityState === 'hidden'
+      sound.setSuspended(hidden)
+      if (hidden) loop.stop()
+      else loop.start()
+    }
+    const onPageHide = () => {
+      sound.setSuspended(true)
+      loop.stop()
+    }
+
+    document.addEventListener('visibilitychange', onVisibility)
+    window.addEventListener('pagehide', onPageHide)
+
     canvas.addEventListener('pointerdown', onPointerDown)
     canvas.addEventListener('pointermove', onPointerMove)
     canvas.addEventListener('pointerup', onPointerUp)
@@ -214,6 +230,8 @@ export function GameScreen({ deps, seed, theme, onExit, onPlayAgain }: GameScree
     canvas.addEventListener('pointercancel', onPointerUp)
 
     return () => {
+      document.removeEventListener('visibilitychange', onVisibility)
+      window.removeEventListener('pagehide', onPageHide)
       loop.stop()
       sound.setAmbient([])
       surfaceHandle.dispose()

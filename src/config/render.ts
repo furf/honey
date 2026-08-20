@@ -16,6 +16,18 @@ export interface RenderConfig {
   readonly waxGlow: number
   readonly waxRim: number
 
+  /**
+   * The slab of comb behind the cells.
+   *
+   * Each cell's outline is inflated and the whole set filled as one shape, so the
+   * board reads as one piece of wax with cells cut into it. Cells keep their own
+   * borders and shadows on top, which is where the depth comes from.
+   */
+  readonly slabInflate: number
+  readonly slabShadowBlur: number
+  readonly slabShadowOffset: number
+  readonly slabEdgeWidth: number
+
   readonly trailRing: number
 
   /** How long a cell's drawn honey takes to catch up with its real level. */
@@ -87,6 +99,10 @@ export const renderConfig: RenderConfig = {
   cellDepth: 0.09,
   waxGlow: 0.35,
   waxRim: 0.055,
+  slabInflate: 1.17,
+  slabShadowBlur: 0.55,
+  slabShadowOffset: 0.22,
+  slabEdgeWidth: 0.05,
 
   trailRing: 0.1,
 

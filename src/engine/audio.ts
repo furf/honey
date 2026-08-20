@@ -21,6 +21,14 @@ export interface SoundBank {
    * are left running, so a buzz does not restart every frame and stutter.
    */
   setAmbient(names: readonly string[]): void
+  /**
+   * Stop or restart everything as the page goes away and comes back.
+   *
+   * Locking a phone or switching apps stops the render loop but not the audio graph,
+   * so a sustained buzz keeps playing out of a pocket. Suspending the context is the
+   * only thing that actually silences it.
+   */
+  setSuspended(suspended: boolean): void
   setMuted(muted: boolean): void
   readonly muted: boolean
   dispose(): void
@@ -131,11 +139,21 @@ export function createSoundBank(recipes: Readonly<Record<string, SoundRecipe>>):
     gain.connect(master)
 
     const oscillator = ctx.createOscillator()
-    oscillator.type = recipe.kind === 'buzz' ? 'sawtooth' : 'sine'
+    // Triangle, not sawtooth. A sawtooth is right for a short stab but grating over
+    // minutes, and the ambient buzz runs the whole time a bee is on the board —
+    // players described it as annoying, which is a timbre problem before it is a
+    // volume one. A triangle still reads as an insect once it wobbles.
+    oscillator.type = recipe.kind === 'buzz' ? 'triangle' : 'sine'
     oscillator.frequency.setValueAtTime(recipe.frequency, now)
 
+    // Roll the top off as well, so nothing sharp is left to fatigue the ear.
+    const tone = ctx.createBiquadFilter()
+    tone.type = 'lowpass'
+    tone.frequency.value = recipe.kind === 'buzz' ? recipe.frequency * 4 : 2000
+    tone.Q.value = 0.5
+
     // For a sustained sound, `toFrequency` is a wobble rate rather than a target
-    // pitch: it is what makes a sawtooth read as an insect instead of a synthesiser,
+    // pitch: it is what makes the tone read as an insect instead of a synthesiser,
     // and at a fraction of a hertz it gives a music drone its slow drift. The two
     // kinds of bee wobble at different rates, so a player can hear which is present
     // without looking.
@@ -145,7 +163,7 @@ export function createSoundBank(recipes: Readonly<Record<string, SoundRecipe>>):
     wobbleGain.gain.value = recipe.frequency * (recipe.kind === 'buzz' ? 0.07 : 0.012)
     wobble.connect(wobbleGain).connect(oscillator.frequency)
 
-    oscillator.connect(gain)
+    oscillator.connect(tone).connect(gain)
     oscillator.start(now)
     wobble.start(now)
 
@@ -186,6 +204,16 @@ export function createSoundBank(recipes: Readonly<Record<string, SoundRecipe>>):
         if (!recipe) continue
         const started = startAmbient(recipe)
         if (started) ambient.set(name, started)
+      }
+    },
+
+    setSuspended(suspended: boolean) {
+      const ctx = context
+      if (!ctx) return
+      if (suspended) {
+        if (ctx.state === 'running') void ctx.suspend()
+      } else if (ctx.state === 'suspended') {
+        void ctx.resume()
       }
     },
 

@@ -228,11 +228,25 @@ body {
   right: 0;
   height: 6rem;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.15rem;
   pointer-events: none;
+}
+
+/*
+ * A plate behind the word. The band floats over whichever environment the level is
+ * showing, so the type cannot rely on what is behind it — white on a pale sky was the
+ * lowest-contrast text on screen.
+ */
+.trail__plate {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+  padding: 0.35rem 1.15rem 0.5rem;
+  border-radius: 1.35rem;
+  background: rgba(48, 22, 6, 0.44);
+  max-width: calc(100vw - 1.25rem);
 }
 
 /*

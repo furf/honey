@@ -9,6 +9,7 @@ import {
   lerp,
   pourHoney,
   roundedHexPath,
+  roundedHexSubpath,
 } from '../engine'
 import { key } from '../core/hex'
 import type { Bee, Cell, GameState } from '../core/types'
@@ -60,6 +61,7 @@ export function renderGame(ctx: CanvasRenderingContext2D, input: RenderInput): v
   }
 
   drawFallingLetters(ctx, input)
+  drawSlab(ctx, input)
   drawCells(ctx, input)
   drawTrail(ctx, input)
   drawBees(ctx, input)
@@ -157,6 +159,49 @@ function ringAlpha(input: RenderInput, cell: Cell): number {
   const local = Math.max(0, Math.min(1, (sweep - start) / (1 - start || 1)))
 
   return sweepKind === 'intro' ? easeOut(local) : 1 - easeOut(local)
+}
+
+/**
+ * The comb the cells are cut into.
+ *
+ * Every cell's outline, inflated and filled as a single shape, so overlapping hexagons
+ * merge into one slab of wax with one shadow beneath it. Nineteen separate tiles with
+ * nineteen shadows read as a grid of buttons; a board that is swiped across should
+ * read as one continuous surface.
+ *
+ * The cells keep their own borders and shadows on top — the slab supplies the mass,
+ * the borders supply the depth.
+ */
+function drawSlab(ctx: CanvasRenderingContext2D, input: RenderInput): void {
+  const { state, theme, layout, render, sweepKind } = input
+  // The intro and game-over sweeps reveal ring by ring; a slab would give the ending
+  // away by outlining cells whose letters have already gone.
+  if (sweepKind !== 'play') return
+
+  const size = layout.size * (1 - render.cellGap) * render.slabInflate
+  const radius = size * render.cellCornerRadius
+
+  ctx.save()
+  ctx.beginPath()
+  for (const cell of state.cells.values()) {
+    const { x, y } = cellCentre(layout, cell.at)
+    roundedHexSubpath(ctx, x, y, size, radius)
+  }
+
+  ctx.shadowColor = theme.palette.cellShadow
+  ctx.shadowBlur = layout.size * render.slabShadowBlur
+  ctx.shadowOffsetY = layout.size * render.slabShadowOffset
+  ctx.fillStyle = theme.palette.combSlab
+  ctx.fill()
+
+  // Stroked without the shadow, so the rim is a crisp edge rather than a smear.
+  ctx.shadowColor = 'transparent'
+  ctx.shadowBlur = 0
+  ctx.shadowOffsetY = 0
+  ctx.strokeStyle = theme.palette.combSlabEdge
+  ctx.lineWidth = Math.max(1, layout.size * render.slabEdgeWidth)
+  ctx.stroke()
+  ctx.restore()
 }
 
 function drawCells(ctx: CanvasRenderingContext2D, input: RenderInput): void {

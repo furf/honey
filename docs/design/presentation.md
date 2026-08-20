@@ -114,8 +114,14 @@ created and resumed on the start tap. Mute state persists.
 A single canvas, drawn in layers, bottom to top:
 
 ```
-environment → fx-behind → honeycomb → honey fill → letters → trail → bees → fx-front
+environment → fx-behind → comb slab → honeycomb → honey fill → letters → trail → bees → fx-front
 ```
+
+The **comb slab** is every cell's outline inflated and filled as one shape, so
+overlapping hexagons merge into a single piece of wax with one shadow beneath it.
+Nineteen tiles with nineteen shadows read as a grid of buttons, and this board is
+swiped across rather than tapped. The cells keep their own borders and shadows on top:
+the slab supplies the mass, the borders supply the depth.
 
 The HUD is DOM above the canvas rather than drawn, so it gets text rendering and
 accessibility for free. Every number in it is set in **tabular figures**: the pot
@@ -158,7 +164,12 @@ outside itself.
 
 Each kind of bee has a continuous buzz while it is on the board, pitched and wobbled
 differently, so a player can hear which is present — and that both are — without looking
-away. Each environment sustains a quiet drone bed, so the world changing is something
+away. It is kept very quiet and deliberately soft in timbre: a sustained sound that runs
+for minutes fatigues the ear, and the first version was described as annoying, which was
+as much its sawtooth edge as its level.
+
+Audio is suspended when the page is hidden. Locking a phone stops the render loop but
+not the audio graph, so a sustained buzz otherwise keeps playing out of a pocket. Each environment sustains a quiet drone bed, so the world changing is something
 heard as well as seen.
 
 Sprites and sound effects are **procedural** — drawn as vector art and synthesised

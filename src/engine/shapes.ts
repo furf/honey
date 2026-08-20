@@ -43,14 +43,38 @@ export function roundedHexPath(
   size: number,
   radius: number,
 ): void {
+  ctx.beginPath()
+  roundedHexSubpath(ctx, x, y, size, radius)
+}
+
+/**
+ * The same outline, without starting a new path.
+ *
+ * Lets many hexagons be added to a single path and filled once, so overlapping cells
+ * merge into one shape — a slab of comb rather than a pile of separate tiles, and one
+ * shadow rather than nineteen.
+ */
+export function roundedHexSubpath(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  size: number,
+  radius: number,
+): void {
   if (radius <= 0) {
-    hexPath(ctx, x, y, size)
+    for (let index = 0; index < CORNERS.length; index++) {
+      const corner = CORNERS[index]!
+      const px = x + corner.x * size
+      const py = y + corner.y * size
+      if (index === 0) ctx.moveTo(px, py)
+      else ctx.lineTo(px, py)
+    }
+    ctx.closePath()
     return
   }
 
   const points = CORNERS.map((corner) => ({ x: x + corner.x * size, y: y + corner.y * size }))
 
-  ctx.beginPath()
   for (let index = 0; index < points.length; index++) {
     const current = points[index]!
     const next = points[(index + 1) % points.length]!

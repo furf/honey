@@ -18,6 +18,9 @@ export interface Palette {
   /** The specular band along the honey surface. */
   readonly honeyGloss: string
   readonly cellEdge: string
+  /** The wax the comb is cut from, drawn as one shape behind every cell. */
+  readonly combSlab: string
+  readonly combSlabEdge: string
   readonly cellShadow: string
   readonly cellHighlight: string
   readonly letter: string

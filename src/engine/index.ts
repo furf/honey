@@ -30,6 +30,7 @@ export {
   hexPath,
   lerp,
   roundedHexPath,
+  roundedHexSubpath,
 } from './shapes'
 
 export type { SoundBank } from './audio'
