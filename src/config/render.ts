@@ -16,6 +16,15 @@ export interface RenderConfig {
   readonly waxGlow: number
   readonly waxRim: number
   readonly cellEdgeWidth: number
+  /**
+   * How far the emboss pair sits from the glyph it backs.
+   *
+   * A fraction of the circumradius like everything else here, so the effect keeps its
+   * proportion on a tablet instead of vanishing. At phone size it works out to roughly
+   * two pixels either way, which is as far as it can go before the pair stops reading
+   * as one letter's edges and starts reading as three overlapping letters.
+   */
+  readonly letterEmbossOffset: number
 
   /**
    * The slab of comb behind the cells.
@@ -124,6 +133,7 @@ export const renderConfig: RenderConfig = {
   waxGlow: 0.35,
   waxRim: 0.055,
   cellEdgeWidth: 0.04,
+  letterEmbossOffset: 0.04,
   slabInflate: 1.17,
   slabShadowBlur: 0.55,
   slabShadowOffset: 0.22,

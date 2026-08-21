@@ -372,14 +372,20 @@ function drawCells(ctx: CanvasRenderingContext2D, input: RenderInput): void {
         ctx.translate(-x, -y)
       }
       const fontSize = size * typography.letterScale
-      centredText(
-        ctx,
-        cell.letter.toUpperCase(),
-        x,
-        y,
-        typography.letters.replace('1px', `${fontSize}px`),
-        state ? palette.letterOnState : palette.letter,
-      )
+      const glyph = cell.letter.toUpperCase()
+      const font = typography.letters.replace('1px', `${fontSize}px`)
+
+      // Stamped into the wax rather than sitting on it. The shadow rides above the
+      // glyph and the highlight below, which is the way round a letter pressed into a
+      // surface lit from above catches the light; the reverse would make it a raised
+      // letter and fight the cells, which are themselves cut into the slab.
+      //
+      // Drawn before the glyph so both stay behind it: at this offset they are meant
+      // to be read as the letter's own edges, not as anything separate.
+      const emboss = size * render.letterEmbossOffset
+      centredText(ctx, glyph, x, y - emboss, font, palette.letterEmbossShadow)
+      centredText(ctx, glyph, x, y + emboss, font, palette.letterEmbossHighlight)
+      centredText(ctx, glyph, x, y, font, state ? palette.letterOnState : palette.letter)
       ctx.restore()
     }
 

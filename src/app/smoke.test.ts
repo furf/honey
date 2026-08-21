@@ -171,7 +171,15 @@ describe('renderer', () => {
     const layout = computeLayout(390, 844, layoutOptions)
     const ctx = renderOnce(game, layout, 'play')
 
-    expect(ctx.texts).toHaveLength(game.state.cells.size)
+    // Three passes per glyph: the emboss shadow and highlight sit behind the letter
+    // itself. Asserting the letters rather than only the count means this still fails
+    // if a cell goes unlettered, which is what the test is actually for.
+    const passes = 3
+    const expected = [...game.state.cells.values()]
+      .flatMap((cell) => Array<string>(passes).fill(cell.letter.toUpperCase()))
+      .sort()
+
+    expect([...ctx.texts].sort()).toEqual(expected)
   })
 
   it('draws no letters once the game is over', () => {

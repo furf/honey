@@ -195,24 +195,40 @@ The word preview sits in its own band between the header and the board, with its
 beneath it rather than beside it, and is set as large as will fit — the available width
 divided by the letter count, so a long word shrinks to the margin and no further.
 
-Two faces, two jobs, both shipped from `public/fonts`.
+One face, every job, shipped from `public/fonts`.
 
-**Nunito** reads: it sets the letters on the board and every word of interface text.
-This is a word game — the letters on the cells are the product — and a rounded face
-with open apertures stays legible inside a hexagon at thumb size.
+**Nunito** sets the letters on the board, the word being spelled above it, and every
+word of interface text. This is a word game — the letters on the cells are the product
+— and a rounded face with open apertures stays legible inside a hexagon at thumb size.
 
-**Poetsen One** announces: it sets the word being spelled above the board, and nothing
-else. Confining the display face to one element is what keeps it an announcement rather
-than a texture; across nineteen cells it would compete with the honey rather than sit
-in it. The value beneath the word stays in Nunito, because it annotates the word rather
-than being part of it, and a display face has no tabular figures to stop it twitching
-as the trail grows.
+Weight is what separates the three, not family. The board and the word above it are
+extra-bold; interface text is semibold. A cell is glanced at through a bee, a state tint
+and a flash, while interface text is actually read. The shipped Nunito is variable across
+200-1000, so both are weights the face draws rather than ones the browser fakes.
 
-Rounded system faces sit behind both in the stack in case a download is slow or
+The word above the board matching the cells is deliberate: it is the letters the player
+is picking up, so it should look like them. It was previously set in a display face,
+which read as an announcement about the word rather than as the word itself. That also
+kept a second family in the critical path for one element.
+
+**Poetsen One** is still shipped and still declared, but nothing currently asks for it.
+An unused `@font-face` costs no bandwidth — a face is fetched when something uses it,
+not when it is declared.
+
+Rounded system faces sit behind Nunito in the stack in case a download is slow or
 blocked, and `font-synthesis` is off so no weight is ever faked.
 
 Board letters are sized to stay readable **under** a bee, which sits offset to a cell's
 upper left rather than centred.
+
+They are also stamped rather than printed: each glyph is drawn three times, with a
+shadow a couple of pixels above it and a highlight a couple of pixels below, both behind
+the glyph itself. That is the way round a letter pressed *into* a surface lit from above
+catches the light, and it matches the cells, which are cut into the slab rather than
+raised off it. Both emboss colours are translucent, so one pair works over honey gold
+and over a blue, green or red state cell without needing a second pair per state. The
+offset is a fraction of the circumradius like every other proportion here, so the effect
+survives a tablet instead of vanishing.
 
 Every number in the interface is set in tabular figures.
 
