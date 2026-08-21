@@ -436,3 +436,42 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+/*
+ * What the player found, at the end of a game.
+ *
+ * Scrolls rather than capping the list: a long game is the one most worth reading
+ * back, and truncating it would hide exactly the words the player is proudest of.
+ * The card stays the same size either way, so the buttons never move.
+ */
+.found {
+  width: 100%;
+  max-height: 34vh;
+  margin: 0 0 1rem;
+  padding: 0.35rem 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  list-style: none;
+  border-top: 1px solid rgba(74, 36, 8, 0.18);
+  border-bottom: 1px solid rgba(74, 36, 8, 0.18);
+}
+
+.found__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.22rem 0.4rem;
+}
+
+.found__word {
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.found__value {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.62;
+  font-size: 0.9rem;
+}

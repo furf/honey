@@ -226,6 +226,18 @@ export interface Level {
 // State
 // ---------------------------------------------------------------------------
 
+/**
+ * A word the player scored, kept so the end of a game can show what they did.
+ *
+ * Letters are stored rather than derived from the string, because `Qu` occupies one
+ * cell but reads as two letters and the list should rank by what the player reads.
+ */
+export interface FoundWord {
+  readonly word: string
+  readonly letters: number
+  readonly harvested: number
+}
+
 export interface Cell {
   readonly at: Axial
   readonly ring: number
@@ -382,6 +394,8 @@ export interface GameState {
   levelIndex: number
   /** Words already scored this game; a word may only be played once. */
   played: Set<string>
+  /** The same words with what they earned, in the order they were found. */
+  found: FoundWord[]
   msSinceSpawn: number
   /** Time inside the current wave or calm. */
   waveElapsedMs: number

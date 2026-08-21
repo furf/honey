@@ -34,6 +34,7 @@ export function createGame(deps: GameDeps, seed: number): Game {
     clockMs: config.clock.durationMs,
     levelIndex: 0,
     played: new Set<string>(),
+    found: [],
     msSinceSpawn: 0,
     waveElapsedMs: 0,
     inWave: true,
@@ -138,6 +139,7 @@ export function releaseTrail(game: Game): void {
   const harvest = harvestFor(letters, wordLength, deps.config, level)
 
   state.played.add(verdict.word)
+  state.found.push({ word: verdict.word, letters: wordLength, harvested: harvest.toPot })
   state.pot += harvest.toPot
 
   // The clock never rises above the duration the game started with, so a long word

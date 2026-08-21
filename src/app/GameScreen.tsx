@@ -7,6 +7,7 @@ import {
   createSoundBank,
   createSurface,
 } from '../engine'
+import type { FoundWord } from '../core/types'
 import type { Layout, SoundBank, Surface, Theme } from '../engine'
 import {
   beginTrail,
@@ -52,6 +53,7 @@ interface HudState {
   word: string
   preview: number
   gameOver: boolean
+  found: readonly FoundWord[]
 }
 
 export function GameScreen({ deps, seed, theme, onExit, onPlayAgain }: GameScreenProps) {
@@ -67,6 +69,7 @@ export function GameScreen({ deps, seed, theme, onExit, onPlayAgain }: GameScree
     word: '',
     preview: 0,
     gameOver: false,
+    found: [],
   })
 
   const toggleMute = useCallback(() => {
@@ -288,6 +291,7 @@ export function GameScreen({ deps, seed, theme, onExit, onPlayAgain }: GameScree
       {hud.gameOver && (
         <GameOverOverlay
           pot={hud.pot}
+          found={hud.found}
           best={loadSettings().highScore}
           message={theme.strings.gameOver ?? 'Game over'}
           onPlayAgain={onPlayAgain}
@@ -322,6 +326,7 @@ function readHud(game: Game, bonus: HudState['bonus']): HudState {
     word,
     preview: previewValue(game),
     gameOver: state.screen === 'gameOver',
+    found: state.found,
   }
 }
 

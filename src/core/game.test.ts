@@ -124,6 +124,16 @@ describe('scoring a word', () => {
     expect(eventsOfKind(drainEvents(game), 'wordScored')[0]!.bonusMs).toBe(0)
   })
 
+  it('records the word and what it earned, for the end of the game', () => {
+    draw(game, TEAM)
+    expect(game.state.found).toEqual([{ word: 'TEAM', letters: 4, harvested: 80 }])
+  })
+
+  it('records nothing for a word that did not score', () => {
+    draw(game, [CENTRE, EAST, NORTH_EAST])
+    expect(game.state.found).toEqual([])
+  })
+
   it('refuses the same word a second time', () => {
     draw(game, TEAM)
     const potAfterFirst = game.state.pot

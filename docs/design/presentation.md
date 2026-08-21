@@ -130,7 +130,19 @@ Three screens: welcome, game, game over.
 
 The welcome screen carries the logo, a start button, and the copyright line. Game over
 shows the final pot, a **Play Again** button that starts a new game immediately, and a
-smaller link back to the welcome screen. There is **no auto-return timer** — the spec
+smaller link back to the welcome screen, and — between the score and the buttons —
+every word the player found.
+
+That list is ordered longest first, because the best thing they did should be the
+first thing they see, with ties broken alphabetically rather than by discovery order;
+a stable order is easier to read down, and when they found a word is not information
+anyone wants afterwards. Each row shows the honey it earned. It is ranked by
+**letters**, not cells, so a word containing `Qu` sits where the player would expect
+it rather than one place lower.
+
+The list scrolls rather than capping: a long game is the one most worth reading back,
+and truncating it would hide exactly the words the player is proudest of. The card
+stays the same size either way, so the buttons never move. There is **no auto-return timer** — the spec
 originally called for returning to the welcome screen after five seconds, which would
 have left the Play Again button on screen too briefly to read, let alone press.
 
