@@ -51,16 +51,32 @@ describe('stepTrail', () => {
     expect(result.trail).toEqual([CENTRE, EAST])
   })
 
+  it('truncates to any cell already in the trail', () => {
+    const result = stepTrail([CENTRE, EAST, NORTH_EAST], CENTRE, adjacency)
+    expect(result.effect).toBe('backtracked')
+    expect(result.trail).toEqual([CENTRE])
+  })
+
+  it('truncates to a cell that is nowhere near where the finger is', () => {
+    // The whole point of the rule. A finger sweeping back across the board reports
+    // where it landed, not what it crossed, so the cell it lands on is routinely not
+    // adjacent to the one it left. FAR is three cells from CENTRE.
+    const trail = [FAR, CENTRE, EAST, NORTH_EAST]
+    const result = stepTrail(trail, FAR, adjacency)
+
+    expect(result.effect).toBe('backtracked')
+    expect(result.trail).toEqual([FAR])
+  })
+
+  it('leaves a valid single-cell trail when truncated to the first cell', () => {
+    const result = stepTrail([CENTRE, EAST, NORTH_EAST, WEST], CENTRE, adjacency)
+    expect(result.trail).toEqual([CENTRE])
+  })
+
   it('backtracks all the way to a single cell', () => {
     let trail = [CENTRE, EAST]
     trail = stepTrail(trail, CENTRE, adjacency).trail
     expect(trail).toEqual([CENTRE])
-  })
-
-  it('refuses to revisit a cell that is not the previous one', () => {
-    const result = stepTrail([CENTRE, EAST, NORTH_EAST], CENTRE, adjacency)
-    expect(result.effect).toBe('ignored')
-    expect(result.trail).toEqual([CENTRE, EAST, NORTH_EAST])
   })
 
   it('ignores staying on the same cell', () => {

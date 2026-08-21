@@ -25,10 +25,18 @@ letter, and a quantity of honey. Positions never change for the life of a game.
 ## Forming a word
 
 A trail begins when the player presses a cell and grows as they drag into adjacent
-cells. A trail may not revisit a cell it already contains. Dragging back onto the
-immediately previous cell removes the last cell instead of adding it. A drag that
-skips past a cell — a fast flick crossing a non-adjacent boundary — does not extend
-the trail and does not interpolate; the trail simply stays where it was.
+cells. A trail may not use a cell twice. Dragging onto a cell the trail already contains
+**truncates** it to end there rather than extending it: having drawn S-T-I-N-G-E-R,
+dropping back onto the I leaves S-T-I selected. That is one movement rather than one
+per cell, which is what correcting a long mis-drag used to cost.
+
+Truncation does not require the cell to be adjacent. A finger sweeping back across the
+board reports where it landed, not what it crossed, so the cell it lands on is
+routinely nowhere near the one it left.
+
+A drag onto a cell that is neither adjacent nor already in the trail — a fast flick
+crossing a non-adjacent boundary — does not extend the trail and does not interpolate;
+the trail simply stays where it was.
 
 On release, the trail is judged in this order:
 

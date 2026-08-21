@@ -21,12 +21,18 @@ export interface TrailStep {
 /**
  * Move a trail onto a cell.
  *
- * Dragging back onto the immediately previous cell removes the last cell rather than
- * adding it, which is how a player corrects a mis-drag. Any other cell already in the
- * trail is refused, because a word may not reuse a cell.
+ * Dragging onto a cell already in the trail truncates the trail to end there. That is
+ * how a player corrects a mis-drag, and it is one movement rather than one per cell:
+ * having drawn S-T-I-N-G-E-R, dropping back onto the I leaves S-T-I.
  *
- * A step to a non-adjacent cell is ignored rather than interpolated. A fast flick
- * across the board would otherwise invent a path the player never drew.
+ * Truncation deliberately does not require adjacency. A finger moving back across the
+ * board covers several cells between the samples the pointer actually reports, so the
+ * cell it lands on is frequently nowhere near the one it left. Requiring adjacency
+ * would make the correction work only when it happened to be drawn slowly.
+ *
+ * A step to a non-adjacent cell that is *not* in the trail is ignored rather than
+ * interpolated. A fast flick across the board would otherwise invent a path the
+ * player never drew.
  */
 export function stepTrail(
   trail: readonly string[],
@@ -38,12 +44,11 @@ export function stepTrail(
   const last = trail[trail.length - 1]!
   if (cellKey === last) return { trail: [...trail], effect: 'ignored' }
 
-  // Checked before the revisit rule, because the previous cell is itself in the trail.
-  if (trail.length >= 2 && cellKey === trail[trail.length - 2]) {
-    return { trail: trail.slice(0, -1), effect: 'backtracked' }
-  }
-
-  if (trail.includes(cellKey)) return { trail: [...trail], effect: 'ignored' }
+  // Checked before adjacency: a truncation is a move backwards through cells the
+  // player already chose, so where their finger currently is does not constrain it.
+  // Stepping onto the immediately previous cell is this same rule at one position.
+  const at = trail.indexOf(cellKey)
+  if (at !== -1) return { trail: trail.slice(0, at + 1), effect: 'backtracked' }
 
   const near = adjacency.get(last)
   if (!near || !near.includes(cellKey)) return { trail: [...trail], effect: 'ignored' }
