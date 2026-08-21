@@ -54,13 +54,33 @@ When a Cell's Honey reaches zero it **Reseeds** — it takes a new Letter and re
 capacity. How the new Letter is chosen is a separate subject, covered in
 [letters.md](./letters.md).
 
+### The two axes, and why they are separate
+
+`level.harvestPercent` decides what the board *loses*. A second setting,
+`level.potPercent`, decides what the Pot is *credited* per Cell. They are two numbers
+because they are two jobs.
+
+While one number did both, churn could not be tuned at all. Making the board turn over
+faster also inflated every score — and since the Pot is what advances you through the
+Levels, a "harder" setting pushed you up the difficulty curve faster, undoing the
+difficulty it was meant to add. Splitting them means the board can be made to churn
+without the score noticing.
+
+Across the Levels, `harvestPercent` climbs and `potPercent` stays flat. That is the
+second difficulty axis, independent of the Bees: later Levels drain Cells in fewer
+Words, so the board turns over its Letters faster and you cannot settle into one corner
+of it.
+
+Rarity applies to both, so a rare Letter still pays more as well as emptying sooner.
+
 ## What reaches the Pot
 
-The Honey removed from the board is multiplied by a **length multiplier**
+The Honey credited to the Pot is multiplied by a **length multiplier**
 (`config.scoring.lengthMultipliers`) before it reaches the Pot. Longer Words are worth
 disproportionately more.
 
-The Pot therefore receives **more than the board loses**, and that is on purpose. If
+The length multiplier applies to the Pot alone. The Pot therefore receives **more than
+the board loses**, and that is on purpose. If
 longer Words simply drained more Cells, chasing them would starve the Honeycomb and
 punish exactly the play the game wants to encourage. The multiplier lets ambition pay
 without costing the board.
@@ -141,8 +161,11 @@ These use real numbers so the arithmetic can be followed. **The values below are
 snapshot and will drift as the game is tuned** — the shape of the calculation is the
 part to trust.
 
-Assume a Cell capacity of 100, a Level harvest of 20%, and length multipliers of
-1.0 at four Letters and 3.0 at seven.
+Assume a Cell capacity of 100, a Level harvest of 20%, a Level pot rate of 20%, and
+length multipliers of 1.0 at four Letters and 3.0 at seven. Because the two rates are
+equal at this Level, the Honey removed and the Honey credited come to the same figure
+before the multiplier — at a later Level, where harvest has climbed and the pot rate
+has not, they would differ.
 
 ### A four-Letter Word: TEAM
 

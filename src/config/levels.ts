@@ -12,6 +12,11 @@ import type { Level } from '../core/types'
  * first word to the last. What a level changes is how fast the board gives up its
  * honey, and what the bees are doing.
  *
+ * `harvestPercent` climbs across the curve and `potPercent` does not. That is the
+ * second difficulty axis: later levels drain cells in fewer words, so the board turns
+ * over its letters faster and a player cannot settle into one corner of it — without
+ * that also inflating every score and pushing them up the levels faster.
+ *
  * Bees arrive in waves with calm between them. Constant presence removes the suspense:
  * a threat that is always there stops being a threat. Waves lengthen and calms shorten
  * as levels progress, so pressure builds rather than being switched on.
@@ -27,7 +32,8 @@ export const levels: readonly Level[] = [
   {
     honeyThreshold: 0,
     environmentId: 'sunnyDay',
-    harvestPercent: 0.2,
+    harvestPercent: 0.20,
+    potPercent: 0.2,
     bees: {
       types: [],
       max: 0,
@@ -41,7 +47,8 @@ export const levels: readonly Level[] = [
   {
     honeyThreshold: 900,
     environmentId: 'sunnyDay',
-    harvestPercent: 0.2,
+    harvestPercent: 0.20,
+    potPercent: 0.2,
     bees: {
       types: ['forager'],
       max: 1,
@@ -55,7 +62,8 @@ export const levels: readonly Level[] = [
   {
     honeyThreshold: 2000,
     environmentId: 'clearNight',
-    harvestPercent: 0.2,
+    harvestPercent: 0.22,
+    potPercent: 0.2,
     bees: {
       types: ['forager'],
       max: 1,
@@ -69,7 +77,8 @@ export const levels: readonly Level[] = [
   {
     honeyThreshold: 3400,
     environmentId: 'clearNight',
-    harvestPercent: 0.2,
+    harvestPercent: 0.24,
+    potPercent: 0.2,
     bees: {
       types: ['forager', 'hunter'],
       max: 1,
@@ -83,7 +92,8 @@ export const levels: readonly Level[] = [
   {
     honeyThreshold: 5100,
     environmentId: 'cloudyDay',
-    harvestPercent: 0.2,
+    harvestPercent: 0.26,
+    potPercent: 0.2,
     bees: {
       types: ['forager', 'hunter'],
       max: 1,
@@ -100,7 +110,8 @@ export const levels: readonly Level[] = [
     // The curve is data: this is a lower `speed` in one row, not a rule in code.
     honeyThreshold: 7100,
     environmentId: 'cloudyDay',
-    harvestPercent: 0.2,
+    harvestPercent: 0.28,
+    potPercent: 0.2,
     bees: {
       types: ['forager', 'hunter'],
       max: 2,
@@ -114,7 +125,8 @@ export const levels: readonly Level[] = [
   {
     honeyThreshold: 9400,
     environmentId: 'forebodingNight',
-    harvestPercent: 0.2,
+    harvestPercent: 0.31,
+    potPercent: 0.2,
     bees: {
       types: ['forager', 'hunter'],
       max: 2,
@@ -128,7 +140,8 @@ export const levels: readonly Level[] = [
   {
     honeyThreshold: 12000,
     environmentId: 'stormyDay',
-    harvestPercent: 0.2,
+    harvestPercent: 0.34,
+    potPercent: 0.2,
     bees: {
       types: ['forager', 'hunter'],
       max: 2,
@@ -142,7 +155,8 @@ export const levels: readonly Level[] = [
   {
     honeyThreshold: 15000,
     environmentId: 'stormyDay',
-    harvestPercent: 0.2,
+    harvestPercent: 0.37,
+    potPercent: 0.2,
     bees: {
       types: ['forager', 'hunter'],
       max: 2,
@@ -156,7 +170,8 @@ export const levels: readonly Level[] = [
   {
     honeyThreshold: 18500,
     environmentId: 'stormyNight',
-    harvestPercent: 0.2,
+    harvestPercent: 0.40,
+    potPercent: 0.2,
     bees: {
       types: ['forager', 'hunter'],
       max: 2,

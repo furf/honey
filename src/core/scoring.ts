@@ -74,11 +74,18 @@ export function rarityOf(letter: string, config: GameConfig): number {
 }
 
 /**
- * What a word is worth.
+ * What a word is worth, in honey off the board and in honey into the pot.
  *
- * The pot receives more than the board loses, because longer words are multiplied.
- * That is deliberate: the multiplier rewards ambition without draining the board
- * faster, so a player chasing long words does not starve the honeycomb.
+ * These are two different numbers on purpose. What a cell gives up is a difficulty
+ * setting — raise it and the board churns faster — and what the pot receives is a
+ * scoring one. A single percentage doing both jobs meant churn could not be tuned
+ * without also inflating every score.
+ *
+ * Rarity applies to both, so a rare letter still pays more as well as emptying
+ * sooner. The length multiplier applies only to the pot, which is why the pot
+ * receives more than the board loses: the multiplier rewards ambition without
+ * draining the board faster, so a player chasing long words does not starve the
+ * honeycomb.
  */
 export function harvestFor(
   letters: readonly string[],
@@ -86,13 +93,17 @@ export function harvestFor(
   config: GameConfig,
   level: Level,
 ): Harvest {
-  const base = config.honey.cellCapacity * level.harvestPercent
+  const { cellCapacity } = config.honey
+  const removed = cellCapacity * level.harvestPercent
+  const credited = cellCapacity * level.potPercent
 
-  const perCell = letters.map((letter) => base * rarityOf(letter, config))
+  const perCell = letters.map((letter) => removed * rarityOf(letter, config))
   const fromBoard = perCell.reduce((sum, amount) => sum + amount, 0)
+
+  const earned = letters.reduce((sum, letter) => sum + credited * rarityOf(letter, config), 0)
   const multiplier = byWordLength(config.scoring.lengthMultipliers, wordLength)
 
-  return { perCell, fromBoard, toPot: fromBoard * multiplier }
+  return { perCell, fromBoard, toPot: earned * multiplier }
 }
 
 /** Which level a pot total puts the player in. */

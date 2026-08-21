@@ -111,7 +111,8 @@ to stay equal to the first. See
 |---|---|
 | `honeyThreshold` | Pot total that advances the player into this level |
 | `environmentId` | Which of the theme's environments is shown |
-| `harvestPercent` | Percentage of cell capacity a harvest removes |
+| `harvestPercent` | Percentage of cell capacity a harvest removes — the churn axis, which climbs across levels |
+| `potPercent` | Percentage of cell capacity credited to the pot per cell, before the length multiplier — held flat |
 | `bees.types` | Which bee types may spawn |
 | `bees.max` | Bees above which none spawn |
 | `bees.spawnIntervalMs` | Cadence of spawns below the maximum |

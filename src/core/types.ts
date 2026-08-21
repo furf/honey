@@ -213,8 +213,22 @@ export interface Level {
   /** Pot total that advances the player into this level. */
   readonly honeyThreshold: number
   readonly environmentId: string
-  /** Percentage of cell capacity a harvest removes. */
+  /**
+   * Percentage of cell capacity a harvest removes.
+   *
+   * The churn axis. Raising it makes cells empty in fewer words, so the board turns
+   * over its letters faster — pressure that is independent of the bees.
+   */
   readonly harvestPercent: number
+  /**
+   * Percentage of cell capacity the pot is credited per cell, before the multiplier.
+   *
+   * Deliberately separate from `harvestPercent`. While one number did both jobs,
+   * churn could not be tuned at all: making the board turn over faster also inflated
+   * every score, which pushed the player up the levels faster and undid the
+   * difficulty the change was meant to add.
+   */
+  readonly potPercent: number
   readonly bees: LevelBees
   readonly transition: {
     readonly sound: string

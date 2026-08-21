@@ -77,6 +77,7 @@ export function testLevel(overrides: Partial<Level> = {}): Level {
     honeyThreshold: 0,
     environmentId: 'test',
     harvestPercent: 0.2,
+    potPercent: 0.2,
     bees: { types: [], max: 0, spawnIntervalMs: 0, waveMs: 0, calmMs: 0, speed: 1 },
     transition: { sound: 'test', durationMs: 0 },
     ...overrides,

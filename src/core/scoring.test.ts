@@ -134,3 +134,43 @@ describe('bonusMsFor', () => {
     expect(bonusMsFor(3, config)).toBe(1_000)
   })
 })
+
+describe('the two honey axes', () => {
+  const letters = ['T', 'E', 'A', 'M']
+
+  it('takes from the board at the harvest rate', () => {
+    const level = testLevel({ harvestPercent: 0.4, potPercent: 0.2 })
+    expect(harvestFor(letters, 4, config, level).fromBoard).toBe(160)
+  })
+
+  it('credits the pot at the pot rate, not the harvest rate', () => {
+    const level = testLevel({ harvestPercent: 0.4, potPercent: 0.2 })
+    expect(harvestFor(letters, 4, config, level).toPot).toBe(80)
+  })
+
+  it('churns faster without paying more', () => {
+    // The whole point of the split. Doubling churn must leave the score alone,
+    // because the pot is what advances the player through the levels.
+    const calm = testLevel({ harvestPercent: 0.2, potPercent: 0.2 })
+    const brisk = testLevel({ harvestPercent: 0.4, potPercent: 0.2 })
+
+    expect(harvestFor(letters, 4, config, brisk).fromBoard).toBeGreaterThan(
+      harvestFor(letters, 4, config, calm).fromBoard,
+    )
+    expect(harvestFor(letters, 4, config, brisk).toPot).toBe(
+      harvestFor(letters, 4, config, calm).toPot,
+    )
+  })
+
+  it('pays more without churning faster', () => {
+    const lean = testLevel({ harvestPercent: 0.2, potPercent: 0.2 })
+    const rich = testLevel({ harvestPercent: 0.2, potPercent: 0.4 })
+
+    expect(harvestFor(letters, 4, config, rich).toPot).toBeGreaterThan(
+      harvestFor(letters, 4, config, lean).toPot,
+    )
+    expect(harvestFor(letters, 4, config, rich).fromBoard).toBe(
+      harvestFor(letters, 4, config, lean).fromBoard,
+    )
+  })
+})
