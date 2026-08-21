@@ -24,6 +24,7 @@ import { renderConfig } from '../config/render'
 import { applyEvent, createEffects, easeHoney, pruneEffects } from './effects'
 import { renderGame } from './render'
 import { Hud } from './Hud'
+import type { BonusFlash } from './Hud'
 import { GameOverOverlay } from './GameOverOverlay'
 import { loadSettings, saveSettings } from './settings'
 
@@ -47,8 +48,7 @@ export interface GameScreenProps {
 interface HudState {
   pot: number
   clockMs: number
-  /** The most recent bonus worth showing, with an id so a repeat still replays. */
-  bonus: { ms: number; id: number } | null
+  bonus: BonusFlash | null
   levelIndex: number
   word: string
   preview: number
@@ -115,7 +115,7 @@ export function GameScreen({ deps, seed, theme, onExit, onPlayAgain }: GameScree
 
     // A bonus entirely swallowed by the cap is not shown: the player gained nothing,
     // and saying "+0s" would be congratulating them on it.
-    let bonus: { ms: number; id: number } | null = null
+    let bonus: BonusFlash | null = null
     let bonusCount = 0
     const startedMs = performance.now()
     let gameOverAtMs: number | null = null
@@ -311,7 +311,7 @@ function layoutOptions() {
   }
 }
 
-function readHud(game: Game, bonus: HudState['bonus']): HudState {
+function readHud(game: Game, bonus: BonusFlash | null): HudState {
   const { state } = game
   const word = state.trail
     .map((cellKey) => state.cells.get(cellKey)?.letter ?? '')

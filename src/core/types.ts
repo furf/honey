@@ -56,11 +56,13 @@ export interface ClockConfig {
   readonly durationMs: number
   readonly stingCostMs: number
   /**
-   * Seconds a word adds, by letter count. The largest key floors anything longer,
-   * which matters because a word containing `Qu` can reach ten letters from nine
-   * cells.
+   * Time a word adds, by letter count.
+   *
+   * In milliseconds like its siblings, so no unit conversion lands in rules code. The
+   * largest key floors anything longer, which matters because a word containing `Qu`
+   * can reach ten letters from nine cells.
    */
-  readonly bonusSecondsByLength: ByWordLength
+  readonly bonusMsByLength: ByWordLength
 }
 
 export interface GenerationConfig {
@@ -406,7 +408,13 @@ export interface GameState {
   /** Milliseconds left on the clock. The game ends when this reaches zero. */
   clockMs: number
   levelIndex: number
-  /** Words already scored this game; a word may only be played once. */
+  /**
+   * Words already scored this game; a word may only be played once.
+   *
+   * Kept as a set alongside `found` deliberately. The uniqueness check runs on every
+   * release and wants to be constant-time, while the list wants order and detail —
+   * one structure cannot be good at both, and the set is the one on the hot path.
+   */
   played: Set<string>
   /** The same words with what they earned, in the order they were found. */
   found: FoundWord[]

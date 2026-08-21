@@ -43,14 +43,14 @@ export function byWordLength(table: ByWordLength, length: number): number {
 }
 
 /**
- * Seconds a word adds to the clock, in milliseconds.
+ * Time a word adds to the clock.
  *
  * The table is keyed by letters, not cells, so a word containing `Qu` is paid for
  * what the player reads. The largest key floors anything longer, which is not
  * theoretical: nine cells can spell a ten-letter word.
  */
 export function bonusMsFor(wordLength: number, config: GameConfig): number {
-  return byWordLength(config.clock.bonusSecondsByLength, wordLength) * 1000
+  return byWordLength(config.clock.bonusMsByLength, wordLength)
 }
 
 export interface Harvest {
@@ -94,13 +94,17 @@ export function harvestFor(
   level: Level,
 ): Harvest {
   const { cellCapacity } = config.honey
+
+  // Rarity is read once per letter and applied to both axes, so the two can never
+  // drift apart on which letters they think are rare.
+  const rarities = letters.map((letter) => rarityOf(letter, config))
+  const totalRarity = rarities.reduce((sum, rarity) => sum + rarity, 0)
+
   const removed = cellCapacity * level.harvestPercent
-  const credited = cellCapacity * level.potPercent
+  const perCell = rarities.map((rarity) => removed * rarity)
+  const fromBoard = removed * totalRarity
 
-  const perCell = letters.map((letter) => removed * rarityOf(letter, config))
-  const fromBoard = perCell.reduce((sum, amount) => sum + amount, 0)
-
-  const earned = letters.reduce((sum, letter) => sum + credited * rarityOf(letter, config), 0)
+  const earned = cellCapacity * level.potPercent * totalRarity
   const multiplier = byWordLength(config.scoring.lengthMultipliers, wordLength)
 
   return { perCell, fromBoard, toPot: earned * multiplier }

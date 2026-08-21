@@ -50,6 +50,8 @@ answered there rather than in the code.
   experiences them.
 - **[docs/design/scoring.md](./docs/design/scoring.md)** — what a word is worth, in
   honey and in seconds, with worked examples.
+- **[docs/design/letters.md](./docs/design/letters.md)** — how letters are chosen and
+  laid out, and why boards are refined rather than redrawn.
 - **[docs/design/presentation.md](./docs/design/presentation.md)** — colour language,
   animation, HUD, theming.
 - **[docs/config-reference.md](./docs/config-reference.md)** — every tunable and what

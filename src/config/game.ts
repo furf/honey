@@ -43,10 +43,14 @@ export const gameConfig: GameConfig = {
     stingCostMs: 5_000,
 
     // Fibonacci. Longer words must be worth disproportionately more or the clock is
-    // sustained by volume, and a player who swipes fast beats a player who looks
-    // hard. The shortest words buy nothing at all, so they stay an escape hatch from
-    // a stuck board rather than a strategy.
-    bonusSecondsByLength: { 4: 1, 5: 1, 6: 2, 7: 3, 8: 5, 9: 8 },
+    // sustained by volume, and a player who swipes fast beats a player who looks hard.
+    //
+    // The shortest scoring word buys a second. The original design gave it nothing,
+    // but that was written when three-letter words were going to be allowed and four
+    // was the second rung; when the minimum stayed at four, the zero rung went with
+    // it. Whether the floor should be pushed back down to zero is a playtest
+    // question — the curve above it is the part to trust.
+    bonusMsByLength: { 4: 1_000, 5: 1_000, 6: 2_000, 7: 3_000, 8: 5_000, 9: 8_000 },
   },
 
   generation: {

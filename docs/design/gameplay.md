@@ -27,7 +27,7 @@ letter, and a quantity of honey. Positions never change for the life of a game.
 A trail begins when the player presses a cell and grows as they drag into adjacent
 cells. A trail may not use a cell twice. Dragging onto a cell the trail already contains
 **truncates** it to end there rather than extending it: having drawn S-T-I-N-G-E-R,
-dropping back onto the I leaves S-T-I selected. That is one movement rather than one
+dropping back onto the I leaves the trail at S-T-I. That is one movement rather than one
 per cell, which is what correcting a long mis-drag used to cost.
 
 Truncation does not require the cell to be adjacent. A finger sweeping back across the
@@ -73,10 +73,19 @@ Every cell has the same capacity, `config.honey.cellCapacity`. A valid word remo
 `level.harvestPercent` of capacity from each cell, **scaled by the rarity of that
 cell's letter** (`config.honey.rarityHarvest`). A `Z` gives up more than an `E`, so it
 pays better and empties in fewer words — rare letters clear themselves off the board
-instead of becoming a cell to route around. The player's pot
-receives that total multiplied by a length multiplier drawn from
-`config.scoring.lengthMultipliers`, so longer words are worth disproportionately more
-than the honey they actually remove from the board.
+instead of becoming a cell to route around.
+
+What the pot receives is a **separate** number: `level.potPercent` of capacity per cell,
+also scaled by rarity, then multiplied by a length multiplier drawn from
+`config.scoring.lengthMultipliers`. Two settings rather than one, because they are two
+jobs — how fast the board turns over its letters is difficulty, and what a word pays is
+scoring. While a single percentage did both, making the board churn faster also inflated
+every score, which pushed the player up the levels faster and undid the difficulty it
+was meant to add.
+
+Because the multiplier applies to the pot alone, the pot receives more than the board
+loses. That is deliberate: it lets a player chase long words without starving the
+honeycomb. Full detail and worked examples are in [scoring.md](./scoring.md).
 
 When a cell's honey reaches zero it **reseeds**: it takes a new letter and its honey is
 restored to full. The honey meter shows how much is left rather than how many words
@@ -88,11 +97,11 @@ The clock starts at `config.clock.durationMs` and counts down in real time. It i
 global: every level runs it at one second per second, and nothing pauses it — not a
 drag, not a level change.
 
-A valid word adds seconds according to `config.clock.bonusSecondsByLength`, keyed by
+A valid word adds seconds according to `config.clock.bonusMsByLength`, keyed by
 **letters** rather than cells, so a word containing `Qu` is paid for what the player
-reads. The steps rise steeply, and the shortest scoring words add nothing at all: they
-remain a way out of a board with nothing better on it, but they cannot sustain the
-clock on their own.
+reads. The steps rise steeply, so short words cannot sustain the clock on their own: they
+remain a way out of a board with nothing better on it, while the time to survive comes
+from finding long ones.
 
 **The clock never rises above the duration it started with.** A word played on a nearly
 full clock is partly wasted, and the game shows the player the seconds actually added
@@ -180,8 +189,8 @@ Reaching a level's `honeyThreshold` advances the player to it. Levels are never
 surfaced as a number — the player perceives a level change as a shift in environment
 and a transition sound.
 
-A level sets its bee population and behaviour overrides, its harvest percentage, and
-its environment. It does **not** set anything about the clock. Advancing does **not** reset
+A level sets its bee population and behaviour overrides, its harvest percentage, its pot
+percentage, and its environment. It does **not** set anything about the clock. Advancing does **not** reset
 the honeycomb; letters, honey, and played words all carry across. The final level
 plateaus and play continues indefinitely.
 

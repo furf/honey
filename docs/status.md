@@ -55,6 +55,13 @@ dictionary, and two fonts. Never measured on a slow connection.
 - **HUD rebalance.** Resolved by the clock: the health bar it referred to no longer
   exists, and the clock that replaced it is the same weight as the pot by design.
 
+- **Freshness tests do not cover the shipped generator.** The sharper three — no
+  ubiquitous word, vocabulary breadth, most words on one board only — run against the
+  alternative weighted-bag generator. The shipped family generator, whose objective
+  deliberately narrows the space of boards, is guarded only by mean pairwise overlap
+  and board uniqueness. It is the one that most needs them. See
+  [letters.md](./design/letters.md).
+
 ## Parked ideas
 
 - **Corner cells.** Using the four empty corners beside the hexagon for extra letters.

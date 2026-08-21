@@ -52,7 +52,13 @@ There is deliberately **no line drawn through a trail's cells**. The cells alrea
 carry the selection colour across their whole face, and a ribbon over the top of that
 said the same thing twice while covering the letters underneath.
 
-**Red means damage and nothing else.** An invalid word is the most common non-event in
+The table above is the **board's** colour language — what a cell is doing. The clock
+carries its own amber and red for time running out, and that is a deliberate second
+axis rather than a contradiction: it lives in the HUD, never touches a cell, and the
+two are never on screen in the same place. A player reading a red clock is not being
+told a cell was stung.
+
+**On the board, red means damage and nothing else.** An invalid word is the most common non-event in
 the game, and a red slap every time is exhausting — so it desaturates rather than
 alarms. Bronze for already-played is deliberately deeper and less saturated than the
 board's own golds so it reads as distinct rather than as part of the honeycomb.
@@ -142,14 +148,17 @@ it rather than one place lower.
 
 The list scrolls rather than capping: a long game is the one most worth reading back,
 and truncating it would hide exactly the words the player is proudest of. The card
-stays the same size either way, so the buttons never move. There is **no auto-return timer** — the spec
-originally called for returning to the welcome screen after five seconds, which would
-have left the Play Again button on screen too briefly to read, let alone press.
+stays the same size either way, so the buttons never move.
+
+There is **no auto-return timer** — the spec originally called for returning to the
+welcome screen after five seconds, which would have left the Play Again button on
+screen too briefly to read, let alone press.
 
 During play:
 
 - **Pot** top right, counting up rather than snapping.
-- **Health** top left, a horizontal bar with a percentage label.
+- **Clock** top left, minutes and seconds beside a stopwatch, matching the pot exactly.
+  See [The clock](#the-clock) above for its warning states and the bonus beside it.
 - **Trail preview** above the honeycomb, showing the letters as they are selected. Once
   the trail is long enough to be valid it also shows a **live honey preview**, so the
   player watches the value change as the trail grows. This is the single thing that

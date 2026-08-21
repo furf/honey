@@ -61,7 +61,7 @@ down on the level that introduces a second bee" is not logic; it is one cell of
 |---|---|
 | `durationMs` | Time a game begins with, and the ceiling a bonus may not push past |
 | `stingCostMs` | Time a sting takes off the clock |
-| `bonusSecondsByLength` | Seconds a word adds, by **letter** count. Largest key floors anything longer |
+| `bonusMsByLength` | Time a word adds, by **letter** count. Largest key floors anything longer |
 
 `durationMs` is one value doing both jobs on purpose: the rule is that the clock never
 rises above where it started, and a separate ceiling would be a second number obliged
@@ -195,6 +195,9 @@ without a second set of numbers.
 | `shakeMs` / `shakeAmplitude` | The screen shake on a sting. Skipped entirely when the device asks for reduced motion |
 | `vignetteInner` / `vignetteStrength` | Red closing in from the edges of the screen on a sting |
 | `popupMs` / `popupRise` | The floating `+142` and `−10` numbers |
+| `clockWarnMs` | Milliseconds remaining at which the clock turns amber |
+| `clockDangerMs` | Milliseconds remaining at which it turns red and pulses once a second |
+| `bonusPopupMs` | How long the green `+3s` stays beside the clock |
 | `trailRing` | Ring weight on a selected cell |
 | `stateEmptyShade` / `stateGlowShade` | How far a state colour is darkened for the empty part of a cell, so the honey line stays visible |
 

@@ -8,17 +8,20 @@ import { renderConfig } from '../config/render'
  * state at a throttled rate, never per frame.
  */
 
+/**
+ * A bonus worth showing, with an id so a second word buying the same number of
+ * seconds still replays the animation — React remounts on a changed key.
+ */
+export interface BonusFlash {
+  readonly ms: number
+  readonly id: number
+}
+
 export interface HudProps {
   readonly pot: number
   /** Milliseconds left. Formatted here, because only presentation cares about m:ss. */
   readonly clockMs: number
-  /**
-   * The most recent bonus, or null.
-   *
-   * Carries an id so a second word scoring the same number of seconds still restarts
-   * the animation — React remounts on a changed key, which is what replays it.
-   */
-  readonly bonus: { readonly ms: number; readonly id: number } | null
+  readonly bonus: BonusFlash | null
   readonly word: string
   readonly preview: number
   readonly muted: boolean
@@ -37,6 +40,19 @@ export function formatClock(ms: number): string {
   const minutes = Math.floor(total / 60)
   const seconds = total % 60
   return `${minutes}:${seconds.toString().padStart(2, '0')}`
+}
+
+/**
+ * The bonus as the player should see it, or null if there is nothing worth saying.
+ *
+ * Rounding here rather than at the call site is the point. Headroom against the cap is
+ * an arbitrary fraction of a second, so a clamped bonus of 400ms is genuinely positive
+ * and would still render "+0s" — congratulating the player on nothing, which is the
+ * one thing this element must never do.
+ */
+export function bonusLabel(ms: number): string | null {
+  const seconds = Math.round(ms / 1000)
+  return seconds >= 1 ? `+${seconds}s` : null
 }
 
 /**
@@ -68,6 +84,8 @@ function Stopwatch() {
 
 export function Hud({ pot, clockMs, bonus, word, preview, muted, onToggleMute }: HudProps) {
   const label = formatClock(clockMs)
+
+  const bonusText = bonus ? bonusLabel(bonus.ms) : null
   const urgency =
     clockMs <= renderConfig.clockDangerMs
       ? 'danger'
@@ -86,13 +104,13 @@ export function Hud({ pot, clockMs, bonus, word, preview, muted, onToggleMute }:
         >
           <Stopwatch />
           <span className="clock__value">{label}</span>
-          {bonus && (
+          {bonus && bonusText && (
             <span
               key={bonus.id}
               className="clock__bonus"
               style={{ '--bonus-ms': `${renderConfig.bonusPopupMs}ms` } as CSSProperties}
             >
-              +{Math.round(bonus.ms / 1000)}s
+              {bonusText}
             </span>
           )}
         </div>

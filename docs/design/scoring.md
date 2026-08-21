@@ -92,7 +92,7 @@ Word longer than that takes the last entry rather than falling off the end of th
 ## What reaches the Clock
 
 The **Bonus** is seconds added to the Clock, decided purely by how many **Letters** the
-Word has (`config.clock.bonusSecondsByLength`). It does not depend on the Level, on
+Word has (`config.clock.bonusMsByLength`). It does not depend on the Level, on
 which Letters they were, or on how much Honey the Word paid.
 
 Two details matter:
@@ -101,9 +101,12 @@ Two details matter:
   containing it is paid for what the player reads, not for how many Cells it used. The
   same table rule applies — the largest key floors anything longer — and that is not
   theoretical here: nine Cells can spell a ten-Letter Word when one of them is `Qu`.
-- **The shortest Words pay nothing.** A Word at the minimum length adds no time at all.
-  It still pays Honey, so it remains a way out of a board where you cannot see anything
-  better, but it cannot sustain you.
+- **Short Words cannot sustain you.** A Word at the minimum length buys about as little
+  time as the table offers. It still pays Honey, so it remains a way out of a board
+  where you cannot see anything better, but the time to survive comes from long Words.
+  (The design originally gave the shortest Word *nothing*; that rung was written for
+  three-Letter Words, which were considered and dropped, so the floor now sits one step
+  higher. Whether to push it back down is a playtest question.)
 
 The Bonus rises steeply — the steps follow the Fibonacci sequence. The shape is the
 point: a reward that rose gently would make the Clock a measure of how fast you swipe,

@@ -33,7 +33,7 @@ that ran at different speeds on different frame rates.
 **Health is replaced by a clock: a visible countdown, in minutes and seconds.**
 
 The clock starts at `config.clock.durationMs` and counts down in real time. A scored
-word adds seconds by letter count (`config.clock.bonusSecondsByLength`). A sting costs
+word adds seconds by letter count (`config.clock.bonusMsByLength`). A sting costs
 `config.clock.stingCostMs`. At zero, the game ends.
 
 **The clock never rises above the duration the game started with.** That is one
@@ -44,8 +44,13 @@ a trap rather than a flexibility.
 **The bonus rises steeply with length** — one second, one, two, three, five, eight.
 Fibonacci, because the shape matters more than the exact figures: a linear reward
 makes the clock a function of how fast a player swipes, and a steep one makes it a
-function of how hard they look. The shortest scoring words add nothing at all, which
-keeps them available as a way out of a stuck board without making them a strategy.
+function of how hard they look.
+
+The original design gave the shortest scoring word nothing at all, so that it stayed a
+way out of a stuck board without becoming a strategy. That rung disappeared when the
+minimum word length stayed at four: the zero was written for three-letter words, which
+were considered and dropped. As shipped the shortest word buys one second. Whether the
+floor should be pushed back to zero is a playtest question.
 
 **The clock ticks at one second per second, at every level.** A per-level scaling
 factor was considered and rejected. A stopwatch that runs fast is lying to the player,
