@@ -185,9 +185,82 @@ body {
  * read as a matched pair, not as a widget beside a number.
  */
 .clock {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 0.35rem;
+  /* Inherited, so the calm clock is exactly the pot's colour — the two numbers a
+     player watches are meant to read as one pair. The warning states then depart from
+     it deliberately. Both the digits and the stopwatch take this: the icon is stroked
+     in currentColor precisely so the warning need not be applied to it twice. */
+  color: inherit;
+  transition: color 300ms ease;
+}
+
+.clock--warn {
+  color: #ffc75a;
+}
+
+/*
+ * The last ten seconds. One pulse per second, so the beat matches what the number is
+ * doing rather than running at some unrelated animation speed.
+ */
+.clock--danger {
+  color: #ff6b63;
+  animation: clock-urgent 1s steps(1, end) infinite;
+}
+
+@keyframes clock-urgent {
+  0%,
+  55% {
+    opacity: 1;
+  }
+  56%,
+  100% {
+    opacity: 0.55;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .clock--danger {
+    animation: none;
+  }
+}
+
+/*
+ * Seconds a word bought, beside the clock rather than over it — the clock is the
+ * thing being read, and covering it to report a change to it is self-defeating.
+ */
+.clock__bonus {
+  position: absolute;
+  left: 100%;
+  margin-left: 0.4rem;
+  white-space: nowrap;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #7ee787;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+  animation: clock-bonus var(--bonus-ms) ease-out forwards;
+  pointer-events: none;
+}
+
+@keyframes clock-bonus {
+  0% {
+    opacity: 0;
+    transform: translateY(0.35rem);
+  }
+  18% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  70% {
+    opacity: 1;
+    transform: translateY(-0.15rem);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-0.6rem);
+  }
 }
 
 .clock__icon {

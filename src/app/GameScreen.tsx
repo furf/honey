@@ -46,6 +46,8 @@ export interface GameScreenProps {
 interface HudState {
   pot: number
   clockMs: number
+  /** The most recent bonus worth showing, with an id so a repeat still replays. */
+  bonus: { ms: number; id: number } | null
   levelIndex: number
   word: string
   preview: number
@@ -60,6 +62,7 @@ export function GameScreen({ deps, seed, theme, onExit, onPlayAgain }: GameScree
   const [hud, setHud] = useState<HudState>({
     pot: 0,
     clockMs: gameConfig.clock.durationMs,
+    bonus: null,
     levelIndex: 0,
     word: '',
     preview: 0,
@@ -107,6 +110,10 @@ export function GameScreen({ deps, seed, theme, onExit, onPlayAgain }: GameScree
     }
     motionQuery.addEventListener('change', onMotionPreference)
 
+    // A bonus entirely swallowed by the cap is not shown: the player gained nothing,
+    // and saying "+0s" would be congratulating them on it.
+    let bonus: { ms: number; id: number } | null = null
+    let bonusCount = 0
     const startedMs = performance.now()
     let gameOverAtMs: number | null = null
     let lastHudMs = 0
@@ -131,6 +138,10 @@ export function GameScreen({ deps, seed, theme, onExit, onPlayAgain }: GameScree
             play: (name) => sound.play(name),
           })
           if (event.kind === 'gameOver') gameOverAtMs = frameMs
+          if (event.kind === 'wordScored' && event.bonusMs > 0) {
+            bonusCount += 1
+            bonus = { ms: event.bonusMs, id: bonusCount }
+          }
           if (event.kind === 'levelChanged') {
             sound.play(deps.levels[event.to]?.transition.sound ?? '')
           }
@@ -177,7 +188,7 @@ export function GameScreen({ deps, seed, theme, onExit, onPlayAgain }: GameScree
         // Throttled so score and clock changes never drive a re-render per frame.
         if (frameMs - lastHudMs >= 1000 / gameConfig.timing.hudUpdateHz) {
           lastHudMs = frameMs
-          setHud(readHud(game))
+          setHud(readHud(game, bonus))
         }
       },
     })
@@ -267,6 +278,7 @@ export function GameScreen({ deps, seed, theme, onExit, onPlayAgain }: GameScree
       <Hud
         pot={hud.pot}
         clockMs={hud.clockMs}
+        bonus={hud.bonus}
         word={hud.word}
         preview={hud.preview}
         muted={muted}
@@ -295,7 +307,7 @@ function layoutOptions() {
   }
 }
 
-function readHud(game: Game): HudState {
+function readHud(game: Game, bonus: HudState['bonus']): HudState {
   const { state } = game
   const word = state.trail
     .map((cellKey) => state.cells.get(cellKey)?.letter ?? '')
@@ -305,6 +317,7 @@ function readHud(game: Game): HudState {
   return {
     pot: Math.round(state.pot),
     clockMs: state.clockMs,
+    bonus,
     levelIndex: state.levelIndex,
     word,
     preview: previewValue(game),

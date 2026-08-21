@@ -38,6 +38,17 @@ export interface RenderConfig {
   /** Points sampled along a honey surface. More is smoother and slower. */
   readonly honeySurfaceSteps: number
 
+  /**
+   * When the clock starts warning, in milliseconds remaining.
+   *
+   * Absolute time rather than a proportion of the duration. "Twenty percent left" is
+   * not a thought anyone has at 0:18 — seconds are what the player is reading.
+   */
+  readonly clockWarnMs: number
+  readonly clockDangerMs: number
+  /** How long the bonus stays on screen beside the clock. */
+  readonly bonusPopupMs: number
+
   readonly trailRing: number
 
   /** How long a cell's drawn honey takes to catch up with its real level. */
@@ -122,6 +133,10 @@ export const renderConfig: RenderConfig = {
   stateGlowShade: 0.42,
   beeLeavingAlpha: 0.55,
   honeySurfaceSteps: 14,
+
+  clockWarnMs: 30_000,
+  clockDangerMs: 10_000,
+  bonusPopupMs: 1_100,
 
   trailRing: 0.1,
 

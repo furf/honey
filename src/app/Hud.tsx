@@ -1,4 +1,5 @@
 import type { CSSProperties } from 'react'
+import { renderConfig } from '../config/render'
 
 /**
  * The clock, the pot, the trail preview, and mute.
@@ -11,6 +12,13 @@ export interface HudProps {
   readonly pot: number
   /** Milliseconds left. Formatted here, because only presentation cares about m:ss. */
   readonly clockMs: number
+  /**
+   * The most recent bonus, or null.
+   *
+   * Carries an id so a second word scoring the same number of seconds still restarts
+   * the animation — React remounts on a changed key, which is what replays it.
+   */
+  readonly bonus: { readonly ms: number; readonly id: number } | null
   readonly word: string
   readonly preview: number
   readonly muted: boolean
@@ -58,15 +66,35 @@ function Stopwatch() {
   )
 }
 
-export function Hud({ pot, clockMs, word, preview, muted, onToggleMute }: HudProps) {
+export function Hud({ pot, clockMs, bonus, word, preview, muted, onToggleMute }: HudProps) {
   const label = formatClock(clockMs)
+  const urgency =
+    clockMs <= renderConfig.clockDangerMs
+      ? 'danger'
+      : clockMs <= renderConfig.clockWarnMs
+        ? 'warn'
+        : 'calm'
 
   return (
     <>
       <div className="hud hud--top">
-        <div className="clock" role="timer" aria-label={`Time remaining ${label}`}>
+        {/* The stopwatch is stroked in currentColor, so it takes the urgency too. */}
+        <div
+          className={`clock clock--${urgency}`}
+          role="timer"
+          aria-label={`Time remaining ${label}`}
+        >
           <Stopwatch />
           <span className="clock__value">{label}</span>
+          {bonus && (
+            <span
+              key={bonus.id}
+              className="clock__bonus"
+              style={{ '--bonus-ms': `${renderConfig.bonusPopupMs}ms` } as CSSProperties}
+            >
+              +{Math.round(bonus.ms / 1000)}s
+            </span>
+          )}
         </div>
 
         <div className="pot" aria-label="Honey collected">

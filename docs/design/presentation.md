@@ -95,6 +95,35 @@ device asks for reduced motion, the screen shake is skipped entirely and CSS ani
 are cut to nothing. These are exactly the effects that make motion-sensitive players
 ill, so the game reads the operating system's answer rather than asking again.
 
+## The clock
+
+The clock sits at the top left, set to match the pot exactly — same size, same weight,
+same tabular figures, same inherited colour. They are the two numbers a player watches,
+and they should read as a pair rather than as a widget beside a number.
+
+The stopwatch beside it is drawn, not typed. An emoji stopwatch renders as a different
+picture on every platform, carries its own colour, and could take neither the
+typography nor the warning states. This one is stroked in `currentColor`, so the
+warning colours reach it without being applied to it separately.
+
+**Warnings are keyed to absolute seconds remaining**, not to a proportion of the
+duration: `render.clockWarnMs` turns the clock amber, `render.clockDangerMs` turns it
+red. A percentage of a maximum is not a thought anyone has at 0:18. The danger state
+pulses once per second, so the beat matches what the number is doing rather than
+running at some unrelated animation speed. Reduced-motion preferences suppress the
+pulse but keep the colour.
+
+**The bonus appears in green to the right of the clock**, never over it — the clock is
+the thing being read, and covering it to report a change to it is self-defeating. It
+shows the seconds *actually* added, taken from the word-scored event rather than
+recomputed, so a word played on a nearly full clock reports what the player really
+gained. When nothing fits at all, nothing appears: "+0s" would be congratulating them
+on nothing.
+
+That last detail is load-bearing. The cap means banking a long word on a full clock
+wastes most of it, so there is a real incentive to spend the clock down first. Showing
+the clamped number is the only thing that makes that discoverable.
+
 ## Screens and HUD
 
 Three screens: welcome, game, game over.
