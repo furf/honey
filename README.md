@@ -48,6 +48,8 @@ answered there rather than in the code.
   *pot*.
 - **[docs/design/gameplay.md](./docs/design/gameplay.md)** — the rules as a player
   experiences them.
+- **[docs/design/scoring.md](./docs/design/scoring.md)** — what a word is worth, in
+  honey and in seconds, with worked examples.
 - **[docs/design/presentation.md](./docs/design/presentation.md)** — colour language,
   animation, HUD, theming.
 - **[docs/config-reference.md](./docs/config-reference.md)** — every tunable and what
@@ -59,6 +61,13 @@ answered there rather than in the code.
 **Rules code contains no numeric literals.** Every quantity a designer might tune lives
 in `src/config/`. Documentation names variables, never values, so playtesting can
 change numbers freely without invalidating the docs.
+
+**Scoring, letter distribution and gameplay changes ship with their documentation.**
+These three are the game, and they are the three a reader cannot recover by reading
+the code — the numbers say what happens, never why that number. A change to any of
+them is not finished until [docs/design/scoring.md](./docs/design/scoring.md),
+[docs/design/letters.md](./docs/design/letters.md) or
+[docs/design/gameplay.md](./docs/design/gameplay.md) matches it.
 
 **The difficulty curve is data.** Progression that reads like a rule is usually a row
 in `src/config/levels.ts`.

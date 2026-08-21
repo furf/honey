@@ -21,11 +21,10 @@ export const testConfig: GameConfig = {
   words: { minLetters: 4, maxLetters: 9 },
   honey: { cellCapacity: 100, rarityHarvest: {}, rarityHarvestDefault: 1 },
   scoring: { lengthMultipliers: { 4: 1, 5: 1.4, 6: 2, 7: 3 } },
-  health: {
-    max: 100,
-    restoreByLength: { 4: 8, 5: 12, 6: 16, 7: 20 },
-    stingCost: 15,
-    drainRampMs: 600,
+  clock: {
+    durationMs: 90_000,
+    stingCostMs: 5_000,
+    bonusSecondsByLength: { 4: 1, 5: 1, 6: 2, 7: 3, 8: 5, 9: 8 },
   },
   generation: {
     minCommonWords: 0,
@@ -77,8 +76,6 @@ export function testLevel(overrides: Partial<Level> = {}): Level {
   return {
     honeyThreshold: 0,
     environmentId: 'test',
-    healthDrainPerSecond: 2,
-    drainPauseMs: 10_000,
     harvestPercent: 0.2,
     bees: { types: [], max: 0, spawnIntervalMs: 0, waveMs: 0, calmMs: 0, speed: 1 },
     transition: { sound: 'test', durationMs: 0 },

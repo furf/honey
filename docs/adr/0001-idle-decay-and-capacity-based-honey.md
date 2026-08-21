@@ -2,7 +2,16 @@
 
 ## Status
 
-accepted
+accepted; the health half is superseded by
+[ADR-0008](./0008-a-countdown-clock-replaces-health.md)
+
+**Amendment.** Everything below about *honey* still holds: capacity-based transfers,
+rarity-weighted harvests, and reseeding on depletion are unchanged. Everything about
+*health* has been replaced by a countdown clock, and the configuration named in it —
+`level.healthDrainPerSecond`, `level.drainPauseMs`, `config.health.restoreByLength`,
+`config.health.drainRampMs` — no longer exists. The reasoning is left intact rather
+than rewritten, because ADR-0008 argues against it and an argument needs its opponent
+on the record.
 
 ## Context
 

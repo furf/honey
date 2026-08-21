@@ -180,57 +180,30 @@ body {
   top: 0;
 }
 
-.health {
-  position: relative;
-  width: min(42vw, 190px);
-  height: 22px;
-  border-radius: 999px;
-  background: rgba(0, 0, 0, 0.35);
-  overflow: hidden;
-}
-
 /*
- * Flashes once per sting. Keyed on the sting count in the markup, so React remounts
- * the element and the animation restarts even on consecutive hits.
+ * The clock, set to match the pot exactly: the two numbers a player watches should
+ * read as a matched pair, not as a widget beside a number.
  */
-.health--hit {
-  animation: health-hit 420ms ease-out;
+.clock {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
 }
 
-@keyframes health-hit {
-  0% {
-    box-shadow: 0 0 0 0 rgba(239, 59, 54, 0.9);
-  }
-  100% {
-    box-shadow: 0 0 0 14px rgba(239, 59, 54, 0);
-  }
+.clock__icon {
+  width: 1.35rem;
+  height: 1.35rem;
+  /* Nudged to sit on the digits' optical centre rather than their box centre. */
+  margin-top: -0.06em;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
 }
 
-.health__bar {
-  height: 100%;
-  border-radius: 999px;
-  transition: width 120ms linear, background-color 300ms ease;
-}
-
-.health__bar--good {
-  background: #4fd66f;
-}
-.health__bar--warn {
-  background: #e8a021;
-}
-.health__bar--danger {
-  background: #ef3b36;
-}
-
-.health__label {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  font-size: 0.75rem;
+.clock__value {
+  font-size: 1.5rem;
   font-weight: 700;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
-  /* Fixed-width digits: without them a falling percentage jitters as it counts. */
+  letter-spacing: 0.01em;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  /* Fixed-width digits: without them the seconds jitter the layout every tick. */
   font-variant-numeric: tabular-nums;
 }
 

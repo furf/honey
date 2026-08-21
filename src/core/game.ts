@@ -1,9 +1,8 @@
 import { buildAdjacency, createHoneycomb } from './honeycomb'
-import { advanceDrain, clampHealth, restoreFor } from './health'
-import { harvestFor, levelIndexFor } from './scoring'
+import { bonusMsFor, harvestFor, levelIndexFor } from './scoring'
 import { judgeTrail, lettersIn, stepTrail } from './trail'
 import { isOnBoard, stepBees } from './bees'
-import { applySting, endIfDead } from './damage'
+import { applySting, endIfOutOfTime } from './damage'
 import { takeHoney } from './reseed'
 import { key } from './hex'
 import type { Game, GameDeps, GameState, Level } from './types'
@@ -32,11 +31,9 @@ export function createGame(deps: GameDeps, seed: number): Game {
     dragVoided: false,
     bees: [],
     pot: 0,
-    health: config.health.max,
+    clockMs: config.clock.durationMs,
     levelIndex: 0,
     played: new Set<string>(),
-    drainPauseRemainingMs: deps.levels[0]?.drainPauseMs ?? 0,
-    drainRampElapsedMs: 0,
     msSinceSpawn: 0,
     waveElapsedMs: 0,
     inWave: true,
@@ -139,22 +136,24 @@ export function releaseTrail(game: Game): void {
   const wordLength = lettersIn(trail, state.cells)
   const letters = trail.map((cellKey) => state.cells.get(cellKey)!.letter)
   const harvest = harvestFor(letters, wordLength, deps.config, level)
-  const { restored, pauseMs } = restoreFor(wordLength, deps.config, level)
 
   state.played.add(verdict.word)
   state.pot += harvest.toPot
 
-  const healthBefore = state.health
-  state.health = clampHealth(state.health + restored, deps.config)
-  state.drainPauseRemainingMs = pauseMs
-  state.drainRampElapsedMs = 0
+  // The clock never rises above the duration the game started with, so a long word
+  // played on a nearly full clock is partly wasted. The applied amount rather than
+  // the earned amount goes on the event: presentation shows the player what really
+  // happened, and does not have to know the cap rule to do it.
+  const earned = bonusMsFor(wordLength, deps.config)
+  const applied = Math.min(earned, deps.config.clock.durationMs - state.clockMs)
+  state.clockMs += applied
 
   state.events.push({
     kind: 'wordScored',
     word: verdict.word,
     cellKeys: trail,
     harvested: harvest.toPot,
-    healthRestored: state.health - healthBefore,
+    bonusMs: applied,
   })
 
   trail.forEach((cellKey, index) => takeHoney(game, cellKey, harvest.perCell[index]!))
@@ -179,29 +178,19 @@ function applyLevel(game: Game): void {
  * rate and a replay from a seed lands in exactly the same place.
  */
 export function step(game: Game, dtMs: number): void {
-  const { state, deps } = game
+  const { state } = game
   if (state.screen !== 'playing') return
 
   state.elapsedMs += dtMs
 
-  const level = currentLevel(game)
-  const drain = advanceDrain(
-    {
-      pauseRemainingMs: state.drainPauseRemainingMs,
-      rampElapsedMs: state.drainRampElapsedMs,
-    },
-    dtMs,
-    deps.config,
-    level,
-  )
+  // A plain subtraction, so the clock is frame-rate independent by construction
+  // rather than by careful integration. The health drain it replaced needed a
+  // piecewise integral across its ease-in and got that wrong once.
+  state.clockMs = Math.max(0, state.clockMs - dtMs)
 
-  state.drainPauseRemainingMs = drain.pauseRemainingMs
-  state.drainRampElapsedMs = drain.rampElapsedMs
-  state.health = clampHealth(state.health - drain.drained, deps.config)
+  stepBees(game, currentLevel(game), dtMs)
 
-  stepBees(game, level, dtMs)
-
-  endIfDead(game)
+  endIfOutOfTime(game)
 }
 
 /** Take the events produced since the last drain. */

@@ -13,7 +13,7 @@ import type { Rng } from './rng'
 // Configuration
 // ---------------------------------------------------------------------------
 
-/** Multipliers and restoration keyed by word length; the largest key is a floor. */
+/** Values keyed by word length; the largest key is a floor for anything longer. */
 export type ByWordLength = Readonly<Record<number, number>>
 
 export interface WordsConfig {
@@ -45,13 +45,22 @@ export interface ScoringConfig {
   readonly lengthMultipliers: ByWordLength
 }
 
-export interface HealthConfig {
-  readonly max: number
-  /** Health restored by a valid word, by length. */
-  readonly restoreByLength: ByWordLength
-  readonly stingCost: number
-  /** Ease-in from zero to full drain rate when a pause expires. Animation polish. */
-  readonly drainRampMs: number
+export interface ClockConfig {
+  /**
+   * Time a game begins with, and the ceiling a bonus may not push past.
+   *
+   * One number rather than two, because the rule is that the clock never rises above
+   * where it started. A separate cap would be a second number that must always equal
+   * the first, which is a trap rather than a flexibility.
+   */
+  readonly durationMs: number
+  readonly stingCostMs: number
+  /**
+   * Seconds a word adds, by letter count. The largest key floors anything longer,
+   * which matters because a word containing `Qu` can reach ten letters from nine
+   * cells.
+   */
+  readonly bonusSecondsByLength: ByWordLength
 }
 
 export interface GenerationConfig {
@@ -120,7 +129,7 @@ export interface GameConfig {
   readonly words: WordsConfig
   readonly honey: HoneyConfig
   readonly scoring: ScoringConfig
-  readonly health: HealthConfig
+  readonly clock: ClockConfig
   readonly generation: GenerationConfig
   readonly board: BoardConfig
   readonly timing: TimingConfig
@@ -204,9 +213,6 @@ export interface Level {
   /** Pot total that advances the player into this level. */
   readonly honeyThreshold: number
   readonly environmentId: string
-  readonly healthDrainPerSecond: number
-  /** How long a valid word suspends the drain. */
-  readonly drainPauseMs: number
   /** Percentage of cell capacity a harvest removes. */
   readonly harvestPercent: number
   readonly bees: LevelBees
@@ -289,7 +295,13 @@ export type GameEvent =
       readonly word: string
       readonly cellKeys: readonly string[]
       readonly harvested: number
-      readonly healthRestored: number
+      /**
+       * Milliseconds actually added to the clock, after clamping at the duration.
+       *
+       * The applied amount rather than the amount the length earned, so presentation
+       * can show the player what really happened without knowing the cap rule.
+       */
+      readonly bonusMs: number
     }
   | {
       readonly kind: 'wordRejected'
@@ -304,7 +316,7 @@ export type GameEvent =
       /** Every cell that was in the voided trail — the whole word is lost, not one cell. */
       readonly cellKeys: readonly string[]
       readonly beeId: number
-      readonly healthLost: number
+      readonly timeLostMs: number
     }
   | {
       readonly kind: 'cellReseeded'
@@ -365,14 +377,11 @@ export interface GameState {
   dragVoided: boolean
   bees: Bee[]
   pot: number
-  health: number
+  /** Milliseconds left on the clock. The game ends when this reaches zero. */
+  clockMs: number
   levelIndex: number
   /** Words already scored this game; a word may only be played once. */
   played: Set<string>
-  /** Milliseconds remaining before the health drain resumes. */
-  drainPauseRemainingMs: number
-  /** Milliseconds elapsed into the drain ease-in, capped at drainRampMs. */
-  drainRampElapsedMs: number
   msSinceSpawn: number
   /** Time inside the current wave or calm. */
   waveElapsedMs: number

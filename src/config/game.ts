@@ -32,11 +32,21 @@ export const gameConfig: GameConfig = {
     lengthMultipliers: { 4: 1.0, 5: 1.4, 6: 2.0, 7: 3.0 },
   },
 
-  health: {
-    max: 100,
-    restoreByLength: { 4: 8, 5: 12, 6: 16, 7: 20 },
-    stingCost: 15,
-    drainRampMs: 600,
+  clock: {
+    // Ninety seconds: short enough that a bad board is not a long sentence, long
+    // enough to find a word family. Also the ceiling — the clock never rises above
+    // where it started.
+    durationMs: 90_000,
+
+    // Five seconds is eight four-letter words, or one nine-letter word, to buy back.
+    // Deliberately steep: stings are telegraphed and avoidable.
+    stingCostMs: 5_000,
+
+    // Fibonacci. Longer words must be worth disproportionately more or the clock is
+    // sustained by volume, and a player who swipes fast beats a player who looks
+    // hard. The shortest words buy nothing at all, so they stay an escape hatch from
+    // a stuck board rather than a strategy.
+    bonusSecondsByLength: { 4: 1, 5: 1, 6: 2, 7: 3, 8: 5, 9: 8 },
   },
 
   generation: {

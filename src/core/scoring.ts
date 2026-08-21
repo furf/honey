@@ -42,6 +42,17 @@ export function byWordLength(table: ByWordLength, length: number): number {
   return lowest
 }
 
+/**
+ * Seconds a word adds to the clock, in milliseconds.
+ *
+ * The table is keyed by letters, not cells, so a word containing `Qu` is paid for
+ * what the player reads. The largest key floors anything longer, which is not
+ * theoretical: nine cells can spell a ten-letter word.
+ */
+export function bonusMsFor(wordLength: number, config: GameConfig): number {
+  return byWordLength(config.clock.bonusSecondsByLength, wordLength) * 1000
+}
+
 export interface Harvest {
   /** Honey removed from each cell, in the trail's order. */
   readonly perCell: readonly number[]

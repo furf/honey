@@ -1,4 +1,3 @@
-import { clampHealth } from './health'
 import type { Game } from './types'
 
 /**
@@ -18,22 +17,26 @@ import type { Game } from './types'
  */
 export function applySting(game: Game, cellKey: string, beeId: number): void {
   const { state, deps } = game
-  const cost = deps.config.health.stingCost
+  const cost = deps.config.clock.stingCostMs
   const cellKeys = state.trail.length > 0 ? [...state.trail] : [cellKey]
 
   state.trail = []
   // The pointer may still be down; ignore the rest of the gesture until it lifts.
   state.dragVoided = true
-  state.health = clampHealth(state.health - cost, deps.config)
 
-  state.events.push({ kind: 'stung', cellKey, cellKeys, beeId, healthLost: cost })
+  // Clamped at zero rather than allowed to go negative: the clock is a duration, and
+  // a sting that would overshoot simply ends the game.
+  const lost = Math.min(state.clockMs, cost)
+  state.clockMs -= lost
 
-  endIfDead(game)
+  state.events.push({ kind: 'stung', cellKey, cellKeys, beeId, timeLostMs: lost })
+
+  endIfOutOfTime(game)
 }
 
-export function endIfDead(game: Game): boolean {
+export function endIfOutOfTime(game: Game): boolean {
   const { state } = game
-  if (state.health > 0 || state.screen === 'gameOver') return state.screen === 'gameOver'
+  if (state.clockMs > 0 || state.screen === 'gameOver') return state.screen === 'gameOver'
 
   state.screen = 'gameOver'
   state.trail = []

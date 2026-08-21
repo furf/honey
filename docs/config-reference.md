@@ -4,7 +4,7 @@ Every number you can change to alter how the game plays or looks, what it does, 
 which file it lives in.
 
 **If you only read one thing:** the game's rules code contains no numbers. Everything a
-designer might want to adjust — how fast health drains, how much honey a word pays, how
+designer might want to adjust — how fast the board gives up its honey, what a word pays, how
 often bees arrive, how big a hexagon is — is a named value in `src/config/`. Change it
 there and the behaviour changes; nothing else needs editing.
 
@@ -55,14 +55,18 @@ down on the level that introduces a second bee" is not logic; it is one cell of
 |---|---|
 | `lengthMultipliers` | Pot multiplier by word length — how much longer words outpay the honey they remove |
 
-### `config.health`
+### `config.clock`
 
 | Variable | Controls |
 |---|---|
-| `max` | Starting and maximum health |
-| `restoreByLength` | Health restored by a valid word, by length |
-| `stingCost` | Health lost to a sting |
-| `drainRampMs` | Ease-in from zero to full drain rate when a pause expires. Animation polish |
+| `durationMs` | Time a game begins with, and the ceiling a bonus may not push past |
+| `stingCostMs` | Time a sting takes off the clock |
+| `bonusSecondsByLength` | Seconds a word adds, by **letter** count. Largest key floors anything longer |
+
+`durationMs` is one value doing both jobs on purpose: the rule is that the clock never
+rises above where it started, and a separate ceiling would be a second number obliged
+to stay equal to the first. See
+[ADR-0008](./adr/0008-a-countdown-clock-replaces-health.md).
 
 ### `config.generation`
 
@@ -107,8 +111,6 @@ down on the level that introduces a second bee" is not logic; it is one cell of
 |---|---|
 | `honeyThreshold` | Pot total that advances the player into this level |
 | `environmentId` | Which of the theme's environments is shown |
-| `healthDrainPerSecond` | Constant drain rate for this level |
-| `drainPauseMs` | How long a valid word suspends the drain |
 | `harvestPercent` | Percentage of cell capacity a harvest removes |
 | `bees.types` | Which bee types may spawn |
 | `bees.max` | Bees above which none spawn |

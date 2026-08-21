@@ -22,8 +22,8 @@ const WEST = key({ q: -1, r: 0 })
 const config = testConfig
 
 const levels: Level[] = [
-  testLevel({ honeyThreshold: 0, healthDrainPerSecond: 2, drainPauseMs: 10_000 }),
-  testLevel({ honeyThreshold: 300, healthDrainPerSecond: 4, drainPauseMs: 8_000 }),
+  testLevel({ honeyThreshold: 0 }),
+  testLevel({ honeyThreshold: 300 }),
 ]
 
 /** TEAM lies along centre → east → north-east → west's neighbour chain. */
@@ -65,9 +65,9 @@ beforeEach(() => {
 })
 
 describe('createGame', () => {
-  it('starts a full board, full health, empty pot', () => {
+  it('starts a full board, a full clock, an empty pot', () => {
     expect(game.state.cells.size).toBe(37)
-    expect(game.state.health).toBe(100)
+    expect(game.state.clockMs).toBe(config.clock.durationMs)
     expect(game.state.pot).toBe(0)
     expect(game.state.screen).toBe('playing')
   })
@@ -96,18 +96,32 @@ describe('scoring a word', () => {
     expect(game.state.cells.get(WEST)!.honey).toBe(100)
   })
 
-  it('restores health and suspends the drain', () => {
-    game.state.health = 50
+  it('adds the length’s bonus to the clock', () => {
+    game.state.clockMs = 50_000
     draw(game, TEAM)
 
-    expect(game.state.health).toBe(58)
-    expect(game.state.drainPauseRemainingMs).toBe(10_000)
-    expect(game.state.drainRampElapsedMs).toBe(0)
+    expect(game.state.clockMs).toBe(51_000)
+    expect(eventsOfKind(drainEvents(game), 'wordScored')[0]!.bonusMs).toBe(1_000)
   })
 
-  it('never restores past full health', () => {
+  it('never pushes the clock past the duration it started with', () => {
     draw(game, TEAM)
-    expect(game.state.health).toBe(100)
+    expect(game.state.clockMs).toBe(config.clock.durationMs)
+  })
+
+  it('reports the bonus actually applied, not the one the length earned', () => {
+    // Only 400ms of the second this word earns will fit. The player is told 400,
+    // because that is what happened.
+    game.state.clockMs = config.clock.durationMs - 400
+    draw(game, TEAM)
+
+    expect(game.state.clockMs).toBe(config.clock.durationMs)
+    expect(eventsOfKind(drainEvents(game), 'wordScored')[0]!.bonusMs).toBe(400)
+  })
+
+  it('reports a bonus of zero when the clock is already full', () => {
+    draw(game, TEAM)
+    expect(eventsOfKind(drainEvents(game), 'wordScored')[0]!.bonusMs).toBe(0)
   })
 
   it('refuses the same word a second time', () => {
@@ -145,12 +159,12 @@ describe('rejecting a trail', () => {
     })
   })
 
-  it('costs no honey and no health', () => {
-    game.state.health = 50
+  it('costs no honey and no time', () => {
+    game.state.clockMs = 50_000
     draw(game, [CENTRE, EAST, NORTH_EAST])
 
     expect(game.state.pot).toBe(0)
-    expect(game.state.health).toBe(50)
+    expect(game.state.clockMs).toBe(50_000)
     expect(game.state.cells.get(CENTRE)!.honey).toBe(100)
   })
 })
@@ -213,37 +227,50 @@ describe('levels', () => {
   })
 })
 
-describe('health and game over', () => {
-  it('drains health over time', () => {
-    game.state.drainPauseRemainingMs = 0
+describe('the clock and game over', () => {
+  it('counts down in real time', () => {
     for (let i = 0; i < 60; i++) step(game, 16)
-    expect(game.state.health).toBeLessThan(100)
+    expect(game.state.clockMs).toBe(config.clock.durationMs - 960)
   })
 
-  it('does not drain while the pause is running', () => {
-    draw(game, TEAM)
-    const health = game.state.health
-    for (let i = 0; i < 60; i++) step(game, 16)
-    expect(game.state.health).toBe(health)
+  /**
+   * The bug this guards has happened here before, in the health drain this replaced.
+   * The total must divide evenly by every step size, or the comparison is between
+   * different durations and passes for the wrong reason.
+   */
+  it('reaches the same time however the steps are sized', () => {
+    const remainingAfter = (stepMs: number) => {
+      const fresh = makeGame()
+      for (let elapsed = 0; elapsed < 3_168; elapsed += stepMs) step(fresh, stepMs)
+      return fresh.state.clockMs
+    }
+
+    expect(remainingAfter(8)).toBe(remainingAfter(16))
+    expect(remainingAfter(16)).toBe(remainingAfter(33))
   })
 
-  it('ends the game when health reaches zero', () => {
-    game.state.drainPauseRemainingMs = 0
-    for (let i = 0; i < 60 * 120; i++) step(game, 16)
+  it('ends the game when the clock reaches zero', () => {
+    game.state.clockMs = 100
+    step(game, 100)
 
-    expect(game.state.health).toBe(0)
+    expect(game.state.clockMs).toBe(0)
     expect(game.state.screen).toBe('gameOver')
     expect(eventsOfKind(drainEvents(game), 'gameOver')).toHaveLength(1)
   })
 
+  it('never counts below zero', () => {
+    game.state.clockMs = 100
+    step(game, 5_000)
+    expect(game.state.clockMs).toBe(0)
+  })
+
   it('announces game over exactly once', () => {
-    game.state.drainPauseRemainingMs = 0
     for (let i = 0; i < 60 * 200; i++) step(game, 16)
     expect(eventsOfKind(drainEvents(game), 'gameOver')).toHaveLength(1)
   })
 
   it('accepts no input once the game is over', () => {
-    game.state.health = 0
+    game.state.clockMs = 0
     step(game, 16)
     drainEvents(game)
 
@@ -277,11 +304,11 @@ describe('stings', () => {
     moveTrail(game, NORTH_EAST)
 
     expect(game.state.trail).toEqual([])
-    expect(game.state.health).toBe(85)
+    expect(game.state.clockMs).toBe(config.clock.durationMs - 5_000)
     expect(eventsOfKind(drainEvents(game), 'stung')[0]).toMatchObject({
       cellKey: NORTH_EAST,
       beeId: 7,
-      healthLost: 15,
+      timeLostMs: 5_000,
     })
   })
 
@@ -330,13 +357,21 @@ describe('stings', () => {
     expect(eventsOfKind(drainEvents(game), 'stung')).toHaveLength(1)
   })
 
-  it('ends the game if a sting takes the last of the health', () => {
-    game.state.health = 10
+  it('ends the game if a sting takes the last of the clock', () => {
+    game.state.clockMs = 3_000
     putBeeOn(CENTRE)
     beginTrail(game, CENTRE)
 
-    expect(game.state.health).toBe(0)
+    expect(game.state.clockMs).toBe(0)
     expect(game.state.screen).toBe('gameOver')
+  })
+
+  it('reports only the time a sting could actually take', () => {
+    game.state.clockMs = 3_000
+    putBeeOn(CENTRE)
+    beginTrail(game, CENTRE)
+
+    expect(eventsOfKind(drainEvents(game), 'stung')[0]!.timeLostMs).toBe(3_000)
   })
 
   it('is not triggered by a bee still arriving or already leaving', () => {
@@ -355,11 +390,10 @@ describe('determinism', () => {
     const play = () => {
       const fresh = makeGame()
       draw(fresh, TEAM)
-      fresh.state.drainPauseRemainingMs = 0
       for (let i = 0; i < 200; i++) step(fresh, 16)
       return {
         pot: fresh.state.pot,
-        health: fresh.state.health,
+        clockMs: fresh.state.clockMs,
         letters: [...fresh.state.cells.values()].map((cell) => cell.letter),
       }
     }

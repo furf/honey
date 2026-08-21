@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { byWordLength, harvestFor, levelIndexFor } from './scoring'
+import { bonusMsFor, byWordLength, harvestFor, levelIndexFor } from './scoring'
 import { testConfig as config, testLevel } from './testSupport'
 import type { GameConfig, Level } from './types'
 
@@ -113,5 +113,24 @@ describe('levelIndexFor', () => {
       expect(index).toBeGreaterThanOrEqual(previous)
       previous = index
     }
+  })
+})
+
+describe('bonusMsFor', () => {
+  it('pays the fibonacci step for each length', () => {
+    expect(bonusMsFor(4, config)).toBe(1_000)
+    expect(bonusMsFor(6, config)).toBe(2_000)
+    expect(bonusMsFor(9, config)).toBe(8_000)
+  })
+
+  it('floors anything longer at the largest entry', () => {
+    // Not theoretical: nine cells spell a ten-letter word when one of them is `Qu`.
+    expect(bonusMsFor(10, config)).toBe(8_000)
+  })
+
+  it('falls back to the shortest entry below the table', () => {
+    // Unreachable in play — a word this short is rejected before it is scored — but
+    // the table must have no hole in it.
+    expect(bonusMsFor(3, config)).toBe(1_000)
   })
 })

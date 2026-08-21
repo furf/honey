@@ -23,7 +23,7 @@ Playable end to end: welcome screen, board, game over. Deployed on Vercel from `
 
 These were derived from arithmetic, not from play. Treat any of them as a first guess:
 
-- `healthDrainPerSecond` and `drainPauseMs` per level
+- `harvestPercent` per level (the clock replaced the health drain — see ADR-0008)
 - the ten `honeyThreshold` values
 - `waveMs` / `calmMs` / `speed` per level
 - `rarityHarvest` per letter
@@ -52,8 +52,8 @@ dictionary, and two fonts. Never measured on a slow connection.
   below the board is empty. At two rings the board is width-capped, so that vertical
   space is permanent — it should be used rather than reduced. A jar filling with the
   same honey the cells lose would reuse the existing liquid renderer.
-- **HUD rebalance.** The health bar is the heaviest object on screen while carrying the
-  least information early in a game.
+- **HUD rebalance.** Resolved by the clock: the health bar it referred to no longer
+  exists, and the clock that replaced it is the same weight as the pot by design.
 
 ## Parked ideas
 

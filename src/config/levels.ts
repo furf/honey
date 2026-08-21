@@ -8,6 +8,10 @@ import type { Level } from '../core/types'
  * anything had happened. Each level here is paced at roughly eight to twelve words, so
  * a bee has room to arrive, do something and leave before the world changes again.
  *
+ * The clock is global and untouched by levels: it is the same countdown from the
+ * first word to the last. What a level changes is how fast the board gives up its
+ * honey, and what the bees are doing.
+ *
  * Bees arrive in waves with calm between them. Constant presence removes the suspense:
  * a threat that is always there stops being a threat. Waves lengthen and calms shorten
  * as levels progress, so pressure builds rather than being switched on.
@@ -23,8 +27,6 @@ export const levels: readonly Level[] = [
   {
     honeyThreshold: 0,
     environmentId: 'sunnyDay',
-    healthDrainPerSecond: 0.7,
-    drainPauseMs: 13000,
     harvestPercent: 0.2,
     bees: {
       types: [],
@@ -39,8 +41,6 @@ export const levels: readonly Level[] = [
   {
     honeyThreshold: 900,
     environmentId: 'sunnyDay',
-    healthDrainPerSecond: 0.8,
-    drainPauseMs: 12000,
     harvestPercent: 0.2,
     bees: {
       types: ['forager'],
@@ -55,8 +55,6 @@ export const levels: readonly Level[] = [
   {
     honeyThreshold: 2000,
     environmentId: 'clearNight',
-    healthDrainPerSecond: 0.9,
-    drainPauseMs: 11500,
     harvestPercent: 0.2,
     bees: {
       types: ['forager'],
@@ -71,8 +69,6 @@ export const levels: readonly Level[] = [
   {
     honeyThreshold: 3400,
     environmentId: 'clearNight',
-    healthDrainPerSecond: 1.0,
-    drainPauseMs: 11000,
     harvestPercent: 0.2,
     bees: {
       types: ['forager', 'hunter'],
@@ -87,8 +83,6 @@ export const levels: readonly Level[] = [
   {
     honeyThreshold: 5100,
     environmentId: 'cloudyDay',
-    healthDrainPerSecond: 1.2,
-    drainPauseMs: 10500,
     harvestPercent: 0.2,
     bees: {
       types: ['forager', 'hunter'],
@@ -101,13 +95,11 @@ export const levels: readonly Level[] = [
     transition: { sound: 'level.cloudyDay', durationMs: 800 },
   },
   {
-    // The level that introduces a second bee. Drain holds at the previous rate and
+    // The level that introduces a second bee. Churn holds at the previous rate and
     // bees slow down, so a player meets one new thing at a time rather than three.
     // The curve is data: this is a lower `speed` in one row, not a rule in code.
     honeyThreshold: 7100,
     environmentId: 'cloudyDay',
-    healthDrainPerSecond: 1.2,
-    drainPauseMs: 10500,
     harvestPercent: 0.2,
     bees: {
       types: ['forager', 'hunter'],
@@ -122,8 +114,6 @@ export const levels: readonly Level[] = [
   {
     honeyThreshold: 9400,
     environmentId: 'forebodingNight',
-    healthDrainPerSecond: 1.6,
-    drainPauseMs: 9500,
     harvestPercent: 0.2,
     bees: {
       types: ['forager', 'hunter'],
@@ -138,8 +128,6 @@ export const levels: readonly Level[] = [
   {
     honeyThreshold: 12000,
     environmentId: 'stormyDay',
-    healthDrainPerSecond: 1.9,
-    drainPauseMs: 9000,
     harvestPercent: 0.2,
     bees: {
       types: ['forager', 'hunter'],
@@ -154,8 +142,6 @@ export const levels: readonly Level[] = [
   {
     honeyThreshold: 15000,
     environmentId: 'stormyDay',
-    healthDrainPerSecond: 2.2,
-    drainPauseMs: 8500,
     harvestPercent: 0.2,
     bees: {
       types: ['forager', 'hunter'],
@@ -170,8 +156,6 @@ export const levels: readonly Level[] = [
   {
     honeyThreshold: 18500,
     environmentId: 'stormyNight',
-    healthDrainPerSecond: 2.5,
-    drainPauseMs: 8000,
     harvestPercent: 0.2,
     bees: {
       types: ['forager', 'hunter'],

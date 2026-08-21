@@ -37,7 +37,7 @@ Colour carries meaning, and each meaning has exactly one colour.
 | Valid word | Green | Blink, then settle |
 | Already played | Deep bronze | Shake |
 | Not a word | Desaturated grey | Trail sags, letters fall |
-| Stung / voided | Red | The entire trail turns red; screen shake, health bar flash |
+| Stung / voided | Red | The entire trail turns red; screen shake |
 | Too short | — | Trail simply releases |
 
 A state colour covers the **whole cell**, not just its border — the filled portion in
@@ -73,7 +73,7 @@ survives red/green colour blindness.
   change is announced rather than merely happening.
 - **Sting** — three things at once, because damage has to register even if the player is
   looking at the far side of the board: the screen shakes, red closes in from the edges
-  of the screen, and the health bar pulses.
+  of the screen.
 - **Bee arrival** — the bee flies in from beyond the rim along the line from the board's
   centre through its entry cell. It does not descend onto a cell: doing so made bees
   appear *on top of* the board rather than arriving at it.
@@ -171,7 +171,7 @@ treeline of individual trees and two gradients are far too much to rebuild sixty
 a second for a picture that does not change.
 
 Simulation runs at a fixed step with an interpolated draw. The HUD subscribes to state
-at a throttled rate rather than per frame, so score and health changes never drive a
+at a throttled rate rather than per frame, so score and clock changes never drive a
 re-render on every tick.
 
 ## Themes

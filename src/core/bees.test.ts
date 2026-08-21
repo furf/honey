@@ -15,8 +15,6 @@ interface Options {
 
 function makeGame(options: Options = {}): Game {
   const level: Level = testLevel({
-    // Bees are the subject here; a draining bar would just end the run mid-test.
-    healthDrainPerSecond: 0,
     bees: {
       types: ['forager'],
       max: 1,
@@ -481,14 +479,14 @@ describe('stinging a held trail', () => {
     // The hazard runs both ways: swiping into a bee and a bee flying onto the trail
     // are the same event from opposite directions.
     const { game: built, near } = trailAndBee()
-    const health = built.state.health
+    const clockMs = built.state.clockMs
 
     step(built, 16)
 
     const stung = eventsOfKind(drainEvents(built), 'stung')
     expect(stung).toHaveLength(1)
     expect(stung[0]!.cellKey).toBe(near)
-    expect(built.state.health).toBeLessThan(health)
+    expect(built.state.clockMs).toBeLessThan(clockMs)
   })
 
   it('voids the whole trail, and reports every cell that was in it', () => {
@@ -526,11 +524,12 @@ describe('stinging a held trail', () => {
       phase: 'turning',
     })
 
-    const health = built.state.health
+    const clockMs = built.state.clockMs
     step(built, 16)
 
+    // The only time that may go is the step itself. A sting would cost seconds.
     expect(eventsOfKind(drainEvents(built), 'stung')).toEqual([])
-    expect(built.state.health).toBe(health)
+    expect(built.state.clockMs).toBe(clockMs - 16)
   })
 })
 

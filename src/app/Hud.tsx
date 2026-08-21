@@ -1,8 +1,7 @@
 import type { CSSProperties } from 'react'
-import { gameConfig } from '../config'
 
 /**
- * Score, health, the trail preview, and mute.
+ * The clock, the pot, the trail preview, and mute.
  *
  * DOM rather than canvas, so text rendering and accessibility come for free. It reads
  * state at a throttled rate, never per frame.
@@ -10,25 +9,64 @@ import { gameConfig } from '../config'
 
 export interface HudProps {
   readonly pot: number
-  readonly health: number
-  /** Rises on every sting. The bar flashes once each time it changes. */
-  readonly stings: number
+  /** Milliseconds left. Formatted here, because only presentation cares about m:ss. */
+  readonly clockMs: number
   readonly word: string
   readonly preview: number
   readonly muted: boolean
   readonly onToggleMute: () => void
 }
 
-export function Hud({ pot, health, stings, word, preview, muted, onToggleMute }: HudProps) {
-  const percent = Math.max(0, Math.min(100, (health / gameConfig.health.max) * 100))
-  const state = percent > 50 ? 'good' : percent > 20 ? 'warn' : 'danger'
+/**
+ * Milliseconds as minutes and seconds.
+ *
+ * Rounded up, so a running game never shows 0:00 and a fresh one shows the full
+ * duration rather than a second less. Zero is then reached only when the clock
+ * genuinely is zero, which is the moment the game ends.
+ */
+export function formatClock(ms: number): string {
+  const total = Math.ceil(Math.max(0, ms) / 1000)
+  const minutes = Math.floor(total / 60)
+  const seconds = total % 60
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`
+}
+
+/**
+ * Drawn rather than typed as an emoji.
+ *
+ * An emoji stopwatch renders as a different picture on every platform and carries its
+ * own colour, so it could neither sit beside Nunito nor take the warning states. This
+ * one is stroked in the current text colour and inherits both.
+ */
+function Stopwatch() {
+  return (
+    <svg className="clock__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <g
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="12" cy="14" r="7.5" />
+        <path d="M9.5 2.5h5" />
+        <path d="M12 2.5v4" />
+        <path d="M18.5 8 20 6.5" />
+        <path d="M12 10.5V14h2.5" />
+      </g>
+    </svg>
+  )
+}
+
+export function Hud({ pot, clockMs, word, preview, muted, onToggleMute }: HudProps) {
+  const label = formatClock(clockMs)
 
   return (
     <>
       <div className="hud hud--top">
-        <div key={stings} className="health health--hit" role="meter" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(percent)} aria-label="Health">
-          <div className={`health__bar health__bar--${state}`} style={{ width: `${percent}%` }} />
-          <span className="health__label">{Math.round(percent)}%</span>
+        <div className="clock" role="timer" aria-label={`Time remaining ${label}`}>
+          <Stopwatch />
+          <span className="clock__value">{label}</span>
         </div>
 
         <div className="pot" aria-label="Honey collected">

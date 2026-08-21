@@ -45,13 +45,11 @@ export interface GameScreenProps {
 /** The slice of state the HUD needs. Small, so comparing it is cheap. */
 interface HudState {
   pot: number
-  health: number
+  clockMs: number
   levelIndex: number
   word: string
   preview: number
   gameOver: boolean
-  /** Bumped on every sting, so the health bar can flash once per hit. */
-  stings: number
 }
 
 export function GameScreen({ deps, seed, theme, onExit, onPlayAgain }: GameScreenProps) {
@@ -61,12 +59,11 @@ export function GameScreen({ deps, seed, theme, onExit, onPlayAgain }: GameScree
   const [muted, setMuted] = useState(() => loadSettings().muted)
   const [hud, setHud] = useState<HudState>({
     pot: 0,
-    health: gameConfig.health.max,
+    clockMs: gameConfig.clock.durationMs,
     levelIndex: 0,
     word: '',
     preview: 0,
     gameOver: false,
-    stings: 0,
   })
 
   const toggleMute = useCallback(() => {
@@ -110,7 +107,6 @@ export function GameScreen({ deps, seed, theme, onExit, onPlayAgain }: GameScree
     }
     motionQuery.addEventListener('change', onMotionPreference)
 
-    let stings = 0
     const startedMs = performance.now()
     let gameOverAtMs: number | null = null
     let lastHudMs = 0
@@ -135,7 +131,6 @@ export function GameScreen({ deps, seed, theme, onExit, onPlayAgain }: GameScree
             play: (name) => sound.play(name),
           })
           if (event.kind === 'gameOver') gameOverAtMs = frameMs
-          if (event.kind === 'stung') stings++
           if (event.kind === 'levelChanged') {
             sound.play(deps.levels[event.to]?.transition.sound ?? '')
           }
@@ -179,10 +174,10 @@ export function GameScreen({ deps, seed, theme, onExit, onPlayAgain }: GameScree
             gameOverAtMs !== null ? 'gameOver' : introProgress < 1 ? 'intro' : 'play',
         })
 
-        // Throttled so score and health changes never drive a re-render per frame.
+        // Throttled so score and clock changes never drive a re-render per frame.
         if (frameMs - lastHudMs >= 1000 / gameConfig.timing.hudUpdateHz) {
           lastHudMs = frameMs
-          setHud(readHud(game, stings))
+          setHud(readHud(game))
         }
       },
     })
@@ -271,8 +266,7 @@ export function GameScreen({ deps, seed, theme, onExit, onPlayAgain }: GameScree
 
       <Hud
         pot={hud.pot}
-        health={hud.health}
-        stings={hud.stings}
+        clockMs={hud.clockMs}
         word={hud.word}
         preview={hud.preview}
         muted={muted}
@@ -301,7 +295,7 @@ function layoutOptions() {
   }
 }
 
-function readHud(game: Game, stings: number): HudState {
+function readHud(game: Game): HudState {
   const { state } = game
   const word = state.trail
     .map((cellKey) => state.cells.get(cellKey)?.letter ?? '')
@@ -310,12 +304,11 @@ function readHud(game: Game, stings: number): HudState {
 
   return {
     pot: Math.round(state.pot),
-    health: state.health,
+    clockMs: state.clockMs,
     levelIndex: state.levelIndex,
     word,
     preview: previewValue(game),
     gameOver: state.screen === 'gameOver',
-    stings,
   }
 }
 

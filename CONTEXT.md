@@ -51,11 +51,15 @@ into a board. Clinical and anatomical terms are not banned.
 _Avoid_: Blocked word, filtered word, blacklist, profanity list
 
 **Harvest**:
-The transfer of honey from a word's cells into the pot.
+Emptying a word's cells of honey, and the score that earns. The honey a cell gives up
+and the score the pot receives are deliberately not the same number: one is a
+difficulty setting, the other is a scoring one.
 _Avoid_: Score, collect, points
 
 **Pot**:
-The player's accumulated honey. The game's score.
+The player's running score, filled by harvesting. Named for the honey pot, and still
+read as honey by the player, though it is no longer a literal count of what came off
+the board.
 _Avoid_: Hive, score, points, total
 
 **Honey**:
@@ -75,11 +79,17 @@ Replacing a cell's letter and restoring its honey to full, triggered when the ce
 honey runs out.
 _Avoid_: Refresh, respawn, reroll, shuffle
 
-**Health**:
-The player's remaining tolerance, from 100 to 0. Drains continuously at a rate set by
-the current level. Words pause the drain and restore health; stings cost health.
-At 0 the game ends.
-_Avoid_: Lives, HP, stamina
+**Clock**:
+The time the player has left. Counts down in real time and is shown as minutes and
+seconds. Words add to it and stings take from it, but it never rises above the
+duration the game began with. At zero the game ends.
+_Avoid_: Health, timer, lives, HP
+
+**Bonus**:
+The seconds a word adds to the clock, decided by its length. The shortest words add
+nothing and each step up is worth more than the last, so the clock is sustained by
+ambition rather than by volume.
+_Avoid_: Reward, extension, credit, refill
 
 ### Hazards
 
@@ -115,21 +125,27 @@ _Avoid_: Steal, drain, sting
 
 **Sting**:
 What happens when a trail reaches a cell occupied by a bee: the trail is voided
-without harvesting, and the player loses health.
+without harvesting, and the clock loses time.
 _Avoid_: Hit, damage, bite
 
 ### Progression and Presentation
 
 **Level**:
 A stage of difficulty, entered by reaching a honey threshold. Determines how many
-bees are present, how they behave, how quickly health drains, and which environment
-is shown. Never surfaced to the player as a number.
+bees are present, how they behave, how fast the board gives up its honey, and which
+environment is shown. Never surfaced to the player as a number.
 _Avoid_: Round, stage, tier, wave
 
 **Environment**:
 The visual and audible world around the honeycomb — sky, ambient sound, weather or
 setting. Purely presentational; carries no rules.
 _Avoid_: Background, scene, weather, skin
+
+**Bough**:
+The tree limb the honeycomb hangs from, reaching in from off screen. Part of the
+theme rather than the environment, because it has to meet the honeycomb wherever the
+board is laid out.
+_Avoid_: Branch, limb, tree
 
 **Theme**:
 A complete swappable presentation: palette, typography, sprites, logo, sounds,

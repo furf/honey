@@ -17,7 +17,7 @@ none of them testable.
 Four layers, each depending only on the layer beneath it through interfaces:
 
 - **core** — the rules. `GameState` and a pure `step(state, dt, input)` function
-  covering trail validity, harvests, health, bees, reseeds, and level progression.
+  covering trail validity, harvests, the clock, bees, reseeds, and level progression.
   No canvas, no DOM, no React, no clock, no randomness except an injected seeded RNG.
 - **content** — swappable strategies behind interfaces: `Dictionary`,
   `LetterGenerator`, `WordPolicy`.

@@ -4,10 +4,10 @@ What the game does, from the player's side.
 
 **The game in a paragraph:** letters sit on hexagonal cells. You drag across touching
 cells to spell a word. A valid word takes honey out of every cell you used and adds it
-to your pot, which is the score. Cells that run out of honey get a new letter. Your
-health drains all the time and is topped up by finding words, so you have to keep
-scoring to stay alive. Bees wander the board; touching one costs health and loses the
-word you were building.
+to your pot, which is the score. Cells that run out of honey get a new letter. A clock
+counts down the whole time, and every word adds seconds back — longer words add far
+more — so you have to keep finding them to stay alive. Bees wander the board; touching
+one costs you seconds and loses the word you were building.
 
 This document names each setting rather than its value — the numbers live in code and
 change with playtesting, the rules here don't. See
@@ -36,15 +36,15 @@ On release, the trail is judged in this order:
    no feedback beyond the trail releasing. The player evidently changed their mind.
 2. **Stung** — the trail and a bee met. Resolved at the moment of contact, not on
    release: the trail is voided immediately, nothing is harvested, and the player loses
-   `config.health.stingCost`. This runs **both ways** — swiping into a bee and a bee
+   `config.clock.stingCostMs` off the clock. This runs **both ways** — swiping into a bee and a bee
    landing on a cell the player is currently holding are the same event from opposite
    directions, and it would be arbitrary for only one to cost anything. The whole trail
    is voided and marked, not just the cell where they met, because the whole word is
    what was lost.
 3. **Already played** — a valid word the player already found this game. No honey, no
-   health, but distinct feedback, because the player did find a real word and deserves
+   time, but distinct feedback, because the player did find a real word and deserves
    to know why it did not score.
-4. **Not a word** — absent from the dictionary. No honey, no health cost.
+4. **Not a word** — absent from the dictionary. No honey, no cost.
 5. **Valid** — harvested and scored.
 
 Some words are **banned**: profanity, slurs, and explicit sexual vocabulary are removed
@@ -74,19 +74,26 @@ When a cell's honey reaches zero it **reseeds**: it takes a new letter and its h
 restored to full. The honey meter shows how much is left rather than how many words
 remain, since a rare letter empties faster than a common one.
 
-## Health
+## The clock
 
-Health runs from `config.health.max` to zero and drains continuously at
-`level.healthDrainPerSecond`. The drain does not pause during a drag — the only thing
-that suppresses it is scoring.
+The clock starts at `config.clock.durationMs` and counts down in real time. It is
+global: every level runs it at one second per second, and nothing pauses it — not a
+drag, not a level change.
 
-A valid word pauses the drain for `level.drainPauseMs` and restores health according to
-`config.health.restoreByLength`, capped at maximum. When the pause expires the drain
-eases in from zero to the level's full rate over `config.health.drainRampMs`; this ramp
-exists so the health bar does not visibly jerk back into motion, and is too short to be
-played around.
+A valid word adds seconds according to `config.clock.bonusSecondsByLength`, keyed by
+**letters** rather than cells, so a word containing `Qu` is paid for what the player
+reads. The steps rise steeply, and the shortest scoring words add nothing at all: they
+remain a way out of a board with nothing better on it, but they cannot sustain the
+clock on their own.
 
-At zero health the game ends.
+**The clock never rises above the duration it started with.** A word played on a nearly
+full clock is partly wasted, and the game shows the player the seconds actually added
+rather than the seconds the length earned.
+
+A sting costs `config.clock.stingCostMs`, or whatever remains if that is less.
+
+At zero the game ends. Full detail, with worked examples, is in
+[scoring.md](./scoring.md).
 
 ## Bees
 
@@ -165,8 +172,8 @@ Reaching a level's `honeyThreshold` advances the player to it. Levels are never
 surfaced as a number — the player perceives a level change as a shift in environment
 and a transition sound.
 
-A level sets its bee population and behaviour overrides, its health drain rate and
-drain pause, its harvest percentage, and its environment. Advancing does **not** reset
+A level sets its bee population and behaviour overrides, its harvest percentage, and
+its environment. It does **not** set anything about the clock. Advancing does **not** reset
 the honeycomb; letters, honey, and played words all carry across. The final level
 plateaus and play continues indefinitely.
 
