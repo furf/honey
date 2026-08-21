@@ -119,13 +119,21 @@ describe('levelIndexFor', () => {
 describe('bonusMsFor', () => {
   it('pays the fibonacci step for each length', () => {
     expect(bonusMsFor(4, config)).toBe(1_000)
-    expect(bonusMsFor(6, config)).toBe(2_000)
-    expect(bonusMsFor(9, config)).toBe(8_000)
+    expect(bonusMsFor(6, config)).toBe(3_000)
+    expect(bonusMsFor(9, config)).toBe(13_000)
+  })
+
+  it('widens the gap between short and long words', () => {
+    // The reason the curve was shifted. Short words stay usable without being able to
+    // sustain the clock, which the ratio is what enforces.
+    const shortest = bonusMsFor(4, config)
+    const longest = bonusMsFor(9, config)
+    expect(longest / shortest).toBeGreaterThanOrEqual(13)
   })
 
   it('floors anything longer at the largest entry', () => {
     // Not theoretical: nine cells spell a ten-letter word when one of them is `Qu`.
-    expect(bonusMsFor(10, config)).toBe(8_000)
+    expect(bonusMsFor(10, config)).toBe(13_000)
   })
 
   it('falls back to the shortest entry below the table', () => {

@@ -62,7 +62,30 @@ export const sounds: Readonly<Record<string, SoundRecipe>> = {
   'music.storm.root': { kind: 'tone', frequency: 65, durationMs: 0, gain: 0.04, toFrequency: 0.04 },
   'music.storm.tritone': { kind: 'tone', frequency: 92, durationMs: 0, gain: 0.026, toFrequency: 0.07 },
 
-  'game.over': { kind: 'chord', frequency: 220, durationMs: 900, gain: 0.2, intervals: [0, 3, 7] },
+  /*
+   * The last ten seconds, and the end.
+   *
+   * Two beeps a second — one on the second, one between — so the pair reads as a
+   * clock rather than a metronome. The on-the-second beep is the one tied to the
+   * digit flip and the red pulse; the half-second beep is the one to silence first
+   * if playtesting finds the bed too dense, which is why it is quieter and can be
+   * turned off from configuration.
+   *
+   * Both are deliberately short and quiet. A tick in the last ten seconds of every
+   * single game is the kind of sound that becomes hated fastest, and the bee buzz
+   * has already been through that.
+   */
+  'clock.tick': { kind: 'tone', frequency: 1180, durationMs: 55, gain: 0.085 },
+  'clock.tock': { kind: 'tone', frequency: 880, durationMs: 50, gain: 0.05 },
+
+  /*
+   * A game-show buzzer, replacing the minor chord that used to end a game.
+   *
+   * Sawtooth with the engine's amplitude wobble, which reads as a klaxon's rasp at
+   * this pitch rather than as an insect. It is the only harsh sound in the game, and
+   * it earns that by being the last one.
+   */
+  'game.over': { kind: 'buzz', frequency: 112, durationMs: 850, gain: 0.34, toFrequency: 94 },
   'game.start': { kind: 'chord', frequency: 392, durationMs: 420, gain: 0.16, intervals: [0, 5, 9] },
 
   'level.sunnyDay': { kind: 'tone', frequency: 520, durationMs: 500, gain: 0.14, toFrequency: 780 },

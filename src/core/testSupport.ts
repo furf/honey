@@ -24,7 +24,7 @@ export const testConfig: GameConfig = {
   clock: {
     durationMs: 90_000,
     stingCostMs: 5_000,
-    bonusMsByLength: { 4: 1_000, 5: 1_000, 6: 2_000, 7: 3_000, 8: 5_000, 9: 8_000 },
+    bonusMsByLength: { 4: 1_000, 5: 2_000, 6: 3_000, 7: 5_000, 8: 8_000, 9: 13_000 },
   },
   generation: {
     minCommonWords: 0,

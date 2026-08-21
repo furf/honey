@@ -284,7 +284,26 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+/*
+ * Diagnostic readout, deliberately cheap to delete. Small, low contrast, and outside
+ * the game's visual language on purpose — the design does not surface the level as a
+ * number, and this should never be mistaken for a decision to start.
+ */
+.pot__level {
+  display: block;
+  margin-top: 0.1rem;
+  text-align: right;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.45;
+  font-variant-numeric: tabular-nums;
+}
+
 .pot__value {
+  display: block;
+  text-align: right;
   font-size: 1.5rem;
   font-weight: 700;
   letter-spacing: 0.01em;

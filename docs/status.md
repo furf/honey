@@ -62,6 +62,13 @@ dictionary, and two fonts. Never measured on a slow connection.
   and board uniqueness. It is the one that most needs them. See
   [letters.md](./design/letters.md).
 
+- **The level indicator is temporary.** A "Level n" readout sits beneath the pot,
+  added for playtesting on 2026-08-21 and explicitly meant to be removed. It
+  contradicts a real design decision — [CONTEXT.md](../CONTEXT.md) says the level is
+  never surfaced to the player as a number — so it is styled as a debug readout rather
+  than as part of the HUD, and the glossary was deliberately **not** amended to
+  accommodate it. Delete the indicator, not the rule.
+
 ## Parked ideas
 
 - **Corner cells.** Using the four empty corners beside the hexagon for extra letters.

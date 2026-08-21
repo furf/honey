@@ -117,6 +117,14 @@ export function GameScreen({ deps, seed, theme, onExit, onPlayAgain }: GameScree
     // and saying "+0s" would be congratulating them on it.
     let bonus: BonusFlash | null = null
     let bonusCount = 0
+
+    // The final countdown, sounded in half-second beats.
+    //
+    // Deliberately driven from the same throttled snapshot the HUD reads, not from
+    // the render loop. Absolute accuracy to the millisecond is worth nothing here —
+    // what a player notices is the beep landing on a different instant from the digit
+    // flip, and reading both off one snapshot makes that impossible.
+    let lastBeat = Number.POSITIVE_INFINITY
     const startedMs = performance.now()
     let gameOverAtMs: number | null = null
     let lastHudMs = 0
@@ -138,7 +146,10 @@ export function GameScreen({ deps, seed, theme, onExit, onPlayAgain }: GameScree
           applyEvent(effects, event, {
             nowMs: frameMs,
             render: renderConfig,
-            play: (name) => sound.play(name),
+            play: (name, delayMs) => {
+              if (delayMs) window.setTimeout(() => sound.play(name), delayMs)
+              else sound.play(name)
+            },
           })
           if (event.kind === 'gameOver') gameOverAtMs = frameMs
           if (event.kind === 'wordScored' && event.bonusMs > 0) {
@@ -191,6 +202,25 @@ export function GameScreen({ deps, seed, theme, onExit, onPlayAgain }: GameScree
         // Throttled so score and clock changes never drive a re-render per frame.
         if (frameMs - lastHudMs >= 1000 / gameConfig.timing.hudUpdateHz) {
           lastHudMs = frameMs
+
+          // Half-second beats, counted down. An even beat lands on a whole second —
+          // the same instant the displayed digit changes and the clock pulses — and
+          // an odd one falls between two seconds.
+          const { clockMs } = game.state
+          if (clockMs > 0 && clockMs <= renderConfig.clockDangerMs) {
+            const beat = Math.ceil(clockMs / 500)
+            if (beat !== lastBeat) {
+              const onTheSecond = beat % 2 === 0
+              if (onTheSecond) sound.play('clock.tick')
+              else if (renderConfig.clockHalfSecondTick) sound.play('clock.tock')
+              lastBeat = beat
+            }
+          } else {
+            // Reset, so a word that buys the clock back out of the danger zone starts
+            // the countdown cleanly if it falls into it again.
+            lastBeat = Number.POSITIVE_INFINITY
+          }
+
           setHud(readHud(game, bonus))
         }
       },
@@ -282,6 +312,7 @@ export function GameScreen({ deps, seed, theme, onExit, onPlayAgain }: GameScree
         pot={hud.pot}
         clockMs={hud.clockMs}
         bonus={hud.bonus}
+        levelIndex={hud.levelIndex}
         word={hud.word}
         preview={hud.preview}
         muted={muted}

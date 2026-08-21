@@ -130,6 +130,33 @@ That last detail is load-bearing. The cap means banking a long word on a full cl
 wastes most of it, so there is a real incentive to spend the clock down first. Showing
 the clamped number is the only thing that makes that discoverable.
 
+### The final countdown
+
+Below `render.clockDangerMs` the clock also **beats twice a second** — a higher tick on
+the second, a lower one between. Two sounds rather than one is what makes it read as a
+clock; a single repeated beep is an alarm.
+
+**The tick, the digit flip and the red pulse all come from one reading of the clock.**
+This matters more than it sounds. Left to itself the pulse would run on its own CSS
+timeline, starting at whatever phase the class happened to be applied at, and the tick
+would fire off the render loop — so the two would land up to half a second apart while
+the number they describe is sitting right there between them. Instead the pulse is keyed
+to the displayed second, which restarts the animation at exactly the instant the tick
+plays. Absolute accuracy to the millisecond is worth nothing here; agreement is worth
+everything.
+
+The between-seconds beat deliberately has **no** visual counterpart, and is separately
+configurable (`render.clockHalfSecondTick`) with its own quieter gain. Twenty sounds in
+ten seconds is a dense bed arriving when the player is most tense, and testers have
+already found one of this game's sounds annoying enough to have it cut. If it grates,
+that is the half to drop — the on-the-second beat is the one doing the work.
+
+At zero, a **game-show buzzer** — replacing the minor chord that used to end a game. It
+is the only harsh sound in the game and earns that by being the last one. When a sting
+is what ended the game, the buzzer waits `render.gameOverStaggerMs` so the sting reads
+as the cause and the buzzer as the consequence, rather than the two arriving in the same
+frame as one indistinct noise.
+
 ## Screens and HUD
 
 Three screens: welcome, game, game over.
@@ -157,6 +184,11 @@ screen too briefly to read, let alone press.
 During play:
 
 - **Pot** top right, counting up rather than snapping.
+- **Level** beneath the pot — **diagnostic and temporary**. The design deliberately
+  never surfaces the level as a number (see Level in
+  [CONTEXT.md](../../CONTEXT.md)); this is a testing aid, styled as a debug readout
+  rather than as part of the HUD so it stays obviously foreign and cheap to delete. It
+  is recorded in [status.md](../status.md) as work to remove.
 - **Clock** top left, minutes and seconds beside a stopwatch, matching the pot exactly.
   See [The clock](#the-clock) above for its warning states and the bonus beside it.
 - **Trail preview** above the honeycomb, showing the letters as they are selected. Once

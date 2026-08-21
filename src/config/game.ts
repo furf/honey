@@ -45,12 +45,11 @@ export const gameConfig: GameConfig = {
     // Fibonacci. Longer words must be worth disproportionately more or the clock is
     // sustained by volume, and a player who swipes fast beats a player who looks hard.
     //
-    // The shortest scoring word buys a second. The original design gave it nothing,
-    // but that was written when three-letter words were going to be allowed and four
-    // was the second rung; when the minimum stayed at four, the zero rung went with
-    // it. Whether the floor should be pushed back down to zero is a playtest
-    // question — the curve above it is the part to trust.
-    bonusMsByLength: { 4: 1_000, 5: 1_000, 6: 2_000, 7: 3_000, 8: 5_000, 9: 8_000 },
+    // The shortest scoring word buys a second and a nine-letter word buys thirteen.
+    // The gap is the design: rather than zeroing the floor to stop short words
+    // sustaining the clock, the ceiling was raised, so they stay usable while being
+    // worth relatively little. Earlier the ratio was 8:1; it is now 13:1.
+    bonusMsByLength: { 4: 1_000, 5: 2_000, 6: 3_000, 7: 5_000, 8: 8_000, 9: 13_000 },
   },
 
   generation: {

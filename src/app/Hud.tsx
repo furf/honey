@@ -22,6 +22,8 @@ export interface HudProps {
   /** Milliseconds left. Formatted here, because only presentation cares about m:ss. */
   readonly clockMs: number
   readonly bonus: BonusFlash | null
+  /** Diagnostic only — see the level indicator below. */
+  readonly levelIndex: number
   readonly word: string
   readonly preview: number
   readonly muted: boolean
@@ -82,10 +84,26 @@ function Stopwatch() {
   )
 }
 
-export function Hud({ pot, clockMs, bonus, word, preview, muted, onToggleMute }: HudProps) {
+export function Hud({
+  pot,
+  clockMs,
+  bonus,
+  levelIndex,
+  word,
+  preview,
+  muted,
+  onToggleMute,
+}: HudProps) {
   const label = formatClock(clockMs)
 
   const bonusText = bonus ? bonusLabel(bonus.ms) : null
+
+  // The pulse is keyed to the displayed second, so React remounts the element and
+  // restarts the animation at exactly the moment the digits change — which is also
+  // the moment the on-the-second beep plays. Left to run on its own CSS timeline it
+  // would start at whatever phase the class happened to be applied at, and a pulse
+  // half a second out of step with the tick is worse than either alone.
+  const second = Math.ceil(Math.max(0, clockMs) / 1000)
   const urgency =
     clockMs <= renderConfig.clockDangerMs
       ? 'danger'
@@ -98,6 +116,7 @@ export function Hud({ pot, clockMs, bonus, word, preview, muted, onToggleMute }:
       <div className="hud hud--top">
         {/* The stopwatch is stroked in currentColor, so it takes the urgency too. */}
         <div
+          key={urgency === 'danger' ? second : 'calm'}
           className={`clock clock--${urgency}`}
           role="timer"
           aria-label={`Time remaining ${label}`}
@@ -117,6 +136,16 @@ export function Hud({ pot, clockMs, bonus, word, preview, muted, onToggleMute }:
 
         <div className="pot" aria-label="Honey collected">
           <span className="pot__value">{pot.toLocaleString()}</span>
+          {/*
+            Diagnostic, and temporary. The design deliberately never surfaces the level
+            as a number — see CONTEXT.md, where Level says exactly that — so this is
+            styled as a debug readout rather than as part of the HUD, and is recorded
+            in docs/status.md as something to remove. Counted from one, because nobody
+            counts levels from zero.
+          */}
+          <span className="pot__level" aria-hidden="true">
+            Level {levelIndex + 1}
+          </span>
         </div>
       </div>
 

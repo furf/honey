@@ -198,6 +198,8 @@ without a second set of numbers.
 | `clockWarnMs` | Milliseconds remaining at which the clock turns amber |
 | `clockDangerMs` | Milliseconds remaining at which it turns red and pulses once a second |
 | `bonusPopupMs` | How long the green `+3s` stays beside the clock |
+| `clockHalfSecondTick` | Whether the between-seconds beat sounds during the final countdown. The half to drop if the bed is too dense |
+| `gameOverStaggerMs` | How long the end-of-game buzzer waits when a sting is what ended the game |
 | `trailRing` | Ring weight on a selected cell |
 | `stateEmptyShade` / `stateGlowShade` | How far a state colour is darkened for the empty part of a cell, so the honey line stays visible |
 

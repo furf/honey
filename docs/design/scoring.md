@@ -101,12 +101,17 @@ Two details matter:
   containing it is paid for what the player reads, not for how many Cells it used. The
   same table rule applies — the largest key floors anything longer — and that is not
   theoretical here: nine Cells can spell a ten-Letter Word when one of them is `Qu`.
-- **Short Words cannot sustain you.** A Word at the minimum length buys about as little
-  time as the table offers. It still pays Honey, so it remains a way out of a board
-  where you cannot see anything better, but the time to survive comes from long Words.
-  (The design originally gave the shortest Word *nothing*; that rung was written for
-  three-Letter Words, which were considered and dropped, so the floor now sits one step
-  higher. Whether to push it back down is a playtest question.)
+- **Short Words cannot sustain you.** A Word at the minimum length buys the smallest
+  step the table offers. It still pays Honey, so it remains a way out of a board where
+  you cannot see anything better, but the time to survive comes from long Words.
+
+  The design originally gave the shortest Word *nothing at all*. That rung was written
+  when three-Letter Words were going to be allowed; when they were dropped and the
+  minimum stayed at four, the zero went with it. Rather than push the floor back down,
+  the ceiling was raised: the gap between the shortest and longest Word is now more than
+  a factor of ten, so short Words are relatively worthless without being useless. That
+  is the same outcome by a kinder route — nothing the player can do is ever worth
+  nothing.
 
 The Bonus rises steeply — the steps follow the Fibonacci sequence. The shape is the
 point: a reward that rose gently would make the Clock a measure of how fast you swipe,
@@ -122,6 +127,16 @@ The game tells you the truth about this: the number that floats up beside the Cl
 what was *actually* added, not what the Word's length earned. There is a real strategy
 hiding here — spend the Clock down before banking your best Word — and showing the
 clamped number is what makes it discoverable.
+
+### The last ten seconds
+
+Below `render.clockDangerMs` the Clock stops being a number and starts being an event.
+It turns amber, then red; it pulses once a second; and it beats twice a second — once
+on the second, once between. At zero a buzzer sounds.
+
+The on-the-second beat, the digit changing, and the pulse are all driven from the same
+reading of the Clock, so they cannot drift apart. The between-seconds beat has no visual
+counterpart, which is what makes the pair read as a clock rather than a metronome.
 
 ## What a Sting costs
 
@@ -193,14 +208,18 @@ empties and Reseeds.
 | Removed from the board | sum | 133 Honey |
 | Length multiplier at seven Letters | ×3.0 | — |
 | **Into the Pot** | 133 × 3.0 | **399** |
-| **Onto the Clock** | seven Letters | **+3 seconds** |
+| **Onto the Clock** | seven Letters | **+5 seconds** |
 
 Compare the two. STINGER removes under twice the Honey that TEAM does, but pays over
-five times as much into the Pot and three times as much onto the Clock. That gap is the
-entire incentive structure of the game.
+five times as much into the Pot and **five** times as much onto the Clock. That gap is
+the entire incentive structure of the game.
 
 ### The same Word on a nearly full Clock
 
-STINGER earns three seconds. If the Clock stands 1.2 seconds below its maximum, only
-1.2 seconds are added and the remaining 1.8 are discarded. The Pot still receives the
+STINGER earns five seconds. If the Clock stands 1.2 seconds below its maximum, only
+1.2 seconds are added and the remaining 3.8 are discarded. The Pot still receives the
 full 399 — the cap applies to time alone.
+
+The game shows the seconds actually added, and shows nothing when the amount rounds
+away to zero. It would otherwise report "+0s" for a genuine fraction of a second, which
+is worse than saying nothing.

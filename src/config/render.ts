@@ -57,6 +57,16 @@ export interface RenderConfig {
   readonly clockDangerMs: number
   /** How long the bonus stays on screen beside the clock. */
   readonly bonusPopupMs: number
+  /**
+   * Whether the between-seconds beep sounds during the final countdown.
+   *
+   * Twenty beeps in ten seconds is a dense bed, and it arrives when the player is
+   * most tense. This is the half of it to drop first — the on-the-second beep is the
+   * one carrying the digit flip.
+   */
+  readonly clockHalfSecondTick: boolean
+  /** How long the end-of-game buzzer waits when a sting is what ended the game. */
+  readonly gameOverStaggerMs: number
 
   readonly trailRing: number
 
@@ -147,6 +157,8 @@ export const renderConfig: RenderConfig = {
   clockWarnMs: 30_000,
   clockDangerMs: 10_000,
   bonusPopupMs: 1_100,
+  clockHalfSecondTick: true,
+  gameOverStaggerMs: 200,
 
   trailRing: 0.1,
 

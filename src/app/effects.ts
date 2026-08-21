@@ -56,6 +56,8 @@ export interface Effects {
   honeyDisturbed: Map<string, number>
   shakeUntilMs: number
   shakeStartedMs: number
+  /** When a sting last landed, so a sting that ends the game can be heard as one. */
+  stungAtMs: number
 }
 
 export function createEffects(): Effects {
@@ -67,14 +69,20 @@ export function createEffects(): Effects {
     honeyDisturbed: new Map(),
     shakeUntilMs: 0,
     shakeStartedMs: 0,
+    stungAtMs: Number.NEGATIVE_INFINITY,
   }
 }
 
 export interface EffectContext {
   readonly nowMs: number
   readonly render: RenderConfig
-  /** Called for each sound the event implies, so audio stays out of the renderer. */
-  play(sound: string): void
+  /**
+   * Called for each sound the event implies, so audio stays out of the renderer.
+   *
+   * The delay exists for one case: a sting that ends the game produces two harsh
+   * sounds in the same frame, and they collide into noise unless the second waits.
+   */
+  play(sound: string, delayMs?: number): void
 }
 
 /** Fold one event into the effect list. */
@@ -128,6 +136,7 @@ export function applyEvent(effects: Effects, event: GameEvent, ctx: EffectContex
       })
       effects.shakeStartedMs = nowMs
       effects.shakeUntilMs = nowMs + render.shakeMs
+      effects.stungAtMs = nowMs
       ctx.play('bee.sting')
       break
 
@@ -207,7 +216,10 @@ export function applyEvent(effects: Effects, event: GameEvent, ctx: EffectContex
       break
 
     case 'gameOver':
-      ctx.play('game.over')
+      // The buzzer waits when a sting is what ended the game, so the sting reads as
+      // the cause and the buzzer as the consequence rather than the two arriving as
+      // one indistinct noise. Both events land on the same frame.
+      ctx.play('game.over', effects.stungAtMs === nowMs ? render.gameOverStaggerMs : 0)
       break
 
     case 'trailBacktracked':
